@@ -3,10 +3,10 @@
 
 #include "getopt.h"
 
+#include <cstdint>
 #include <iostream>
 #include <map>
 #include <vector>
-#include <cstdint>
 
 // cfg.h
 //
@@ -23,38 +23,40 @@ typedef struct option param;
 
 class cfg
 {
-	public:
-		cfg();
-		~cfg();
+public:
+	cfg();
+	~cfg();
 
-		void 
-		parse_args(int argc, char** argv, warthog::util::param params[]);
+	void
+	parse_args(int argc, char** argv, warthog::util::param params[]);
 
-        void
-		parse_args(int argc, char** argv, const char* short_opts, 
-                warthog::util::param params[]);
+	void
+	parse_args(
+	    int argc, char** argv, const char* short_opts,
+	    warthog::util::param params[]);
 
-		std::string
-		get_param_value(std::string);
+	std::string get_param_value(std::string);
 
-        uint32_t
-        get_num_values(std::string);
+	uint32_t get_num_values(std::string);
 
-		void
-		print(std::ostream& out);
+	void
+	print(std::ostream& out);
 
-        void
-        print_values(const std::string&, std::ostream& out);
+	void
+	print_values(const std::string&, std::ostream& out);
 
-	private:
-		// no copy
-		cfg(const cfg& other) {}
-		cfg& operator=(const cfg& other) { return *this; }
+private:
+	// no copy
+	cfg(const cfg& other) { }
+	cfg&
+	operator=(const cfg& other)
+	{
+		return *this;
+	}
 
-		std::map<std::string, std::vector<std::string>> params_;
+	std::map<std::string, std::vector<std::string>> params_;
 };
 
 } // namespace warthog::util
 
 #endif // WARTHOG_APP_CFG_H
-

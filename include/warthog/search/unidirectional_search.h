@@ -313,6 +313,12 @@ private:
 	}
 };
 
+template<
+    class H, class E, class Q = util::pqueue_min, class L = dummy_listener>
+unidirectional_search(
+    H* heuristic, E* expander, Q* queue,
+    L* listener = nullptr) -> unidirectional_search<H, E, Q, L>;
+
 } // namespace warthog::search
 
 #endif // WARTHOG_SEARCH_UNIDIRECTIONAL_SEARCH_H
