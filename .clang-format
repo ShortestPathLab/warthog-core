@@ -2,9 +2,11 @@
 Language: Cpp
 Standard: c++11
 BasedOnStyle: GNU
-AccessModifierOffset: -2
+AccessModifierOffset: -4
 PointerAlignment: Left
+UseTab: ForIndentation
 IndentWidth: 4
+TabWidth: 4
 Cpp11BracedListStyle: true
 AlwaysBreakTemplateDeclarations: Yes
 AlwaysBreakAfterReturnType: All
@@ -12,9 +14,9 @@ AlignAfterOpenBracket: AlwaysBreak
 SpaceInEmptyBlock: true
 SpaceBeforeParens: Never
 SpaceAfterTemplateKeyword: false
-AllowShortBlocksOnASingleLine: Always
+AllowShortBlocksOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: WithoutElse
-AllowShortFunctionsOnASingleLine: All
+AllowShortFunctionsOnASingleLine: Inline
 AlignOperands: false
 BreakBeforeBraces: Custom
 BraceWrapping:

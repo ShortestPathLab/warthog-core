@@ -9,10 +9,7 @@
 // @created: 2018-11-03
 //
 
-namespace warthog
-{
-
-namespace grid
+namespace warthog::grid
 {
 
 typedef enum
@@ -23,15 +20,12 @@ typedef enum
 	EAST = 4,
 	WEST = 8,
 	NORTHEAST = 16,
-	NORTHWEST = 32, 
+	NORTHWEST = 32,
 	SOUTHEAST = 64,
 	SOUTHWEST = 128,
-    ALL = 255
+	ALL = 255
 } direction;
 
-
-}
-
-}
+} // namespace warthog::grid
 
 #endif // WARTHOG_DOMAIN_GRID_H

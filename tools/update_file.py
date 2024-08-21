@@ -6,8 +6,9 @@ import sys
 import collections as cl
 import shutil
 
+GUARD_PREFIX = ''
 root = Path(__file__).resolve().parent.parent
-root_inc = root/'include/warthog'
+root_inc = root/'include'
 root_src = root/'src'
 
 class SrcFile:
@@ -31,10 +32,22 @@ class SrcFile:
 		# loads file into data, trimming blank start/end lines
 		with open(self.fname) as f:
 			self.data = list(map(lambda g: g.removesuffix('\n'), f.readlines()))
+		comment_open = False
 		for start_line in range(len(self.data)):
 			line = self.data[start_line].strip()
-			if len(line) != 0 and not line[0] in ('*', '/'): # skip comment lines
-				break
+			if comment_open:
+				if '*/' in line:
+					comment_open = False
+			else:
+				if line.startswith('/*'):
+					comment_open = True
+				elif line.startswith('//'):
+					pass
+				elif len(line) == 0:
+					pass
+				else: # found first non-empty comment line
+					break
+					
 		self.preamble_end = start_line
 		while len(self.data) > self.preamble_end and len(self.data[-1].strip()) == 0:
 			del self.data[-1]
@@ -55,7 +68,11 @@ class SrcAlter:
 class GuardAlter(SrcAlter):
 	def __init__(self, src:SrcFile):
 		super().__init__(src)
-		self.guard = '_'.join(map(str.upper, ['WARTHOG', *src.namespace, src.fname.name.replace('.','_')]))
+		elem_list = []
+		if GUARD_PREFIX is not None and len(GUARD_PREFIX) > 0:
+			elem_list.append(GUARD_PREFIX)
+		elem_list.extend( (*src.namespace, src.fname.name.replace('.','_')) )
+		self.guard = '_'.join(map(str.upper, elem_list))
 		self.has_guard = src.header
 		
 	
@@ -81,7 +98,7 @@ class GuardAlter(SrcAlter):
 		return None
 
 class IncludeAlter(SrcAlter):
-	INCLUDE = re.compile('^#include ["<]([^">]+)"$')
+	INCLUDE = re.compile('^\\s*#include\\s+["<]([^">]+)[">]\\s*$')
 	FILES: dict[str,list[Path]]|None = None
 
 	def line_conv(self, line:str, no:int) -> str|None:
@@ -141,7 +158,9 @@ def conv_file(file:str, alters: list):
 			writeln(line)
 
 def _main():
-	conv_file(sys.argv[1], [GuardAlter, IncludeAlter])
+	for i in range(1, len(sys.argv)):
+		print(f'file "{sys.argv[i]}"', file=sys.stderr)
+		conv_file(sys.argv[i], [GuardAlter, IncludeAlter])
 
 if __name__ == '__main__':
 	_main()
