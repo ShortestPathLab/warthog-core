@@ -9,6 +9,7 @@
 
 #include <warthog/constants.h>
 #include <warthog/util/helpers.h>
+#include "heuristic_value.h"
 
 #include <cstdlib>
 
@@ -21,16 +22,22 @@ public:
 	zero_heuristic() { }
 	~zero_heuristic() { }
 
-	inline double
+	double
 	h(unsigned int x, unsigned int y, unsigned int x2, unsigned int y2)
 	{
 		return 0;
 	}
 
-	inline double
+	double
 	h(sn_id_t id, sn_id_t id2)
 	{
 		return 0;
+	}
+
+	void
+	h(heuristic_value* hv)
+	{
+		hv->lb_ = hv->ub_ = 0;
 	}
 
 	size_t

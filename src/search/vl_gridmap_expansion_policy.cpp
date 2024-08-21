@@ -113,6 +113,15 @@ vl_gridmap_expansion_policy::get_state(warthog::sn_id_t node_id)
 }
 
 void
+vl_gridmap_expansion_policy::get_xy(sn_id_t node_id, int32_t& x, int32_t& y)
+{
+	uint32_t lx, ly;
+	map_->to_unpadded_xy(node_id, lx, ly);
+	x = lx;
+	y = ly;
+}
+
+void
 vl_gridmap_expansion_policy::print_node(search_node* n, std::ostream& out)
 {
 	uint32_t x, y;

@@ -9,6 +9,7 @@
 
 #include <warthog/constants.h>
 #include <warthog/util/helpers.h>
+#include "heuristic_value.h"
 
 #include <cstdlib>
 
@@ -24,14 +25,14 @@ public:
 
 	~manhattan_heuristic() { }
 
-	inline double
+	double
 	h(int32_t x, int32_t y, int32_t x2, int32_t y2)
 	{
 		// NB: precision loss when double is an integer
 		return (abs(x - x2) + abs(y - y2));
 	}
 
-	inline double
+	double
 	h(sn_id_t id, sn_id_t id2)
 	{
 		int32_t x, x2;
@@ -39,6 +40,12 @@ public:
 		util::index_to_xy((uint32_t)id, mapwidth_, x, y);
 		util::index_to_xy((uint32_t)id2, mapwidth_, x2, y2);
 		return this->h(x, y, x2, y2);
+	}
+
+	void
+	h(heuristic_value* hv)
+	{
+		hv->lb_ = hv->ub_ = h(hv->from_, hv->to_);
 	}
 
 	size_t

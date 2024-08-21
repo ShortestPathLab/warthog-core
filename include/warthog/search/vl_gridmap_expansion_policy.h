@@ -58,6 +58,9 @@ public:
 	get_state(sn_id_t node_id);
 
 	void
+	get_xy(sn_id_t node_id, int32_t& x, int32_t& y);
+
+	void
 	print_node(search_node* n, std::ostream& out);
 
 	virtual search_node*

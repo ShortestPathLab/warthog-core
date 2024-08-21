@@ -11,6 +11,7 @@
 
 #include <warthog/constants.h>
 #include <warthog/util/helpers.h>
+#include "heuristic_value.h"
 
 #include <cstdlib>
 
@@ -26,7 +27,7 @@ public:
 
 	~octile_heuristic() { }
 
-	inline double
+	double
 	h(int32_t x, int32_t y, int32_t x2, int32_t y2)
 	{
 		int32_t dx = abs(x - x2);
@@ -38,7 +39,7 @@ public:
 		return (dy * warthog::DBL_ROOT_TWO + (dx - dy)) * hscale_;
 	}
 
-	inline double
+	double
 	h(sn_id_t id, sn_id_t id2)
 	{
 		int32_t x, x2;
@@ -48,13 +49,19 @@ public:
 		return this->h(x, y, x2, y2);
 	}
 
-	inline void
+	void
+	h(heuristic_value* hv)
+	{
+		hv->lb_ = hv->ub_ = h(hv->from_, hv->to_);
+	}
+
+	void
 	set_hscale(double hscale)
 	{
 		hscale_ = hscale;
 	}
 
-	inline double
+	double
 	get_hscale()
 	{
 		return hscale_;

@@ -129,9 +129,10 @@ run_experiments(
 		uint32_t startid = exp->starty() * exp->mapwidth() + exp->startx();
 		uint32_t goalid = exp->goaly() * exp->mapwidth() + exp->goalx();
 		warthog::search::problem_instance pi(startid, goalid, verbose);
+        warthog::search::search_parameters par;
 		warthog::search::solution sol;
 
-		// algo.get_path(pi, sol);
+		algo.get_path(&pi, &par, &sol);
 
 		out << i << "\t" << alg_name << "\t" << sol.met_.nodes_expanded_
 		    << "\t" << sol.met_.nodes_generated_ << "\t"
