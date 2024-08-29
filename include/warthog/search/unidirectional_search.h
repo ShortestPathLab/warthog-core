@@ -76,7 +76,7 @@ public:
 		search_node* current = sol->s_node_;
 		while(current)
 		{
-			sol->path_.push_back(current->get_id());
+			sol->path_.push_back(expander_->get_state(current->get_id()));
 			if(current->get_parent() == warthog::SN_ID_MAX) break;
 			current = expander_->generate(current->get_parent());
 		}
@@ -199,9 +199,10 @@ private:
 	}
 
 	void
-	search(problem_instance* pi, search_parameters* par, solution* sol)
+	search(problem_instance* opi, search_parameters* par, solution* sol)
 	{
 		util::timer mytimer;
+		problem_instance pi(opi);
 		mytimer.start();
 		open_->clear();
 
@@ -211,6 +212,8 @@ private:
 
 			search_node* start = expander_->generate_start_node(pi);
 			if(!start) { return; }
+			search_node* target = expander_->generate_target_node(pi);
+			pi.target_ = target.id_;
 
 			initialise_node_(start, warthog::SN_ID_MAX, 0, pi, par, sol);
 			open_->push(start);

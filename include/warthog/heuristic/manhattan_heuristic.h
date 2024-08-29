@@ -45,7 +45,7 @@ public:
 	void
 	h(heuristic_value* hv)
 	{
-		hv->lb_ = hv->ub_ = h(hv->from_, hv->to_);
+		hv->lb_ = h(hv->from_, hv->to_);
 	}
 
 	size_t
