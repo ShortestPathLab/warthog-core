@@ -45,8 +45,8 @@ public:
 	    domain::vl_gridmap* map, util::cost_table& costs);
 	virtual ~vl_gridmap_expansion_policy();
 
-	virtual void
-	expand(search_node*, problem_instance*);
+	void
+	expand(search_node*, search_problem_instance*) override;
 
 	virtual size_t
 	mem()
@@ -54,20 +54,27 @@ public:
 		return expansion_policy::mem() + sizeof(*this) + map_->mem();
 	}
 
-	uint32_t
-	get_state(sn_id_t node_id);
+	search_problem_instance
+	get_problem_instance(problem_instance* pi) override;
+
+	pack_id
+	get_state(pad_id node_id) override;
+	pad_id
+	unget_state(pack_id node_id) override;
 
 	void
-	get_xy(sn_id_t node_id, int32_t& x, int32_t& y);
+	get_xy(pack_id node_id, int32_t& x, int32_t& y);
+	void
+	get_xy(pad_id node_id, int32_t& x, int32_t& y);
 
 	void
 	print_node(search_node* n, std::ostream& out);
 
-	virtual search_node*
-	generate_start_node(problem_instance* pi);
+	search_node*
+	generate_start_node(search_problem_instance* pi) override;
 
-	virtual search_node*
-	generate_target_node(problem_instance* pi);
+	search_node*
+	generate_target_node(search_problem_instance* pi) override;
 
 private:
 	domain::vl_gridmap* map_;

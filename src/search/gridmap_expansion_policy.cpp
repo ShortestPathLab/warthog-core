@@ -13,13 +13,13 @@ gridmap_expansion_policy::gridmap_expansion_policy(
 
 void
 gridmap_expansion_policy::expand(
-    search_node* current, problem_instance* problem)
+    search_node* current, search_problem_instance* problem)
 {
 	reset();
 
 	// get terrain type of each tile in the 3x3 square around (x, y)
 	uint32_t tiles = 0;
-	uint32_t nodeid = (uint32_t)current->get_id();
+	uint32_t nodeid = uint32_t{current->get_id()};
 	map_->get_neighbours(nodeid, (uint8_t*)&tiles);
 
 	//	#ifndef NDEBUG
@@ -43,49 +43,74 @@ gridmap_expansion_policy::expand(
 	// generate cardinal moves
 	if((tiles & 514) == 514) // N
 	{
-		add_neighbour(this->generate(nid_m_w), 1);
+		add_neighbour(this->generate(pad_id{nid_m_w}), 1);
 	}
 	if((tiles & 1536) == 1536) // E
 	{
-		add_neighbour(this->generate(nodeid + 1), 1);
+		add_neighbour(this->generate(pad_id{nodeid + 1}), 1);
 	}
 	if((tiles & 131584) == 131584) // S
 	{
-		add_neighbour(this->generate(nid_p_w), 1);
+		add_neighbour(this->generate(pad_id{nid_p_w}), 1);
 	}
 	if((tiles & 768) == 768) // W
 	{
-		add_neighbour(this->generate(nodeid - 1), 1);
+		add_neighbour(this->generate(pad_id{nodeid - 1}), 1);
 	}
 	if(manhattan_) { return; }
 
 	// generate diagonal moves
 	if((tiles & 1542) == 1542) // NE
 	{
-		add_neighbour(this->generate(nid_m_w + 1), warthog::DBL_ROOT_TWO);
+		add_neighbour(
+		    this->generate(pad_id{nid_m_w + 1}), warthog::DBL_ROOT_TWO);
 	}
 	if((tiles & 394752) == 394752) // SE
 	{
-		add_neighbour(this->generate(nid_p_w + 1), warthog::DBL_ROOT_TWO);
+		add_neighbour(
+		    this->generate(pad_id{nid_p_w + 1}), warthog::DBL_ROOT_TWO);
 	}
 	if((tiles & 197376) == 197376) // SW
 	{
-		add_neighbour(this->generate(nid_p_w - 1), warthog::DBL_ROOT_TWO);
+		add_neighbour(
+		    this->generate(pad_id{nid_p_w - 1}), warthog::DBL_ROOT_TWO);
 	}
 	if((tiles & 771) == 771) // NW
 	{
-		add_neighbour(this->generate(nid_m_w - 1), warthog::DBL_ROOT_TWO);
+		add_neighbour(
+		    this->generate(pad_id{nid_m_w - 1}), warthog::DBL_ROOT_TWO);
 	}
 }
 
-uint32_t
-gridmap_expansion_policy::get_state(sn_id_t node_id)
+search_problem_instance
+gridmap_expansion_policy::get_problem_instance(problem_instance* pi)
+{
+	assert(pi != nullptr);
+	return convert_problem_instance_to_search(*pi, *map_);
+}
+
+pack_id
+gridmap_expansion_policy::get_state(pad_id node_id)
 {
 	return map_->to_unpadded_id(node_id);
 }
 
+pad_id
+gridmap_expansion_policy::unget_state(pack_id node_id)
+{
+	return map_->to_padded_id(node_id);
+}
+
 void
-gridmap_expansion_policy::get_xy(sn_id_t node_id, int32_t& x, int32_t& y)
+gridmap_expansion_policy::get_xy(pack_id node_id, int32_t& x, int32_t& y)
+{
+	uint32_t lx, ly;
+	map_->to_unpadded_xy(node_id, lx, ly);
+	x = lx;
+	y = ly;
+}
+void
+gridmap_expansion_policy::get_xy(pad_id node_id, int32_t& x, int32_t& y)
 {
 	uint32_t lx, ly;
 	map_->to_unpadded_xy(node_id, lx, ly);
@@ -103,23 +128,21 @@ gridmap_expansion_policy::print_node(search_node* n, std::ostream& out)
 }
 
 search_node*
-gridmap_expansion_policy::generate_start_node(problem_instance* pi)
+gridmap_expansion_policy::generate_start_node(search_problem_instance* pi)
 {
-	uint32_t max_id = map_->header_width() * map_->header_height();
-	if((uint32_t)pi->start_ >= max_id) { return 0; }
-	uint32_t padded_id = map_->to_padded_id((uint32_t)pi->start_);
-	if(map_->get_label(padded_id) == 0) { return 0; }
-	return generate(padded_id);
+	uint32_t max_id = map_->width() * map_->height();
+	if(uint32_t{pi->start_} >= max_id) { return 0; }
+	if(map_->get_label(uint32_t{pi->start_}) == 0) { return 0; }
+	return generate(pi->start_);
 }
 
 search_node*
-gridmap_expansion_policy::generate_target_node(problem_instance* pi)
+gridmap_expansion_policy::generate_target_node(search_problem_instance* pi)
 {
-	uint32_t max_id = map_->header_width() * map_->header_height();
+	uint32_t max_id = map_->width() * map_->height();
 	if((uint32_t)pi->target_ >= max_id) { return 0; }
-	uint32_t padded_id = map_->to_padded_id((uint32_t)pi->target_);
-	if(map_->get_label(padded_id) == 0) { return 0; }
-	return generate(padded_id);
+	if(map_->get_label(uint32_t{pi->target_}) == 0) { return 0; }
+	return generate(pi->target_);
 }
 
 size_t

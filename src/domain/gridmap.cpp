@@ -20,7 +20,7 @@ gridmap::gridmap(const char* filename)
 	init_db();
 	// populate matrix
 	num_traversable_ = 0;
-	for(unsigned int i = 0; i < parser.get_num_tiles(); i++)
+	for(uint32_t i = 0; i < parser.get_num_tiles(); i++)
 	{
 		unsigned char c = parser.get_tile_at(i);
 		switch(c)
@@ -30,13 +30,13 @@ gridmap::gridmap(const char* filename)
 		case 'T':
 		case '@':
 		case 'O': // these terrain types are obstacles
-			this->set_label(to_padded_id(i), 0);
-			assert(this->get_label(to_padded_id(i)) == 0);
+			this->set_label(uint32_t{to_padded_id(pack_id{i})}, 0);
+			assert(this->get_label(uint32_t{to_padded_id(pack_id{i})}) == 0);
 			break;
 		default: // everything else is traversable
-			this->set_label(to_padded_id(i), 1);
+			this->set_label(uint32_t{to_padded_id(pack_id{i})}, 1);
 			num_traversable_++;
-			assert(this->get_label(to_padded_id(i)) == 1);
+			assert(this->get_label(uint32_t{to_padded_id(pack_id{i})}) == 1);
 			break;
 		}
 	}

@@ -64,6 +64,6 @@ struct search_metrics
 } // namespace warthog::search
 
 std::ostream&
-operator<<(std::ostream& str, warthog::search::search_metrics& met);
+operator<<(std::ostream& str, const warthog::search::search_metrics& met);
 
 #endif // WARTHOG_SEARCH_SEARCH_METRICS_H

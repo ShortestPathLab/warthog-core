@@ -126,8 +126,9 @@ run_experiments(
 	{
 		warthog::util::experiment* exp = scenmgr.get_experiment(i);
 
-		uint32_t startid = exp->starty() * exp->mapwidth() + exp->startx();
-		uint32_t goalid = exp->goaly() * exp->mapwidth() + exp->goalx();
+		warthog::pack_id startid{
+		    exp->starty() * exp->mapwidth() + exp->startx()};
+		warthog::pack_id goalid{exp->goaly() * exp->mapwidth() + exp->goalx()};
 		warthog::search::problem_instance pi(startid, goalid, verbose);
         warthog::search::search_parameters par;
 		warthog::search::solution sol;

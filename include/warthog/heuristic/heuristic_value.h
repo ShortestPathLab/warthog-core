@@ -28,13 +28,22 @@ struct heuristic_value
 	}
 
 	heuristic_value(
-	    sn_id_t from, sn_id_t to, std::vector<sn_id_t>* ub_path = 0)
+	    pack_id from, pack_id to, std::vector<pack_id>* ub_path = 0)
+	{
+		this->operator()(sn_id_t{from}, sn_id_t{to}, ub_path);
+	}
+	heuristic_value(pad_id from, pad_id to, std::vector<pack_id>* ub_path = 0)
+	{
+		this->operator()(sn_id_t{from}, sn_id_t{to}, ub_path);
+	}
+	heuristic_value(
+	    sn_id_t from, sn_id_t to, std::vector<pack_id>* ub_path = 0)
 	{
 		this->operator()(from, to, ub_path);
 	}
 
 	void
-	operator()(sn_id_t from, sn_id_t to, std::vector<sn_id_t>* ub_path = 0)
+	operator()(sn_id_t from, sn_id_t to, std::vector<pack_id>* ub_path = 0)
 	{
 		from_ = from;
 		to_ = to;
@@ -58,7 +67,7 @@ struct heuristic_value
 
 	// the container where the upperbound path
 	// (if any) can be stored
-	std::vector<sn_id_t>* ub_path_;
+	std::vector<pack_id>* ub_path_;
 };
 
 } // namespace warthog::heuristic

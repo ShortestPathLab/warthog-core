@@ -38,7 +38,7 @@
  */
 #define debug(p, ...) _abstractLog("DEBUG", p, __VA_ARGS__)
 #else
-#define debug(...) ;
+#define debug(...) {};
 #endif
 
 #if QUICK_LOG <= 1
@@ -55,7 +55,7 @@
  */
 #define trace(p, ...) _abstractLog("TRACE", p, __VA_ARGS__)
 #else
-#define trace(...) ;
+#define trace(...) {};
 #endif
 
 #if QUICK_LOG <= 4
@@ -72,7 +72,7 @@
  */
 #define info(p, ...) _abstractLog("INFO ", p, __VA_ARGS__)
 #else
-#define info(...) ;
+#define info(...) {};
 #endif
 
 #if QUICK_LOG <= 5
@@ -89,7 +89,7 @@
  */
 #define user(p, ...) _abstractLog("USER ", p, __VA_ARGS__)
 #else
-#define user(...) ;
+#define user(...) {};
 #endif
 
 #if QUICK_LOG <= 6
@@ -106,7 +106,7 @@
  */
 #define warning(p, ...) _abstractLog("WARN ", p, __VA_ARGS__)
 #else
-#define warning(...) ;
+#define warning(...) {};
 #endif
 
 #if QUICK_LOG <= 7
@@ -123,7 +123,7 @@
  */
 #define error(...) _abstractLog("ERROR", true, __VA_ARGS__)
 #else
-#define error(...) ;
+#define error(...) {};
 #endif
 
 #if QUICK_LOG <= 8
@@ -140,7 +140,7 @@
  */
 #define critical(...) _abstractLog("CRTCL", true, __VA_ARGS__)
 #else
-#define critical(...) ;
+#define critical(...) {};
 #endif
 
 /**
@@ -225,7 +225,7 @@
 
 #define DO_ON_DEBUG_IF(expr) if(false)
 #define DO_ON_DEBUG if(false)
-#define _abstractLog(level, ...) ;
+#define _abstractLog(level, ...) {};
 
 #endif
 

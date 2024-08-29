@@ -163,12 +163,12 @@ public:
 	}
 };
 
+} // namespace warthog::geometry
+
 std::ostream&
 operator<<(std::ostream& out, warthog::geometry::rectangle& rect);
 
 std::istream&
 operator>>(std::istream& in, warthog::geometry::rectangle& rect);
-
-} // namespace warthog::geometry
 
 #endif // WARTHOG_GEOMETRY_GEOM_H

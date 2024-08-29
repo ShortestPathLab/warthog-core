@@ -1,9 +1,6 @@
 #include <cassert>
 #include <warthog/geometry/geom.h>
 
-namespace warthog::geometry
-{
-
 std::ostream&
 operator<<(std::ostream& out, warthog::geometry::rectangle& rect)
 {
@@ -23,5 +20,3 @@ operator>>(std::istream& in, warthog::geometry::rectangle& rect)
 	in.read((char*)(&rect.y2), sizeof(rect.y2));
 	return in;
 }
-
-} // namespace warthog::geometry

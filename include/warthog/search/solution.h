@@ -30,19 +30,19 @@ public:
 	solution(const solution& other) : met_(other.met_), path_(other.path_) { }
 
 	inline void
-	print_metrics(std::ostream& out)
+	print_metrics(std::ostream& out) const
 	{
 		out << "sum_of_edge_costs=" << sum_of_edge_costs_;
 		out << met_;
 	}
 
 	inline void
-	print_path(std::ostream& out)
+	print_path(std::ostream& out) const
 	{
 		out << "path=";
 		for(auto& state : path_)
 		{
-			out << state << " ";
+			out << sn_id_t{state} << " ";
 		}
 	}
 
@@ -55,8 +55,8 @@ public:
 		met_.reset();
 	}
 
-	friend std::ostream&
-	operator<<(std::ostream& str, solution& sol);
+	// friend std::ostream&
+	// ::operator<<(std::ostream& str, solution& sol);
 
 	// search performance metrics
 	search::search_metrics met_;
@@ -66,12 +66,12 @@ public:
 	// from start to target
 	search::search_node* s_node_;
 	cost_t sum_of_edge_costs_;
-	std::vector<sn_id_t> path_;
+	std::vector<pack_id> path_;
 };
 
 } // namespace warthog::search
 
 std::ostream&
-operator<<(std::ostream& str, warthog::search::solution& sol);
+operator<<(std::ostream& str, const warthog::search::solution& sol);
 
 #endif // WARTHOG_SEARCH_SOLUTION_H

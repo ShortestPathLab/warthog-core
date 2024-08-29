@@ -25,11 +25,12 @@
 
 #include <climits>
 #include <cstdint>
+#include <limits>
 
 namespace warthog::domain
 {
 
-const uint32_t GRID_ID_MAX = (uint32_t)warthog::SN_ID_MAX;
+constexpr uint32_t GRID_ID_MAX = std::numeric_limits<uint32_t>::max();
 class gridmap
 {
 public:
@@ -39,45 +40,47 @@ public:
 
 	// here we convert from the coordinate space of
 	// the original grid to the coordinate space of db_.
-	inline uint32_t
-	to_padded_id(uint32_t node_id)
+	pad_id
+	to_padded_id(pack_id node_id)
 	{
-		return node_id +
+		return pad_id{
+		    uint32_t{node_id} +
 		    // padded rows before the actual map data starts
 		    padded_rows_before_first_row_ * padded_width_ +
 		    // padding from each row of data before this one
-		    (node_id / header_.width_) * padding_per_row_;
+		    (node_id.id / header_.width_) * padding_per_row_};
 	}
 
 	// here we convert from the coordinate space of
 	// the original grid to the coordinate space of db_.
-	inline uint32_t
+	pad_id
 	to_padded_id(uint32_t x, uint32_t y)
 	{
-		return to_padded_id(y * this->header_width() + x);
+		return to_padded_id(pack_id{y * this->header_width() + x});
 	}
 
-	inline void
-	to_padded_xy(uint32_t grid_id_p, uint32_t& x, uint32_t& y)
+	void
+	to_unpadded_xy(pack_id grid_id_p, uint32_t& x, uint32_t& y)
 	{
-		y = grid_id_p / padded_width_;
-		x = grid_id_p % padded_width_;
+		y = uint32_t{grid_id_p} / padded_width_;
+		x = uint32_t{grid_id_p} % padded_width_;
 	}
 
-	inline void
-	to_unpadded_xy(uint32_t grid_id_p, uint32_t& x, uint32_t& y)
+	void
+	to_unpadded_xy(pad_id grid_id_p, uint32_t& x, uint32_t& y)
 	{
-		grid_id_p -= padded_rows_before_first_row_ * padded_width_;
-		y = grid_id_p / padded_width_;
-		x = grid_id_p % padded_width_;
+		uint32_t id = uint32_t{grid_id_p}
+		    - padded_rows_before_first_row_ * padded_width_;
+		y = id / padded_width_;
+		x = id % padded_width_;
 	}
 
-	inline uint32_t
-	to_unpadded_id(uint32_t padded_id)
+	pack_id
+	to_unpadded_id(pad_id padded_id)
 	{
 		uint32_t x, y;
 		to_unpadded_xy(padded_id, x, y);
-		return y * header_.width_ + x;
+		return pack_id{y * header_.width_ + x};
 	}
 
 	// get the immediately adjacent neighbours of @param node_id
@@ -87,7 +90,7 @@ public:
 	// In each case the bits for each neighbour are in the three
 	// lowest positions of the byte.
 	// position :0 is the nei in direction NW, :1 is N and :2 is NE
-	inline void
+	void
 	get_neighbours(uint32_t grid_id_p, uint8_t tiles[3])
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
@@ -139,7 +142,7 @@ public:
 	// similar to get_neighbours_32bit but grid_id_p is placed into the
 	// upper bit of the return value. this variant is useful when jumping
 	// toward smaller memory addresses (i.e. west instead of east).
-	inline void
+	void
 	get_neighbours_upper_32bit(uint32_t grid_id_p, uint32_t tiles[3])
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
@@ -186,13 +189,15 @@ public:
 	}
 
 	// get the label associated with the padded coordinate pair (x, y)
-	inline bool
-	get_label(uint32_t x, unsigned int y)
+	bool
+	get_label(uint32_t x, uint32_t y)
 	{
 		return this->get_label(y * padded_width_ + x);
 	}
 
-	inline warthog::dbword
+	// TODO: for now, kept internal as uint32_t for smaller call size, decide
+	// later
+	warthog::dbword
 	get_label(uint32_t grid_id_p)
 	{
 		// now we can fetch the label
@@ -204,7 +209,7 @@ public:
 	}
 
 	// get a pointer to the word that contains the label of node @grid_id_p
-	inline warthog::dbword*
+	warthog::dbword*
 	get_mem_ptr(uint32_t grid_id_p)
 	{
 		uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
@@ -213,13 +218,13 @@ public:
 	}
 
 	// set the label associated with the padded coordinate pair (x, y)
-	inline void
+	void
 	set_label(uint32_t x, unsigned int y, bool label)
 	{
 		this->set_label(y * padded_width_ + x, label);
 	}
 
-	inline void
+	void
 	set_label(uint32_t grid_id_p, bool label)
 	{
 		uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
@@ -231,50 +236,50 @@ public:
 		else { db_[dbindex] &= (warthog::dbword)~bitmask; }
 	}
 
-	inline uint32_t
-	padded_mapsize()
+	uint32_t
+	padded_mapsize() const noexcept
 	{
 		return padded_width_ * padded_height_;
 	}
 
-	inline uint32_t
-	height() const
+	uint32_t
+	height() const noexcept
 	{
 		return this->padded_height_;
 	}
 
-	inline uint32_t
-	width() const
+	uint32_t
+	width() const noexcept
 	{
 		return this->padded_width_;
 	}
 
-	inline uint32_t
-	header_height()
+	uint32_t
+	header_height() const noexcept
 	{
 		return this->header_.height_;
 	}
 
-	inline uint32_t
-	header_width()
+	uint32_t
+	header_width() const noexcept
 	{
 		return this->header_.width_;
 	}
 
-	inline const char*
-	filename()
+	const char*
+	filename() const noexcept
 	{
 		return this->filename_;
 	}
 
-	inline uint32_t
-	get_num_traversable_tiles()
+	uint32_t
+	get_num_traversable_tiles() const noexcept
 	{
 		return num_traversable_;
 	}
 
 	// invert map (traversable tiles become obstacles and vice versa)
-	inline void
+	void
 	invert()
 	{
 		for(unsigned int i = 0; i < db_size_; i++)
@@ -290,7 +295,7 @@ public:
 	printdb(std::ostream& out);
 
 	size_t
-	mem()
+	mem() const noexcept
 	{
 		return sizeof(*this) + sizeof(warthog::dbword) * db_size_;
 	}

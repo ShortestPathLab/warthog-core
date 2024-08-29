@@ -113,7 +113,7 @@ public:
 	// should be added to the list of neighbours via
 	// ::add_neighbour
 	virtual void
-	expand(search_node*, problem_instance*)
+	expand(search_node*, search_problem_instance*)
 	    = 0;
 
 	// this function creates a search_node object for
@@ -128,7 +128,7 @@ public:
 	// the start state. if the start state is invalid the
 	// function returns 0
 	virtual search_node*
-	generate_start_node(problem_instance* pi)
+	generate_start_node(search_problem_instance* pi)
 	    = 0;
 
 	// this function creates a search_node object for
@@ -143,11 +143,19 @@ public:
 	// the target state. if the target state is invalid the
 	// function returns 0
 	virtual search_node*
-	generate_target_node(problem_instance* pi)
+	generate_target_node(search_problem_instance* pi)
 	    = 0;
 
-	virtual uint32_t
-	get_state(sn_id_t node_id)
+	virtual search_problem_instance
+	get_problem_instance(problem_instance* pi)
+	    = 0;
+
+	virtual pack_id
+	get_state(pad_id node_id)
+	    = 0;
+
+	virtual pad_id
+	unget_state(pack_id node_id)
 	    = 0;
 
 	virtual void
@@ -159,7 +167,7 @@ public:
 	// representation of states from the search algorithm which
 	// only knows about search_node objects.
 	bool
-	is_target(search_node* n, problem_instance* pi)
+	is_target(search_node* n, search_problem_instance* pi)
 	{
 		return n->get_id() == pi->target_;
 	}
@@ -167,7 +175,7 @@ public:
 	// get a search_node memory pointer associated with @param node_id.
 	// (value is null if @param node_id is bigger than nodes_pool_size_)
 	inline search_node*
-	generate(sn_id_t node_id)
+	generate(pad_id node_id)
 	{
 		return nodepool_->generate(node_id);
 	}
@@ -176,7 +184,7 @@ public:
 	// value is null if this node has not been previously allocated
 	// or if node_id is bigger than nodes_pool_size_
 	search_node*
-	get_ptr(sn_id_t node_id, uint32_t search_number)
+	get_ptr(pad_id node_id, uint32_t search_number)
 	{
 		search_node* tmp = nodepool_->get_ptr(node_id);
 		if(tmp && tmp->get_search_number() == search_number) { return tmp; }

@@ -65,11 +65,11 @@ public:
 	void
 	get_path(problem_instance* pi, search_parameters* par, solution* sol)
 	{
-
 		// if successful the search returns an incumbent node. this can be
 		// the target node or it can be another node from which the
 		// heuristic knows a concrete path to the target.
-		search(pi, par, sol);
+		search_problem_instance spi = expander_->get_problem_instance(pi);
+		search(&spi, par, sol);
 		if(!sol->s_node_) { return; }
 
 		// follow backpointers to extract the path, from start to incumbent
@@ -77,17 +77,17 @@ public:
 		while(current)
 		{
 			sol->path_.push_back(expander_->get_state(current->get_id()));
-			if(current->get_parent() == warthog::SN_ID_MAX) break;
+			if(current->get_parent() == pad_id::max()) break;
 			current = expander_->generate(current->get_parent());
 		}
 		assert(sol->path_.back() == pi->start_);
 		std::reverse(sol->path_.begin(), sol->path_.end());
 
 		// extract the rest of the path, from incumbent to target
-		if(sol->s_node_->get_id() != pi->target_)
+		if(sol->s_node_->get_id() != spi.target_)
 		{
-			heuristic::heuristic_value hv;
-			hv(sol->s_node_->get_id(), pi->target_, &sol->path_);
+			heuristic::heuristic_value hv(
+			    sol->s_node_->get_id(), spi.target_, &sol->path_);
 			heuristic_->h(&hv);
 		}
 
@@ -98,7 +98,8 @@ public:
 				int32_t x, y;
 				expander_->get_xy(node_id, x, y);
 				std::cerr << "final path: (" << x << ", " << y << ")...";
-				search_node* n = expander_->generate(node_id);
+				search_node* n
+				    = expander_->generate(expander_->unget_state(node_id));
 				assert(n->get_search_number() == pi->instance_id_);
 				n->print(std::cerr);
 				std::cerr << std::endl;
@@ -160,8 +161,8 @@ private:
 	 */
 	void
 	initialise_node_(
-	    search_node* n, sn_id_t parent_id, cost_t gval, problem_instance* pi,
-	    search_parameters* par, solution* sol)
+	    search_node* n, pad_id parent_id, cost_t gval,
+	    search_problem_instance* pi, search_parameters* par, solution* sol)
 	{
 		heuristic::heuristic_value hv(n->get_id(), pi->target_);
 		heuristic_->h(&hv);
@@ -187,7 +188,7 @@ private:
 	}
 
 	void
-	update_ub(search_node* n, solution* sol, problem_instance* pi)
+	update_ub(search_node* n, solution* sol, search_problem_instance* pi)
 	{
 		if(n->get_ub() < sol->met_.ub_)
 		{
@@ -199,23 +200,22 @@ private:
 	}
 
 	void
-	search(problem_instance* opi, search_parameters* par, solution* sol)
+	search(search_problem_instance* pi, search_parameters* par, solution* sol)
 	{
 		util::timer mytimer;
-		problem_instance pi(opi);
 		mytimer.start();
 		open_->clear();
 
 		// initialise the start node and push to OPEN
 		{
-			if(pi->start_ == warthog::SN_ID_MAX) { return; }
+			if(pi->start_ == pad_id::max()) { return; }
 
 			search_node* start = expander_->generate_start_node(pi);
 			if(!start) { return; }
-			search_node* target = expander_->generate_target_node(pi);
-			pi.target_ = target.id_;
+			// search_node* target = expander_->generate_target_node(pi);
+			// pi.target_ = target.id_;
 
-			initialise_node_(start, warthog::SN_ID_MAX, 0, pi, par, sol);
+			initialise_node_(start, pad_id::max(), 0, pi, par, sol);
 			open_->push(start);
 			listener_->generate_node(0, start, 0, UINT32_MAX);
 			user(pi->verbose_, pi);

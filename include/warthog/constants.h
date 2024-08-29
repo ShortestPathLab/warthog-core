@@ -11,14 +11,69 @@
 #include <cfloat>
 #include <climits>
 #include <cmath>
+#include <concepts>
+#include <limits>
 #include <stdint.h>
 
 namespace warthog
 {
 
 using sn_id_t = uint64_t; // address space for state identifiers
-constexpr sn_id_t SN_ID_MAX = UINT64_MAX;
+constexpr sn_id_t SN_ID_MAX = std::numeric_limits<sn_id_t>::max();
 constexpr sn_id_t NO_PARENT = SN_ID_MAX;
+
+template<class Tag, std::unsigned_integral IdType = sn_id_t>
+struct identity_base
+{
+	using id_type = IdType;
+	using tag = Tag;
+	IdType id;
+	identity_base() noexcept = default;
+	constexpr explicit identity_base(IdType id_) noexcept : id(id_) { }
+	constexpr identity_base(const identity_base&) noexcept = default;
+	constexpr identity_base(identity_base&&) noexcept = default;
+	constexpr identity_base&
+	operator=(const identity_base&) noexcept
+	    = default;
+	constexpr identity_base&
+	operator=(identity_base&&) noexcept
+	    = default;
+
+	constexpr bool
+	operator==(const identity_base& other) const noexcept
+	{
+		return id == other.id;
+	}
+
+	constexpr explicit
+	operator uint64_t() const noexcept
+	{
+		return static_cast<uint64_t>(id);
+	}
+	constexpr explicit
+	operator uint32_t() const noexcept
+	{
+		return static_cast<uint32_t>(id);
+	}
+	consteval static identity_base
+	max() noexcept
+	{
+		return identity_base{std::numeric_limits<IdType>::max()};
+	}
+};
+template<class T>
+constexpr bool is_identity_v = std::false_type{};
+template<template<class, class> class T, class Tag, class IdType>
+constexpr bool is_identity_v<T<Tag, IdType>> = std::true_type{};
+template<class T>
+concept Identity = is_identity_v<T>;
+
+struct pack_tag
+{ };
+using pack_id = identity_base<pack_tag>;
+struct pad_tag
+{ };
+using pad_id = identity_base<pad_tag>;
 
 // each node in a weighted grid map uses sizeof(dbword) memory.
 // in a uniform-cost grid map each dbword is a contiguous set

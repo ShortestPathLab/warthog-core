@@ -48,12 +48,12 @@ public:
 	// if the node has already been generated, return a pointer to the
 	// previous instance; otherwise allocate memory for a new object.
 	search::search_node*
-	generate(sn_id_t node_id);
+	generate(pad_id node_id);
 
 	// return a pre-allocated pointer. if the corresponding node has not
 	// been allocated yet, return null
 	search::search_node*
-	get_ptr(sn_id_t node_id);
+	get_ptr(pad_id node_id);
 
 	size_t
 	mem();

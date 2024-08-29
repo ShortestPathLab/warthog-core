@@ -48,10 +48,10 @@ node_pool::~node_pool()
 }
 
 search::search_node*
-node_pool::generate(sn_id_t node_id)
+node_pool::generate(pad_id node_id)
 {
-	sn_id_t block_id = node_id >> node_pool_ns::LOG2_NBS;
-	sn_id_t list_id = node_id & node_pool_ns::NBS_MASK;
+	sn_id_t block_id = sn_id_t{node_id} >> node_pool_ns::LOG2_NBS;
+	sn_id_t list_id = sn_id_t{node_id} & node_pool_ns::NBS_MASK;
 
 	// id outside the pool address range
 	if(block_id > num_blocks_) { return 0; }
@@ -64,17 +64,25 @@ node_pool::generate(sn_id_t node_id)
 		    search::search_node[node_pool_ns::NBS];
 
 		// initialise memory
-		sn_id_t current_id = node_id - list_id;
+		sn_id_t current_id = sn_id_t{node_id} - list_id;
 		for(uint32_t i = 0; i < node_pool_ns::NBS; i += 8)
 		{
-			new(&blocks_[block_id][i]) search::search_node(current_id++);
-			new(&blocks_[block_id][i + 1]) search::search_node(current_id++);
-			new(&blocks_[block_id][i + 2]) search::search_node(current_id++);
-			new(&blocks_[block_id][i + 3]) search::search_node(current_id++);
-			new(&blocks_[block_id][i + 4]) search::search_node(current_id++);
-			new(&blocks_[block_id][i + 5]) search::search_node(current_id++);
-			new(&blocks_[block_id][i + 6]) search::search_node(current_id++);
-			new(&blocks_[block_id][i + 7]) search::search_node(current_id++);
+			new(&blocks_[block_id][i])
+			    search::search_node(pad_id{current_id++});
+			new(&blocks_[block_id][i + 1])
+			    search::search_node(pad_id{current_id++});
+			new(&blocks_[block_id][i + 2])
+			    search::search_node(pad_id{current_id++});
+			new(&blocks_[block_id][i + 3])
+			    search::search_node(pad_id{current_id++});
+			new(&blocks_[block_id][i + 4])
+			    search::search_node(pad_id{current_id++});
+			new(&blocks_[block_id][i + 5])
+			    search::search_node(pad_id{current_id++});
+			new(&blocks_[block_id][i + 6])
+			    search::search_node(pad_id{current_id++});
+			new(&blocks_[block_id][i + 7])
+			    search::search_node(pad_id{current_id++});
 		}
 	}
 
@@ -83,10 +91,10 @@ node_pool::generate(sn_id_t node_id)
 }
 
 search::search_node*
-node_pool::get_ptr(sn_id_t node_id)
+node_pool::get_ptr(pad_id node_id)
 {
-	sn_id_t block_id = node_id >> node_pool_ns::LOG2_NBS;
-	sn_id_t list_id = node_id & node_pool_ns::NBS_MASK;
+	sn_id_t block_id = sn_id_t{node_id} >> node_pool_ns::LOG2_NBS;
+	sn_id_t list_id = sn_id_t{node_id} & node_pool_ns::NBS_MASK;
 
 	// id outside the pool address range
 	if(block_id > num_blocks_) { return 0; }

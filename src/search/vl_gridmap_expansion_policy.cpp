@@ -14,12 +14,12 @@ vl_gridmap_expansion_policy::~vl_gridmap_expansion_policy() { }
 
 void
 vl_gridmap_expansion_policy::expand(
-    search_node* current, problem_instance* problem)
+    search_node* current, search_problem_instance* problem)
 {
 	reset();
 
 	// ids of current tile and its 8 neighbours
-	uint32_t id_node = (uint32_t)current->get_id();
+	uint32_t id_node = uint32_t{current->get_id()};
 	uint32_t id_N = id_node - map_->width();
 	uint32_t id_S = id_node + map_->width();
 	uint32_t id_E = id_node + 1;
@@ -42,13 +42,13 @@ vl_gridmap_expansion_policy::expand(
 	// generate neighbours to the north
 	if(costs_[*label_N])
 	{
-		search_node* n = generate(id_N);
+		search_node* n = generate(pad_id{id_N});
 		double cost = (costs_[*label] + costs_[*label_N]) * 0.5;
 		add_neighbour(n, cost);
 
 		if(costs_[*label_NE] && costs_[*label_E])
 		{
-			search_node* n = generate(id_NE);
+			search_node* n = generate(pad_id{id_NE});
 			double cost = (costs_[*label] + costs_[*label_N] + costs_[*label_E]
 			               + costs_[*label_NE])
 			    * warthog::DBL_ROOT_TWO * 0.25;
@@ -56,7 +56,7 @@ vl_gridmap_expansion_policy::expand(
 		}
 		if(costs_[*label_NW] && costs_[*label_W])
 		{
-			search_node* n = generate(id_NW);
+			search_node* n = generate(pad_id{id_NW});
 			double cost = (costs_[*label] + costs_[*label_N] + costs_[*label_W]
 			               + costs_[*label_NW])
 			    * warthog::DBL_ROOT_TWO * 0.25;
@@ -67,13 +67,13 @@ vl_gridmap_expansion_policy::expand(
 	// neighburs to the south
 	if(costs_[*label_S])
 	{
-		search_node* n = generate(id_S);
+		search_node* n = generate(pad_id{id_S});
 		double cost = (costs_[*label] + costs_[*label_S]) * 0.5;
 		add_neighbour(n, cost);
 
 		if(costs_[*label_SE] && costs_[*label_E])
 		{
-			search_node* n = generate(id_SE);
+			search_node* n = generate(pad_id{id_SE});
 			double cost = (costs_[*label] + costs_[*label_S] + costs_[*label_E]
 			               + costs_[*label_SE])
 			    * warthog::DBL_ROOT_TWO * 0.25;
@@ -81,7 +81,7 @@ vl_gridmap_expansion_policy::expand(
 		}
 		if(costs_[*label_SW] && costs_[*label_W])
 		{
-			search_node* n = generate(id_SW);
+			search_node* n = generate(pad_id{id_SW});
 			double cost = (costs_[*label] + costs_[*label_S] + costs_[*label_W]
 			               + costs_[*label_SW])
 			    * warthog::DBL_ROOT_TWO * 0.25;
@@ -92,7 +92,7 @@ vl_gridmap_expansion_policy::expand(
 	// neighbour to the east
 	if(costs_[*label_E])
 	{
-		search_node* n = generate(id_E);
+		search_node* n = generate(pad_id{id_E});
 		double cost = (costs_[*label] + costs_[*label_E]) * 0.5;
 		add_neighbour(n, cost);
 	}
@@ -100,20 +100,41 @@ vl_gridmap_expansion_policy::expand(
 	// neighbour to the west
 	if(costs_[*label_W])
 	{
-		search_node* n = generate(id_W);
+		search_node* n = generate(pad_id{id_W});
 		double cost = (costs_[*label] + costs_[*label_W]) * 0.5;
 		add_neighbour(n, cost);
 	}
 }
 
-uint32_t
-vl_gridmap_expansion_policy::get_state(warthog::sn_id_t node_id)
+search_problem_instance
+vl_gridmap_expansion_policy::get_problem_instance(problem_instance* pi)
+{
+	assert(pi != nullptr);
+	return convert_problem_instance_to_search(*pi, *map_);
+}
+
+pack_id
+vl_gridmap_expansion_policy::get_state(pad_id node_id)
 {
 	return map_->to_unpadded_id(node_id);
 }
 
+pad_id
+vl_gridmap_expansion_policy::unget_state(pack_id node_id)
+{
+	return map_->to_padded_id(node_id);
+}
+
 void
-vl_gridmap_expansion_policy::get_xy(sn_id_t node_id, int32_t& x, int32_t& y)
+vl_gridmap_expansion_policy::get_xy(pack_id node_id, int32_t& x, int32_t& y)
+{
+	uint32_t lx, ly;
+	map_->to_unpadded_xy(node_id, lx, ly);
+	x = lx;
+	y = ly;
+}
+void
+vl_gridmap_expansion_policy::get_xy(pad_id node_id, int32_t& x, int32_t& y)
 {
 	uint32_t lx, ly;
 	map_->to_unpadded_xy(node_id, lx, ly);
@@ -125,30 +146,25 @@ void
 vl_gridmap_expansion_policy::print_node(search_node* n, std::ostream& out)
 {
 	uint32_t x, y;
-	map_->to_padded_xy(n->get_id(), x, y);
+	map_->to_unpadded_xy(n->get_id(), x, y);
 	out << "(" << x << ", " << y << ")...";
 	n->print(out);
 }
 
 search_node*
-vl_gridmap_expansion_policy::generate_start_node(problem_instance* pi)
+vl_gridmap_expansion_policy::generate_start_node(search_problem_instance* pi)
 {
-	uint32_t start = (uint32_t)pi->start_;
-	uint32_t max_id = map_->header_width() * map_->header_height();
-	if(start >= max_id) { return 0; }
-	uint32_t padded_id = map_->to_padded_id(start);
-	return generate(padded_id);
+	uint32_t max_id = map_->width() * map_->height();
+	if(uint32_t{pi->start_} >= max_id) { return 0; }
+	return generate(pi->start_);
 }
 
 search_node*
-vl_gridmap_expansion_policy::generate_target_node(problem_instance* pi)
+vl_gridmap_expansion_policy::generate_target_node(search_problem_instance* pi)
 {
-	uint32_t target = (uint32_t)pi->target_;
-	uint32_t max_id = map_->header_width() * map_->header_height();
-
-	if(target >= max_id) { return 0; }
-	uint32_t padded_id = map_->to_padded_id(target);
-	return generate(padded_id);
+	uint32_t max_id = map_->width() * map_->height();
+	if(uint32_t{pi->target_} >= max_id) { return 0; }
+	return generate(pi->target_);
 }
 
 } // namespace warthog::search

@@ -107,7 +107,8 @@ public:
 	get_instance()
 	{
 		return search::problem_instance(
-		    starty_ * mapwidth_ + startx_, goaly_ * mapwidth_ + goalx_);
+		    pack_id{starty_ * mapwidth_ + startx_},
+		    pack_id{goaly_ * mapwidth_ + goalx_});
 	}
 
 private:

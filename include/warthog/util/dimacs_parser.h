@@ -51,7 +51,7 @@ public:
 		search::problem_instance
 		get_instance()
 		{
-			return search::problem_instance(source, target);
+			return search::problem_instance(pack_id{source}, pack_id{target});
 		}
 	};
 

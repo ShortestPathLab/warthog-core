@@ -10,7 +10,7 @@
 #include <warthog/constants.h>
 #include <warthog/memory/cpool.h>
 
-#include <iostream>
+#include <ostream>
 
 namespace warthog::search
 {
@@ -18,7 +18,7 @@ namespace warthog::search
 class search_node
 {
 public:
-	search_node(sn_id_t id = warthog::SN_ID_MAX)
+	search_node(pad_id id = pad_id::max())
 	    : id_(id), parent_id_(warthog::SN_ID_MAX), g_(warthog::COST_MAX),
 	      f_(warthog::COST_MAX), ub_(warthog::COST_MAX), status_(0),
 	      priority_(warthog::INF32), search_number_(UINT32_MAX)
@@ -30,7 +30,7 @@ public:
 
 	inline void
 	init(
-	    uint32_t search_number, sn_id_t parent_id, cost_t g, cost_t f,
+	    uint32_t search_number, pad_id parent_id, cost_t g, cost_t f,
 	    cost_t ub = warthog::COST_MAX)
 	{
 		parent_id_ = parent_id;
@@ -53,14 +53,14 @@ public:
 		search_number_ = search_number;
 	}
 
-	inline sn_id_t
+	inline pad_id
 	get_id() const
 	{
 		return id_;
 	}
 
 	inline void
-	set_id(sn_id_t id)
+	set_id(pad_id id)
 	{
 		id_ = id;
 	}
@@ -77,14 +77,14 @@ public:
 		status_ = expanded;
 	}
 
-	inline sn_id_t
+	inline pad_id
 	get_parent() const
 	{
 		return parent_id_;
 	}
 
 	inline void
-	set_parent(sn_id_t parent_id)
+	set_parent(pad_id parent_id)
 	{
 		parent_id_ = parent_id;
 	}
@@ -138,7 +138,7 @@ public:
 	}
 
 	inline void
-	relax(cost_t g, sn_id_t parent_id)
+	relax(cost_t g, pad_id parent_id)
 	{
 		assert(g < g_);
 		f_ = (f_ - g_) + g;
@@ -205,9 +205,9 @@ public:
 	inline void
 	print(std::ostream& out) const
 	{
-		out << "search_node id:" << get_id();
+		out << "search_node id:" << get_id().id;
 		out << " p_id: ";
-		out << parent_id_;
+		out << parent_id_.id;
 		out << " g: " << g_ << " f: " << this->get_f() << " ub: " << ub_
 		    << " expanded: " << get_expanded() << " "
 		    << " search_number_: " << search_number_;
@@ -226,8 +226,8 @@ public:
 	}
 
 private:
-	sn_id_t id_;
-	sn_id_t parent_id_;
+	pad_id id_;
+	pad_id parent_id_;
 
 	cost_t g_;
 	cost_t f_;
