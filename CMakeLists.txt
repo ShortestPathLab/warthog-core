@@ -7,10 +7,7 @@ project(Warthog
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-# only compile binaries by default if top level, as apps will search for additional deps
 include(cmake/submodule.cmake)
-warthog_top_level()
-set(WARTHOG_COMPILE_BINARIES ${_is_top} CACHE BOOL "Compile warthog binaries located in apps/")
 
 add_library(warthog_core)
 add_library(warthog::core ALIAS warthog_core)
