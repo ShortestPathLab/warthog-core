@@ -1,0 +1,26 @@
+cmake_minimum_required(VERSION 3.13)
+
+# include this file to check submodule include
+
+set(WARTHOG_SUBMODULE_ROOT_ONLY ON CACHE BOOL "add submodule if present only allowed for root project")
+
+function(warthog_submodule dirname)
+if(NOT ${WARTHOG_SUBMODULE_ROOT_ONLY})
+	set(_is_top ON)
+elseif(${CMAKE_VERSION} VERSION_GREATER_EQUAL 3.21)
+	if(${PROJECT_IS_TOP_LEVEL})
+		set(_is_top ON)
+	endif()
+else()
+	if(${CMAKE_SOURCE_DIR} STREQUAL ${PROJECT_SOURCE_DIR})
+		set(_is_top ON)
+	endif()
+endif()
+if(${_is_top})
+	if(NOT EXISTS "${PROJECT_SOURCE_DIR}/${dirname}/.git")
+		message(SEND_ERROR "Failed to find submodule ${dirname}")
+	else()
+		add_subdirectory("${PROJECT_SOURCE_DIR}/${dirname}")
+	endif()
+endif()
+endfunction()
