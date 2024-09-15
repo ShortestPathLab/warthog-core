@@ -53,7 +53,7 @@ public:
 	get_xy(pad_id node_id, int32_t& x, int32_t& y);
 
 	void
-	print_node(search_node* n, std::ostream& out);
+	print_node(search_node* n, std::ostream& out) override;
 
 	search_node*
 	generate_start_node(search_problem_instance* pi) override;
@@ -61,8 +61,8 @@ public:
 	search_node*
 	generate_target_node(search_problem_instance* pi) override;
 
-	virtual size_t
-	mem();
+	size_t
+	mem() override;
 
 private:
 	domain::gridmap* map_;
