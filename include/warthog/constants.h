@@ -13,7 +13,7 @@
 #include <cmath>
 #include <concepts>
 #include <limits>
-#include <stdint.h>
+#include <cstdint>
 
 namespace warthog
 {
@@ -30,6 +30,12 @@ struct identity_base
 	IdType id;
 	identity_base() noexcept = default;
 	constexpr explicit identity_base(IdType id_) noexcept : id(id_) { }
+	template <typename IdType2>
+		requires (!std::same_as<IdType, IdType2>)
+	constexpr identity_base(identity_base<Tag, IdType2> alt) : id(IdType{alt.id})
+	{
+		assert(id == alt.id);
+	}
 	constexpr identity_base(const identity_base&) noexcept = default;
 	constexpr identity_base(identity_base&&) noexcept = default;
 	constexpr identity_base&
@@ -71,9 +77,11 @@ concept Identity = is_identity_v<T>;
 struct pack_tag
 { };
 using pack_id = identity_base<pack_tag>;
+using pack32_id = identity_base<pack_tag, uint32_t>;
 struct pad_tag
 { };
 using pad_id = identity_base<pad_tag>;
+using pad32_id = identity_base<pad_tag, uint32_t>;
 
 // each node in a weighted grid map uses sizeof(dbword) memory.
 // in a uniform-cost grid map each dbword is a contiguous set
