@@ -7,11 +7,9 @@
 // @created: 2014-10-22
 //
 
+#include "heuristic_value.h"
 #include <warthog/constants.h>
 #include <warthog/util/helpers.h>
-#include "heuristic_value.h"
-
-#include <cstdlib>
 
 namespace warthog::heuristic
 {

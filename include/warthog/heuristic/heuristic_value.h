@@ -10,6 +10,7 @@
 //
 
 #include <vector>
+#include <warthog/constants.h>
 
 namespace warthog::heuristic
 {
