@@ -139,9 +139,10 @@ run_experiments(
 		    << "\t" << sol.met_.nodes_generated_ << "\t"
 		    << sol.met_.nodes_reopen_ << "\t" << sol.met_.nodes_surplus_
 		    << "\t" << sol.met_.heap_ops_ << "\t"
-		    << sol.met_.time_elapsed_nano_ << "\t" << (sol.path_.size() - 1)
-		    << "\t" << sol.sum_of_edge_costs_ << "\t" << exp->distance()
-		    << "\t" << scenmgr.last_file_loaded() << std::endl;
+		    << sol.met_.time_elapsed_nano_.count() << "\t"
+		    << (sol.path_.size() - 1) << "\t" << sol.sum_of_edge_costs_ << "\t"
+		    << exp->distance() << "\t" << scenmgr.last_file_loaded()
+		    << std::endl;
 
 		if(checkopt) { check_optimality(sol, exp); }
 	}
