@@ -66,6 +66,15 @@ struct identity_base
 	{
 		return identity_base{std::numeric_limits<IdType>::max()};
 	}
+	consteval static identity_base
+	none() noexcept
+	{
+		return max();
+	}
+	bool constexpr is_none() const noexcept
+	{
+		return (*this) == none();
+	}
 };
 template<class T>
 constexpr bool is_identity_v = std::false_type{};
