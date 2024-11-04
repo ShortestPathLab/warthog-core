@@ -108,14 +108,14 @@ constexpr double DBL_TWO = 2.0;
 constexpr double DBL_ROOT_TWO
     = 1.414213562373095048801688724209698078569671875;
 constexpr double DBL_ONE_OVER_TWO = 0.5;
-constexpr double DBL_ONE_OVER_ROOT_TWO = 1.0 / DBL_ROOT_TWO; // 0.707106781f;
-constexpr double DBL_ROOT_TWO_OVER_FOUR = DBL_ROOT_TWO * 0.25;
+constexpr double DBL_ONE_OVER_ROOT_TWO = 0.70710678118654752440084436210484903928483593768847403658833986;
+constexpr double DBL_ROOT_TWO_OVER_FOUR = 0.35355339059327376220042218105242451964241796884423701829416993;
 constexpr int32_t ONE = 100000;
 
 constexpr uint32_t INF32
-    = UINT32_MAX; // indicates uninitialised or undefined values
+    = std::numeric_limits<uint32_t>::max(); // indicates uninitialised or undefined values
 constexpr uint64_t INFTY
-    = UINT64_MAX; // indicates uninitialised or undefined values
+    = std::numeric_limits<uint64_t>::max(); // indicates uninitialised or undefined values
 
 using cost_t = double;
 constexpr cost_t COST_MAX = DBL_MAX;
