@@ -1,4 +1,4 @@
-name: test-clang-format
+name: apply-clang-format
 
 on: workflow_dispatch
 
