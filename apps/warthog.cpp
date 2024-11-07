@@ -21,11 +21,9 @@
 #include <warthog/util/scenario_manager.h>
 #include <warthog/util/timer.h>
 
-
 #include "cfg.h"
 #include "config.h"
 #include <getopt.h>
-
 
 #include <cmath>
 #include <filesystem>
@@ -35,7 +33,6 @@
 #include <memory>
 #include <sstream>
 #include <unordered_map>
-
 
 // #include "time_constraints.h"
 
@@ -130,7 +127,7 @@ run_experiments(
 		    exp->starty() * exp->mapwidth() + exp->startx()};
 		warthog::pack_id goalid{exp->goaly() * exp->mapwidth() + exp->goalx()};
 		warthog::search::problem_instance pi(startid, goalid, verbose);
-        warthog::search::search_parameters par;
+		warthog::search::search_parameters par;
 		warthog::search::solution sol;
 
 		algo.get_path(&pi, &par, &sol);
