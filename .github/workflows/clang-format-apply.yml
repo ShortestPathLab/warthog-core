@@ -1,0 +1,23 @@
+name: clang-format-apply
+
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - uses: DoozyX/clang-format-lint-action@v0.18.1
+      with:
+        source: '.'
+        exclude: './extern ./libs'
+        clangFormatVersion: 18
+        inplace: True
+    - uses: EndBug/add-and-commit@v9
+      with:
+        author_name: Clang-Format Robot
+        author_email: Ryan.Hechenberger@proton.me
+        message: 'Committing clang-format changes'
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
