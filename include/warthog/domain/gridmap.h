@@ -60,26 +60,26 @@ public:
 	}
 
 	void
-	to_unpadded_xy(pack_id grid_id_p, uint32_t& x, uint32_t& y)
+	to_unpadded_xy(pack_id grid_id, uint32_t& x, uint32_t& y)
 	{
-		y = uint32_t{grid_id_p} / padded_width_;
-		x = uint32_t{grid_id_p} % padded_width_;
+		y = uint32_t{grid_id} / padded_width_;
+		x = uint32_t{grid_id} % padded_width_;
 	}
 
 	void
-	to_unpadded_xy(pad_id grid_id_p, uint32_t& x, uint32_t& y)
+	to_unpadded_xy(pad_id grid_id, uint32_t& x, uint32_t& y)
 	{
-		uint32_t id = uint32_t{grid_id_p}
+		uint32_t id = uint32_t{grid_id}
 		    - padded_rows_before_first_row_ * padded_width_;
 		y = id / padded_width_;
 		x = id % padded_width_;
 	}
 
 	pack_id
-	to_unpadded_id(pad_id padded_id)
+	to_unpadded_id(pad_id grid_id)
 	{
 		uint32_t x, y;
-		to_unpadded_xy(padded_id, x, y);
+		to_unpadded_xy(grid_id, x, y);
 		return pack_id{y * header_.width_ + x};
 	}
 
@@ -91,12 +91,12 @@ public:
 	// lowest positions of the byte.
 	// position :0 is the nei in direction NW, :1 is N and :2 is NE
 	void
-	get_neighbours(uint32_t grid_id_p, uint8_t tiles[3])
+	get_neighbours(pad_id grid_id, uint8_t tiles[3])
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
-		uint32_t bit_offset = (grid_id_p & warthog::DBWORD_BITS_MASK);
-		uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
+		uint32_t bit_offset = static_cast<uint32_t>(grid_id.id & warthog::DBWORD_BITS_MASK);
+		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 
 		// compute dbword indexes for tiles immediately above
 		// and immediately below node_id
@@ -119,12 +119,12 @@ public:
 	// tiles are from the row immediately above and immediately below
 	// grid_id_p.
 	void
-	get_neighbours_32bit(uint32_t grid_id_p, uint32_t tiles[3])
+	get_neighbours_32bit(pad_id grid_id, uint32_t tiles[3])
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
-		uint32_t bit_offset = (grid_id_p & warthog::DBWORD_BITS_MASK);
-		uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
+		uint32_t bit_offset = static_cast<uint32_t>(grid_id.id & warthog::DBWORD_BITS_MASK);
+		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 
 		// compute dbword indexes for tiles immediately above
 		// and immediately below node_id
@@ -143,12 +143,12 @@ public:
 	// upper bit of the return value. this variant is useful when jumping
 	// toward smaller memory addresses (i.e. west instead of east).
 	void
-	get_neighbours_upper_32bit(uint32_t grid_id_p, uint32_t tiles[3])
+	get_neighbours_upper_32bit(pad_id grid_id, uint32_t tiles[3])
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
-		uint32_t bit_offset = (grid_id_p & warthog::DBWORD_BITS_MASK);
-		uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
+		uint32_t bit_offset = static_cast<uint32_t>(grid_id.id & warthog::DBWORD_BITS_MASK);
+		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 
 		// start reading from a prior index. this way everything
 		// up to grid_id_p is cached.
@@ -171,10 +171,10 @@ public:
 	// the middle row contains tile grid_id_p.
 	// the other tiles are from the row above and below grid_id_p.
 	void
-	get_neighbours_64bit(uint32_t grid_id_p, uint64_t tiles[3])
+	get_neighbours_64bit(pad_id grid_id, uint64_t tiles[3])
 	{
 		// convert grid_id_p into a 64bit db_ index.
-		uint32_t dbindex = grid_id_p >> 6;
+		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> 6);
 
 		// compute 64bit dbword indexes for the tiles
 		// above and below node_id
@@ -192,43 +192,43 @@ public:
 	bool
 	get_label(uint32_t x, uint32_t y)
 	{
-		return this->get_label(y * padded_width_ + x);
+		return this->get_label(to_padded_id(x, y));
 	}
 
 	// TODO: for now, kept internal as uint32_t for smaller call size, decide
 	// later
 	warthog::dbword
-	get_label(uint32_t grid_id_p)
+	get_label(pad_id grid_id)
 	{
 		// now we can fetch the label
 		uint32_t bitmask = 1;
-		bitmask <<= (grid_id_p & warthog::DBWORD_BITS_MASK);
-		uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
+		bitmask <<= (grid_id.id & warthog::DBWORD_BITS_MASK);
+		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 		if(dbindex > max_id_) { return 0; }
 		return (db_[dbindex] & bitmask) != 0;
 	}
 
 	// get a pointer to the word that contains the label of node @grid_id_p
 	warthog::dbword*
-	get_mem_ptr(uint32_t grid_id_p)
+	get_mem_ptr(pad_id grid_id)
 	{
-		uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
+		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 		if(dbindex > max_id_) { return 0; }
 		return &db_[dbindex];
 	}
 
 	// set the label associated with the padded coordinate pair (x, y)
 	void
-	set_label(uint32_t x, unsigned int y, bool label)
+	set_label(uint32_t x, uint32_t y, bool label)
 	{
-		this->set_label(y * padded_width_ + x, label);
+		this->set_label(to_padded_id(x, y), label);
 	}
 
 	void
-	set_label(uint32_t grid_id_p, bool label)
+	set_label(pad_id grid_id, bool label)
 	{
-		uint32_t dbindex = grid_id_p >> warthog::LOG2_DBWORD_BITS;
-		uint32_t bitmask = 1u << (grid_id_p & warthog::DBWORD_BITS_MASK);
+		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
+		uint32_t bitmask = 1u << (grid_id.id & warthog::DBWORD_BITS_MASK);
 
 		if(dbindex > max_id_) { return; }
 
