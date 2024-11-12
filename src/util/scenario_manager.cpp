@@ -8,17 +8,6 @@
 namespace warthog::util
 {
 
-namespace
-{
-[[deprecated("should not be a global variable.")]]
-uint32_t head_offset
-    = 0;
-[[deprecated("should not be a global variable.")]]
-uint32_t tail_offset
-    = 0;
-constexpr int MAXTRIES = 10000000;
-}
-
 scenario_manager::scenario_manager() { }
 
 scenario_manager::~scenario_manager()
@@ -29,93 +18,6 @@ scenario_manager::~scenario_manager()
 	}
 	experiments_.clear();
 }
-
-// void
-// scenario_manager::generate_experiments(domain::gridmap* map, int num)
-// {
-// 	assert(map); // need a test here; throw exception if absMap is null
-
-// 	head_offset = tail_offset = 0;
-// 	int tries = 0;
-// 	int generated = 0;
-// 	while(generated < num)
-// 	{
-// 		if(tries >= MAXTRIES)
-// 		{
-// 			std::cerr << "err; scenario_manager::generate_experiments"
-// 			          << " tried " << tries
-// 			          << " times but could not generate "
-// 			             "a valid experiment. giving up.\n";
-// 			exit(1);
-// 		}
-
-// 		experiment* exp = generate_single_experiment(map);
-// 		if(exp != NULL)
-// 		{
-// 			this->add_experiment(exp);
-// 			generated++;
-// 			if((generated % 10) == 0)
-// 			{
-// 				head_offset += 10;
-// 				tail_offset += 20;
-// 				std::cerr << "\rgenerated: " << generated << "/" << num;
-// 				std::cerr << std::flush;
-// 			}
-// 		}
-// 		tries++;
-// 		if((tries % 5) == 0)
-// 		{
-// 			head_offset += 5;
-// 			tail_offset += 10;
-// 		}
-// 	}
-// 	std::cerr << " experiments." << std::endl;
-// 	sort();
-// }
-
-// experiment*
-// scenario_manager::generate_single_experiment(domain::gridmap* map)
-// {
-// 	warthog::gridmap_expansion_policy expander(map);
-// 	warthog::octile_heuristic heuristic(map->width(), map->height());
-// 	warthog::pqueue_min open;
-// 	warthog::dummy_listener listener;
-// 	warthog::flexible_astar<
-// 	    warthog::octile_heuristic, warthog::gridmap_expansion_policy,
-// 	    warthog::pqueue_min, warthog::dummy_listener>
-// 	    astar(&heuristic, &expander, &open, &listener);
-
-// 	warthog::experiment* newexp;
-// 	uint32_t raw_mapsize = map->header_height() * map->header_width();
-
-// 	uint32_t window_size = (uint32_t)(raw_mapsize * 0.01);
-// 	if(head_offset + window_size >= raw_mapsize) head_offset = 0;
-// 	if(tail_offset + window_size >= raw_mapsize) tail_offset = 0;
-
-// 	uint32_t id1 = map->to_padded_id(
-// 	    (((uint32_t)rand() % window_size) + head_offset) % raw_mapsize);
-// 	uint32_t id2 = map->to_padded_id(
-// 	    (raw_mapsize - (((uint32_t)rand() % window_size) + tail_offset))
-// 	    % raw_mapsize);
-// 	warthog::problem_instance pi(id1, id2);
-// 	warthog::solution sol;
-// 	astar.get_path(pi, sol);
-
-// 	if(sol.sum_of_edge_costs_ == warthog::INF32)
-// 	{
-// 		//	std::cout << " no path;" <<std::endl;
-// 		return 0;
-// 	}
-// 	// std::cout << " found path;" << std::endl;
-
-// 	uint32_t x1, x2, y1, y2;
-// 	map->to_unpadded_xy(id1, x1, y1);
-// 	map->to_unpadded_xy(id2, x2, y2);
-// 	newexp = new experiment(
-// 	    x1, y1, x2, y2, map->header_width(), map->header_height(),
-// 	    sol.sum_of_edge_costs_, std::string(map->filename()));
-// 	return newexp;
-// }
 
 void
 scenario_manager::load_scenario(const char* filelocation)

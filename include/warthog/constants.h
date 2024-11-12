@@ -12,8 +12,8 @@
 #include <climits>
 #include <cmath>
 #include <concepts>
-#include <limits>
 #include <cstdint>
+#include <limits>
 
 namespace warthog
 {

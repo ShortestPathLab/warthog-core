@@ -15,13 +15,7 @@
 #ifndef WARTHOG_UTIL_TIMER_H
 #define WARTHOG_UTIL_TIMER_H
 
-#ifdef OS_MAC
-#include <mach/mach.h>
-#include <mach/mach_time.h>
-
-#else
-#include <time.h>
-#endif
+#include <chrono>
 
 namespace warthog::util
 {
@@ -30,37 +24,42 @@ class timer
 {
 
 public:
+	using clock = std::chrono::steady_clock;
+
 	timer();
 	void
 	reset();
 	void
 	start();
-	double
+	std::chrono::nanoseconds
 	elapsed_time_nano();
 	double
-	elapsed_time_micro();
-	double
-	elapsed_time_sec();
-	double
-	get_time_nano();
-	inline double
-	get_time_micro()
+	elapsed_time_micro()
 	{
-		return get_time_nano() / 1000.0;
+		return elapsed_time_nano().count() * 1e-3;
 	}
-	inline double
-	get_time_sec()
+	double
+	elapsed_time_sec()
 	{
-		return get_time_nano() / 1e9f;
+		return elapsed_time_nano().count() * 1e-9;
 	}
+	clock::time_point
+	get_time();
+	// std::chrono::nanoseconds
+	// get_time_nano();
+	// double
+	// get_time_micro()
+	// {
+	// 	return get_time_nano().count() * 1e-3;
+	// }
+	// double
+	// get_time_sec()
+	// {
+	// 	return get_time_nano().count() * 1e-9;
+	// }
 
 private:
-#ifdef OS_MAC
-	uint64_t start_time;
-	mach_timebase_info_data_t timebase;
-#else
-	timespec start_time;
-#endif
+	clock::time_point start_time;
 };
 
 } // namespace warthog::util

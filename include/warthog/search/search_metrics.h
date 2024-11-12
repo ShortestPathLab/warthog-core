@@ -9,6 +9,7 @@
 // @created: 2021-10-13
 //
 
+#include <chrono>
 #include <iostream>
 #include <warthog/constants.h>
 
@@ -36,7 +37,7 @@ struct search_metrics
 	inline void
 	reset()
 	{
-		time_elapsed_nano_ = 0;
+		time_elapsed_nano_ = {};
 		nodes_expanded_ = 0;
 		nodes_generated_ = 0;
 		nodes_surplus_ = 0;
@@ -46,7 +47,7 @@ struct search_metrics
 		ub_ = warthog::COST_MAX;
 	}
 
-	double time_elapsed_nano_;
+	std::chrono::nanoseconds time_elapsed_nano_;
 	uint32_t nodes_expanded_;
 	uint32_t nodes_generated_;
 	uint32_t nodes_surplus_;

@@ -82,10 +82,6 @@ public:
 	sort(); // organise by increasing solution length
 
 private:
-	// TODO: fix
-	[[deprecated("removed flexible astar, fix")]]
-	experiment*
-	generate_single_experiment(domain::gridmap*);
 	void
 	load_gppc_scenario(std::ifstream& infile);
 

@@ -26,7 +26,7 @@ public:
 		// optimal solution cost, no cutoff limits
 		cost_cutoff_ = DBL_MAX;
 		exp_cutoff_ = UINT32_MAX;
-		time_cutoff_ns_ = DBL_MAX;
+		time_cutoff_ns_ = std::chrono::nanoseconds::max();
 		w_admissibility_ = 1.0;
 		eps_admissibility_ = 0.0;
 		verbose_ = false;
@@ -34,58 +34,48 @@ public:
 
 	// limits the maximum time which is available to find a solution
 	// (in nanoseconds)
-	inline void
-	set_max_time_cutoff(double nanos)
+	void
+	set_max_time_cutoff(std::chrono::nanoseconds nanos)
 	{
 		time_cutoff_ns_ = nanos;
 	}
 
-	inline double
+	std::chrono::nanoseconds
 	get_max_time_cutoff()
 	{
 		return time_cutoff_ns_;
 	}
 
 	// convenience functions for setting larger time cutoffs
-	inline void
-	set_max_us_cutoff(double cutoff)
-	{
-		set_max_time_cutoff(cutoff * 1e3);
-	}
 
-	inline void
-	set_max_ms_cutoff(double cutoff)
+	void
+	set_max_time_cutoff_s(double cutoff)
 	{
-		set_max_time_cutoff(cutoff * 1e6);
-	}
-
-	inline void
-	set_max_s_cutoff(double cutoff)
-	{
-		set_max_time_cutoff(cutoff * 1e9);
+		set_max_time_cutoff(
+		    std::chrono::nanoseconds(static_cast<uint64_t>(cutoff * 1e9)));
 	}
 
 	// limits the maximum number of expansion operations
-	inline void
+	void
 	set_max_expansions_cutoff(uint32_t cutoff)
 	{
 		exp_cutoff_ = cutoff;
 	}
 
-	inline uint32_t
+	uint32_t
 	get_max_expansions_cutoff()
 	{
 		return exp_cutoff_;
 	}
 
 	// limits the maximum solution cost
-	inline void
+	void
 	set_max_cost_cutoff(cost_t cutoff)
 	{
 		cost_cutoff_ = cutoff;
 	}
 
-	inline cost_t
+	cost_t
 	get_max_cost_cutoff()
 	{
 		return cost_cutoff_;
@@ -93,14 +83,14 @@ public:
 
 	// tells the search an admissible solution is one whose
 	// cost is not larger than optimal by more than a factor w >= 1
-	inline void
+	void
 	set_w_admissibility(double w)
 	{
 		assert(w >= 1);
 		w_admissibility_ = w;
 	}
 
-	inline double
+	double
 	get_w_admissibility()
 	{
 		return w_admissibility_;
@@ -109,14 +99,14 @@ public:
 	// tells the search an admissible solution is one whose
 	// cost is not larger than optimal by more than an additive
 	// factor of epsilon >= 0
-	inline void
+	void
 	set_eps_admissibility(cost_t epsilon)
 	{
 		assert(epsilon >= 0);
 		eps_admissibility_ = epsilon;
 	};
 
-	inline cost_t
+	cost_t
 	get_eps_admissibility()
 	{
 		return eps_admissibility_;
@@ -127,7 +117,7 @@ public:
 private:
 	cost_t cost_cutoff_;
 	uint32_t exp_cutoff_;
-	double time_cutoff_ns_;
+	std::chrono::nanoseconds time_cutoff_ns_;
 	double w_admissibility_;
 	cost_t eps_admissibility_ = 0;
 };
