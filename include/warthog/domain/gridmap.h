@@ -56,7 +56,7 @@ public:
 	pad_id
 	to_padded_id(uint32_t x, uint32_t y)
 	{
-		return to_padded_id(pack_id{y * this->header_width() + x});
+		return pad_id{(y + padded_rows_before_first_row_) * padded_width_ + x};
 	}
 
 	void
