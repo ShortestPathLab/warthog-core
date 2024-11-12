@@ -19,7 +19,7 @@ gridmap_expansion_policy::expand(
 
 	// get terrain type of each tile in the 3x3 square around (x, y)
 	uint32_t tiles = 0;
-	uint32_t nodeid = uint32_t{current->get_id()};
+	pad_id nodeid = current->get_id();
 	map_->get_neighbours(nodeid, (uint8_t*)&tiles);
 
 	//	#ifndef NDEBUG
@@ -37,25 +37,25 @@ gridmap_expansion_policy::expand(
 	//	#endif
 
 	// NB: no corner cutting or squeezing between obstacles!
-	uint32_t nid_m_w = nodeid - map_->width();
-	uint32_t nid_p_w = nodeid + map_->width();
+	pad_id nid_m_w = pad_id{nodeid.id - map_->width()};
+	pad_id nid_p_w = pad_id{nodeid.id + map_->width()};
 
 	// generate cardinal moves
 	if((tiles & 514) == 514) // N
 	{
-		add_neighbour(this->generate(pad_id{nid_m_w}), 1);
+		add_neighbour(this->generate(nid_m_w), 1);
 	}
 	if((tiles & 1536) == 1536) // E
 	{
-		add_neighbour(this->generate(pad_id{nodeid + 1}), 1);
+		add_neighbour(this->generate(pad_id{nodeid.id + 1}), 1);
 	}
 	if((tiles & 131584) == 131584) // S
 	{
-		add_neighbour(this->generate(pad_id{nid_p_w}), 1);
+		add_neighbour(this->generate(nid_p_w), 1);
 	}
 	if((tiles & 768) == 768) // W
 	{
-		add_neighbour(this->generate(pad_id{nodeid - 1}), 1);
+		add_neighbour(this->generate(pad_id{nodeid.id - 1}), 1);
 	}
 	if(manhattan_) { return; }
 
@@ -63,22 +63,22 @@ gridmap_expansion_policy::expand(
 	if((tiles & 1542) == 1542) // NE
 	{
 		add_neighbour(
-		    this->generate(pad_id{nid_m_w + 1}), warthog::DBL_ROOT_TWO);
+		    this->generate(pad_id{nid_m_w.id + 1}), warthog::DBL_ROOT_TWO);
 	}
 	if((tiles & 394752) == 394752) // SE
 	{
 		add_neighbour(
-		    this->generate(pad_id{nid_p_w + 1}), warthog::DBL_ROOT_TWO);
+		    this->generate(pad_id{nid_p_w.id + 1}), warthog::DBL_ROOT_TWO);
 	}
 	if((tiles & 197376) == 197376) // SW
 	{
 		add_neighbour(
-		    this->generate(pad_id{nid_p_w - 1}), warthog::DBL_ROOT_TWO);
+		    this->generate(pad_id{nid_p_w.id - 1}), warthog::DBL_ROOT_TWO);
 	}
 	if((tiles & 771) == 771) // NW
 	{
 		add_neighbour(
-		    this->generate(pad_id{nid_m_w - 1}), warthog::DBL_ROOT_TWO);
+		    this->generate(pad_id{nid_m_w.id - 1}), warthog::DBL_ROOT_TWO);
 	}
 }
 
@@ -132,7 +132,7 @@ gridmap_expansion_policy::generate_start_node(search_problem_instance* pi)
 {
 	uint32_t max_id = map_->width() * map_->height();
 	if(uint32_t{pi->start_} >= max_id) { return 0; }
-	if(map_->get_label(uint32_t{pi->start_}) == 0) { return 0; }
+	if(map_->get_label(pi->start_) == 0) { return 0; }
 	return generate(pi->start_);
 }
 
@@ -141,7 +141,7 @@ gridmap_expansion_policy::generate_target_node(search_problem_instance* pi)
 {
 	uint32_t max_id = map_->width() * map_->height();
 	if((uint32_t)pi->target_ >= max_id) { return 0; }
-	if(map_->get_label(uint32_t{pi->target_}) == 0) { return 0; }
+	if(map_->get_label(pi->target_) == 0) { return 0; }
 	return generate(pi->target_);
 }
 
