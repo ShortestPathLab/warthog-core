@@ -32,7 +32,7 @@ struct identity_base
 	constexpr explicit identity_base(IdType id_) noexcept : id(id_) { }
 	template <typename IdType2>
 		requires (!std::same_as<IdType, IdType2>)
-	constexpr identity_base(identity_base<Tag, IdType2> alt) : id(IdType{alt.id})
+	explicit (std::numeric_limits<IdType>::max() < std::numeric_limits<IdType2>::max()) constexpr identity_base(identity_base<Tag, IdType2> alt) : id(IdType{alt.id})
 	{
 		assert(id == alt.id);
 	}
