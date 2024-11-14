@@ -8,13 +8,13 @@
 //
 
 #include <bit>
+#include <cassert>
 #include <cfloat>
 #include <climits>
 #include <cmath>
 #include <concepts>
 #include <cstdint>
 #include <limits>
-#include <cassert>
 
 namespace warthog
 {

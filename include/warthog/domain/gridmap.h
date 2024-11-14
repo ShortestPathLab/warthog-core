@@ -23,10 +23,10 @@
 #include <warthog/util/gm_parser.h>
 #include <warthog/util/helpers.h>
 
+#include <cassert>
 #include <climits>
 #include <cstdint>
 #include <limits>
-#include <cassert>
 
 namespace warthog::domain
 {
@@ -76,7 +76,8 @@ public:
 		assert(x < header_.width_ && y < header_.height_);
 	}
 
-	void to_padded_xy(pad_id grid_id, uint32_t& x, uint32_t& y) const noexcept
+	void
+	to_padded_xy(pad_id grid_id, uint32_t& x, uint32_t& y) const noexcept
 	{
 		y = uint32_t{grid_id} / padded_width_;
 		x = uint32_t{grid_id} % padded_width_;
@@ -103,8 +104,10 @@ public:
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
-		uint32_t bit_offset = static_cast<uint32_t>(grid_id.id & warthog::DBWORD_BITS_MASK);
-		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
+		uint32_t bit_offset
+		    = static_cast<uint32_t>(grid_id.id & warthog::DBWORD_BITS_MASK);
+		uint32_t dbindex
+		    = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 
 		// compute dbword indexes for tiles immediately above
 		// and immediately below node_id
@@ -131,8 +134,10 @@ public:
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
-		uint32_t bit_offset = static_cast<uint32_t>(grid_id.id & warthog::DBWORD_BITS_MASK);
-		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
+		uint32_t bit_offset
+		    = static_cast<uint32_t>(grid_id.id & warthog::DBWORD_BITS_MASK);
+		uint32_t dbindex
+		    = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 
 		// compute dbword indexes for tiles immediately above
 		// and immediately below node_id
@@ -155,8 +160,10 @@ public:
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
-		uint32_t bit_offset = static_cast<uint32_t>(grid_id.id & warthog::DBWORD_BITS_MASK);
-		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
+		uint32_t bit_offset
+		    = static_cast<uint32_t>(grid_id.id & warthog::DBWORD_BITS_MASK);
+		uint32_t dbindex
+		    = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 
 		// start reading from a prior index. this way everything
 		// up to grid_id_p is cached.
@@ -211,7 +218,8 @@ public:
 		// now we can fetch the label
 		uint32_t bitmask = 1;
 		bitmask <<= (grid_id.id & warthog::DBWORD_BITS_MASK);
-		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
+		uint32_t dbindex
+		    = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 		if(dbindex > max_id_) { return 0; }
 		return (db_[dbindex] & bitmask) != 0;
 	}
@@ -220,7 +228,8 @@ public:
 	warthog::dbword*
 	get_mem_ptr(pad_id grid_id)
 	{
-		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
+		uint32_t dbindex
+		    = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 		if(dbindex > max_id_) { return 0; }
 		return &db_[dbindex];
 	}
@@ -235,7 +244,8 @@ public:
 	void
 	set_label(pad_id grid_id, bool label)
 	{
-		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
+		uint32_t dbindex
+		    = static_cast<uint32_t>(grid_id.id >> warthog::LOG2_DBWORD_BITS);
 		uint32_t bitmask = 1u << (grid_id.id & warthog::DBWORD_BITS_MASK);
 
 		if(dbindex > max_id_) { return; }
