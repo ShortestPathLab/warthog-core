@@ -8,6 +8,7 @@
 //
 
 #include <bit>
+#include <cassert>
 #include <cfloat>
 #include <climits>
 #include <cmath>
@@ -34,7 +35,7 @@ struct identity_base
 	requires(!std::same_as<IdType, IdType2>) explicit(
 	    std::numeric_limits<IdType>::max() < std::numeric_limits<IdType2>::
 	        max()) constexpr identity_base(identity_base<Tag, IdType2> alt)
-	    : id(IdType{alt.id})
+	    : id(static_cast<IdType>(alt.id))
 	{
 		assert(id == alt.id);
 	}
@@ -121,8 +122,8 @@ constexpr uint64_t INFTY
                                             // undefined values
 
 using cost_t = double;
-constexpr cost_t COST_MAX = DBL_MAX;
-constexpr cost_t COST_MIN = DBL_MIN;
+constexpr cost_t COST_MAX = std::numeric_limits<cost_t>::max();
+constexpr cost_t COST_MIN = std::numeric_limits<cost_t>::max();
 
 // hashing constants
 constexpr uint32_t FNV32_offset_basis = 2166136261;
