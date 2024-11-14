@@ -38,21 +38,12 @@
 namespace warthog::search
 {
 
-class vl_gridmap_expansion_policy : public expansion_policy
+class vl_gridmap_expansion_policy_base : public expansion_policy
 {
 public:
-	vl_gridmap_expansion_policy(
+	vl_gridmap_expansion_policy_base(
 	    domain::vl_gridmap* map, util::cost_table& costs);
-	virtual ~vl_gridmap_expansion_policy();
-
-	void
-	expand(search_node*, search_problem_instance*) override;
-
-	size_t
-	mem() override
-	{
-		return expansion_policy::mem() + sizeof(*this) + map_->mem();
-	}
+	virtual ~vl_gridmap_expansion_policy_base();
 
 	search_problem_instance
 	get_problem_instance(problem_instance* pi) override;
@@ -70,15 +61,30 @@ public:
 	void
 	print_node(search_node* n, std::ostream& out) override;
 
+	size_t
+	mem() override;
+
+protected:
+	domain::vl_gridmap* map_;
+	util::cost_table& costs_;
+};
+
+class vl_gridmap_expansion_policy : public vl_gridmap_expansion_policy_base
+{
+public:
+	using vl_gridmap_expansion_policy_base::vl_gridmap_expansion_policy_base;
+
+	void
+	expand(search_node*, search_problem_instance*) override;
+
 	search_node*
 	generate_start_node(search_problem_instance* pi) override;
 
 	search_node*
 	generate_target_node(search_problem_instance* pi) override;
 
-private:
-	domain::vl_gridmap* map_;
-	util::cost_table& costs_;
+	size_t
+	mem() override;
 };
 
 } // namespace warthog::search
