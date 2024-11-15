@@ -37,7 +37,7 @@ struct identity_base
 	        max()) constexpr identity_base(identity_base<Tag, IdType2> alt)
 	    : id(static_cast<IdType>(alt.id))
 	{
-		assert(id == alt.id);
+		assert(id == alt.id || (is_none() && alt.is_none()));
 	}
 	constexpr identity_base(const identity_base&) noexcept = default;
 	constexpr identity_base(identity_base&&) noexcept = default;

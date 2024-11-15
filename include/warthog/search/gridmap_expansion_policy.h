@@ -30,14 +30,10 @@
 namespace warthog::search
 {
 
-class gridmap_expansion_policy : public expansion_policy
+class gridmap_expansion_policy_base : public expansion_policy
 {
 public:
-	gridmap_expansion_policy(domain::gridmap* map, bool manhattan = false);
-	virtual ~gridmap_expansion_policy() { }
-
-	void
-	expand(search_node*, search_problem_instance*) override;
+	gridmap_expansion_policy_base(domain::gridmap* map);
 
 	search_problem_instance
 	get_problem_instance(problem_instance* pi) override;
@@ -55,6 +51,21 @@ public:
 	void
 	print_node(search_node* n, std::ostream& out) override;
 
+	size_t
+	mem() override;
+
+protected:
+	domain::gridmap* map_;
+};
+
+class gridmap_expansion_policy : public gridmap_expansion_policy_base
+{
+public:
+	gridmap_expansion_policy(domain::gridmap* map, bool manhattan = false);
+
+	void
+	expand(search_node*, search_problem_instance*) override;
+
 	search_node*
 	generate_start_node(search_problem_instance* pi) override;
 
@@ -64,8 +75,7 @@ public:
 	size_t
 	mem() override;
 
-private:
-	domain::gridmap* map_;
+protected:
 	bool manhattan_;
 };
 
