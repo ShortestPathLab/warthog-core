@@ -62,13 +62,14 @@ gridmap_expansion_policy_base::print_node(search_node* n, std::ostream& out)
 size_t
 gridmap_expansion_policy_base::mem()
 {
-	return expansion_policy::mem() + (sizeof(gridmap_expansion_policy_base) - sizeof(expansion_policy)) + map_->mem();
+	return expansion_policy::mem()
+	    + (sizeof(gridmap_expansion_policy_base) - sizeof(expansion_policy))
+	    + map_->mem();
 }
 
 gridmap_expansion_policy::gridmap_expansion_policy(
     domain::gridmap* map, bool manhattan)
-    : gridmap_expansion_policy_base(map),
-      manhattan_(manhattan)
+    : gridmap_expansion_policy_base(map), manhattan_(manhattan)
 { }
 
 void
@@ -163,7 +164,9 @@ gridmap_expansion_policy::generate_target_node(search_problem_instance* pi)
 size_t
 gridmap_expansion_policy::mem()
 {
-	return gridmap_expansion_policy_base::mem() + (sizeof(gridmap_expansion_policy) - sizeof(gridmap_expansion_policy_base));
+	return gridmap_expansion_policy_base::mem()
+	    + (sizeof(gridmap_expansion_policy)
+	       - sizeof(gridmap_expansion_policy_base));
 }
 
 } // warthog::expansion_policy
