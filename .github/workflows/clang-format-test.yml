@@ -12,4 +12,4 @@ jobs:
       with:
         source: '.'
         exclude: './extern ./libs'
-        clangFormatVersion: 18
+        clangFormatVersion: 18.1.3
