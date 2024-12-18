@@ -65,11 +65,16 @@ public:
 	void
 	get_path(problem_instance* pi, search_parameters* par, solution* sol)
 	{
+		search_problem_instance spi = expander_->get_problem_instance(pi);
+		get_path(&spi, par, sol);
+	}
+	void
+	get_path(search_problem_instance* spi, search_parameters* par, solution* sol)
+	{
 		// if successful the search returns an incumbent node. this can be
 		// the target node or it can be another node from which the
 		// heuristic knows a concrete path to the target.
-		search_problem_instance spi = expander_->get_problem_instance(pi);
-		search(&spi, par, sol);
+		search(spi, par, sol);
 		if(!sol->s_node_) { return; }
 
 		// follow backpointers to extract the path, from start to incumbent
@@ -80,18 +85,18 @@ public:
 			if(current->get_parent() == pad_id::max()) break;
 			current = expander_->generate(current->get_parent());
 		}
-		assert(sol->path_.back() == pi->start_);
+		assert(sol->path_.back() == expander_->get_state(spi->start_));
 		std::reverse(sol->path_.begin(), sol->path_.end());
 
 		// extract the rest of the path, from incumbent to target
-		if(sol->s_node_->get_id() != spi.target_)
+		if(sol->s_node_->get_id() != spi->target_)
 		{
 			heuristic::heuristic_value hv(
-			    sol->s_node_->get_id(), spi.target_, &sol->path_);
+			    sol->s_node_->get_id(), spi->target_, &sol->path_);
 			heuristic_->h(&hv);
 		}
 
-		DO_ON_DEBUG_IF(pi->verbose_)
+		DO_ON_DEBUG_IF(spi->verbose_)
 		{
 			for(auto& node_id : sol->path_)
 			{
@@ -100,7 +105,7 @@ public:
 				std::cerr << "final path: (" << x << ", " << y << ")...";
 				search_node* n
 				    = expander_->generate(expander_->unget_state(node_id));
-				assert(n->get_search_number() == pi->instance_id_);
+				assert(n->get_search_number() == spi->instance_id_);
 				n->print(std::cerr);
 				std::cerr << std::endl;
 			}
