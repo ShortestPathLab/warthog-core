@@ -120,8 +120,8 @@ run_experiments(
 	auto* expander = algo.get_expander();
 	if (expander == nullptr)
 		return 1;
-	std::cout << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
-	          << "\tnanos\tplen\tpcost\tscost\tmap\n";
+	out << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
+	    << "\tnanos\tplen\tpcost\tscost\tmap\n";
 	for(unsigned int i = 0; i < scenmgr.num_experiments(); i++)
 	{
 		warthog::util::experiment* exp = scenmgr.get_experiment(i);
