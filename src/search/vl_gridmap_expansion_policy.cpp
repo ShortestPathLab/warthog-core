@@ -40,8 +40,7 @@ vl_gridmap_expansion_policy_base::unget_state(pack_id node_id)
 }
 
 void
-vl_gridmap_expansion_policy_base::get_xy(
-    pack_id node_id, int32_t& x, int32_t& y)
+vl_gridmap_expansion_policy_base::get_xy(pack_id node_id, int32_t& x, int32_t& y)
 {
 	uint32_t lx, ly;
 	map_->to_unpadded_xy(node_id, lx, ly);
@@ -49,13 +48,23 @@ vl_gridmap_expansion_policy_base::get_xy(
 	y = ly;
 }
 void
-vl_gridmap_expansion_policy_base::get_xy(
-    pad_id node_id, int32_t& x, int32_t& y)
+vl_gridmap_expansion_policy_base::get_xy(pad_id node_id, int32_t& x, int32_t& y)
 {
 	uint32_t lx, ly;
 	map_->to_unpadded_xy(node_id, lx, ly);
 	x = lx;
 	y = ly;
+}
+
+pack_id
+vl_gridmap_expansion_policy_base::get_pack(int32_t x, int32_t y)
+{
+	return map_->to_unpadded_id_from_unpadded(static_cast<uint32_t>(x), static_cast<uint32_t>(y));
+}
+pad_id
+vl_gridmap_expansion_policy_base::get_pad(int32_t x, int32_t y)
+{
+	return map_->to_padded_id_from_unpadded(static_cast<uint32_t>(x), static_cast<uint32_t>(y));
 }
 
 void
