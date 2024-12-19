@@ -50,6 +50,19 @@ gridmap_expansion_policy_base::get_xy(pad_id node_id, int32_t& x, int32_t& y)
 	y = ly;
 }
 
+pack_id
+gridmap_expansion_policy_base::get_pack(int32_t x, int32_t y)
+{
+	return map_->to_unpadded_id_from_unpadded(
+	    static_cast<uint32_t>(x), static_cast<uint32_t>(y));
+}
+pad_id
+gridmap_expansion_policy_base::get_pad(int32_t x, int32_t y)
+{
+	return map_->to_padded_id_from_unpadded(
+	    static_cast<uint32_t>(x), static_cast<uint32_t>(y));
+}
+
 void
 gridmap_expansion_policy_base::print_node(search_node* n, std::ostream& out)
 {

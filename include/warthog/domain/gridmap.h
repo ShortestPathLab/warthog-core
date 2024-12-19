@@ -56,9 +56,14 @@ public:
 	// here we convert from the coordinate space of
 	// the original grid to the coordinate space of db_.
 	pad_id
-	to_padded_id(uint32_t x, uint32_t y) const noexcept
+	to_padded_id_from_unpadded(uint32_t x, uint32_t y) const noexcept
 	{
 		return pad_id{(y + padded_rows_before_first_row_) * padded_width_ + x};
+	}
+	pad_id
+	to_padded_id_from_padded(uint32_t x, uint32_t y) const noexcept
+	{
+		return pad_id{y * padded_width_ + x};
 	}
 
 	void
@@ -89,6 +94,11 @@ public:
 	{
 		uint32_t x, y;
 		to_unpadded_xy(grid_id, x, y);
+		return pack_id{y * header_.width_ + x};
+	}
+	pack_id
+	to_unpadded_id_from_unpadded(uint32_t x, uint32_t y) const noexcept
+	{
 		return pack_id{y * header_.width_ + x};
 	}
 
@@ -207,7 +217,7 @@ public:
 	bool
 	get_label(uint32_t x, uint32_t y)
 	{
-		return this->get_label(to_padded_id(x, y));
+		return this->get_label(to_padded_id_from_padded(x, y));
 	}
 
 	// TODO: for now, kept internal as uint32_t for smaller call size, decide
@@ -238,7 +248,7 @@ public:
 	void
 	set_label(uint32_t x, uint32_t y, bool label)
 	{
-		this->set_label(to_padded_id(x, y), label);
+		this->set_label(to_padded_id_from_unpadded(x, y), label);
 	}
 
 	void
