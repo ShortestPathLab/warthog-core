@@ -270,7 +270,7 @@ main(int argc, char** argv)
 	if(argc == 1 || print_help)
 	{
 		help();
-		exit(0);
+		return 0;
 	}
 
 	std::string sfile = cfg.get_param_value("scen");
@@ -292,7 +292,7 @@ main(int argc, char** argv)
 	if(alg == "" || sfile == "")
 	{
 		help();
-		exit(0);
+		return 0;
 	}
 
 	// load up the instances
@@ -302,7 +302,7 @@ main(int argc, char** argv)
 	if(scenmgr.num_experiments() == 0)
 	{
 		std::cerr << "err; scenario file does not contain any instances\n";
-		exit(0);
+		return 1;
 	}
 
 	// the map filename can be given or (default) taken from the scenario file
@@ -323,21 +323,22 @@ main(int argc, char** argv)
 				{
 					std::cerr << "could not locate a corresponding map file\n";
 					help();
-					exit(0);
+					return 1;
 				}
 			}
 		}
 	}
 	std::cerr << "mapfile=" << mapfile << std::endl;
 
-	if(alg == "dijkstra") { run_dijkstra(scenmgr, mapfile, alg); }
-
-	else if(alg == "astar") { run_astar(scenmgr, mapfile, alg); }
-	else if(alg == "astar4c") { run_astar4c(scenmgr, mapfile, alg); }
-
-	else if(alg == "astar_wgm")
-	{
-		run_wgm_astar(scenmgr, mapfile, alg, costfile);
+	if(alg == "dijkstra") {
+		return run_dijkstra(scenmgr, mapfile, alg);
+	} else if (alg == "astar") {
+		return run_astar(scenmgr, mapfile, alg);
+	} else if(alg == "astar4c") {
+		return run_astar4c(scenmgr, mapfile, alg);
+	} else if(alg == "astar_wgm") {
+		return run_wgm_astar(scenmgr, mapfile, alg, costfile);
 	}
-	else { std::cerr << "err; invalid search algorithm: " << alg << "\n"; }
+	std::cerr << "err; invalid search algorithm: " << alg << "\n";
+	return 1;
 }
