@@ -30,14 +30,10 @@
 namespace warthog::search
 {
 
-class gridmap_expansion_policy : public expansion_policy
+class gridmap_expansion_policy_base : public expansion_policy
 {
 public:
-	gridmap_expansion_policy(domain::gridmap* map, bool manhattan = false);
-	virtual ~gridmap_expansion_policy() { }
-
-	void
-	expand(search_node*, search_problem_instance*) override;
+	gridmap_expansion_policy_base(domain::gridmap* map);
 
 	search_problem_instance
 	get_problem_instance(problem_instance* pi) override;
@@ -47,13 +43,43 @@ public:
 	pad_id
 	unget_state(pack_id node_id) override;
 
+	/// get unpadded xy
 	void
 	get_xy(pack_id node_id, int32_t& x, int32_t& y);
+	/// get unpadded xy
 	void
 	get_xy(pad_id node_id, int32_t& x, int32_t& y);
 
+	/// unpadded xy to pack
+	pack_id
+	get_pack(int32_t x, int32_t y);
+	/// unpadded xy to pad
+	pad_id
+	get_pad(int32_t x, int32_t y);
+
+	domain::gridmap*
+	get_map() const noexcept
+	{
+		return map_;
+	}
+
 	void
 	print_node(search_node* n, std::ostream& out) override;
+
+	size_t
+	mem() override;
+
+protected:
+	domain::gridmap* map_;
+};
+
+class gridmap_expansion_policy : public gridmap_expansion_policy_base
+{
+public:
+	gridmap_expansion_policy(domain::gridmap* map, bool manhattan = false);
+
+	void
+	expand(search_node*, search_problem_instance*) override;
 
 	search_node*
 	generate_start_node(search_problem_instance* pi) override;
@@ -64,8 +90,7 @@ public:
 	size_t
 	mem() override;
 
-private:
-	domain::gridmap* map_;
+protected:
 	bool manhattan_;
 };
 

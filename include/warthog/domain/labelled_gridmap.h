@@ -58,8 +58,9 @@ public:
 	// here we convert from the coordinate space of
 	// the original grid to the coordinate space of db_.
 	pad_id
-	to_padded_id(pack_id node_id)
+	to_padded_id(pack_id node_id) const noexcept
 	{
+		assert(header_.width_ != 0);
 		return pad_id{
 		    uint32_t{node_id} +
 		    // padded rows before the actual map data starts
@@ -71,32 +72,49 @@ public:
 	// here we convert from the coordinate space of
 	// the original grid to the coordinate space of db_.
 	pad_id
-	to_padded_id(uint32_t x, uint32_t y)
+	to_padded_id_from_unpadded(uint32_t x, uint32_t y) const noexcept
 	{
-		return to_padded_id(pack_id{y * this->header_width() + x});
+		return pad_id{(y + padded_rows_before_first_row_) * padded_width_ + x};
+	}
+	pad_id
+	to_padded_id_from_padded(uint32_t x, uint32_t y) const noexcept
+	{
+		return pad_id{y * padded_width_ + x};
 	}
 
 	void
-	to_unpadded_xy(pack_id grid_id_p, uint32_t& x, uint32_t& y)
+	to_unpadded_xy(pack_id grid_id, uint32_t& x, uint32_t& y) const noexcept
 	{
-		y = uint32_t{grid_id_p} / padded_width_;
-		x = uint32_t{grid_id_p} % padded_width_;
+		y = uint32_t{grid_id} / header_.width_;
+		x = uint32_t{grid_id} % header_.width_;
 	}
 
 	void
-	to_unpadded_xy(pad_id grid_id_p, uint32_t& x, uint32_t& y)
+	to_unpadded_xy(pad_id grid_id, uint32_t& x, uint32_t& y) const noexcept
 	{
-		uint32_t id = uint32_t{grid_id_p}
-		    - padded_rows_before_first_row_ * padded_width_;
-		y = id / padded_width_;
-		x = id % padded_width_;
+		to_padded_xy(grid_id, x, y);
+		y -= padded_rows_before_first_row_;
+		assert(x < header_.width_ && y < header_.height_);
+	}
+
+	void
+	to_padded_xy(pad_id grid_id, uint32_t& x, uint32_t& y) const noexcept
+	{
+		y = uint32_t{grid_id} / padded_width_;
+		x = uint32_t{grid_id} % padded_width_;
+		assert(x < padded_width_ && y < padded_height_);
 	}
 
 	pack_id
-	to_unpadded_id(pad_id padded_id)
+	to_unpadded_id(pad_id grid_id) const noexcept
 	{
 		uint32_t x, y;
-		to_unpadded_xy(padded_id, x, y);
+		to_unpadded_xy(grid_id, x, y);
+		return pack_id{y * header_.width_ + x};
+	}
+	pack_id
+	to_unpadded_id_from_unpadded(uint32_t x, uint32_t y) const noexcept
+	{
 		return pack_id{y * header_.width_ + x};
 	}
 

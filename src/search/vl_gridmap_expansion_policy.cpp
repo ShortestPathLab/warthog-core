@@ -5,12 +5,80 @@
 namespace warthog::search
 {
 
-vl_gridmap_expansion_policy::vl_gridmap_expansion_policy(
+vl_gridmap_expansion_policy_base::vl_gridmap_expansion_policy_base(
     domain::vl_gridmap* map, util::cost_table& costs)
     : expansion_policy(map->height() * map->width()), map_(map), costs_(costs)
 { }
 
-vl_gridmap_expansion_policy::~vl_gridmap_expansion_policy() { }
+vl_gridmap_expansion_policy_base::~vl_gridmap_expansion_policy_base() { }
+
+size_t
+vl_gridmap_expansion_policy_base::mem()
+{
+	return expansion_policy::mem()
+	    + (sizeof(vl_gridmap_expansion_policy_base) - sizeof(expansion_policy))
+	    + map_->mem();
+}
+
+search_problem_instance
+vl_gridmap_expansion_policy_base::get_problem_instance(problem_instance* pi)
+{
+	assert(pi != nullptr);
+	return convert_problem_instance_to_search(*pi, *map_);
+}
+
+pack_id
+vl_gridmap_expansion_policy_base::get_state(pad_id node_id)
+{
+	return map_->to_unpadded_id(node_id);
+}
+
+pad_id
+vl_gridmap_expansion_policy_base::unget_state(pack_id node_id)
+{
+	return map_->to_padded_id(node_id);
+}
+
+void
+vl_gridmap_expansion_policy_base::get_xy(
+    pack_id node_id, int32_t& x, int32_t& y)
+{
+	uint32_t lx, ly;
+	map_->to_unpadded_xy(node_id, lx, ly);
+	x = lx;
+	y = ly;
+}
+void
+vl_gridmap_expansion_policy_base::get_xy(
+    pad_id node_id, int32_t& x, int32_t& y)
+{
+	uint32_t lx, ly;
+	map_->to_unpadded_xy(node_id, lx, ly);
+	x = lx;
+	y = ly;
+}
+
+pack_id
+vl_gridmap_expansion_policy_base::get_pack(int32_t x, int32_t y)
+{
+	return map_->to_unpadded_id_from_unpadded(
+	    static_cast<uint32_t>(x), static_cast<uint32_t>(y));
+}
+pad_id
+vl_gridmap_expansion_policy_base::get_pad(int32_t x, int32_t y)
+{
+	return map_->to_padded_id_from_unpadded(
+	    static_cast<uint32_t>(x), static_cast<uint32_t>(y));
+}
+
+void
+vl_gridmap_expansion_policy_base::print_node(search_node* n, std::ostream& out)
+{
+	uint32_t x, y;
+	map_->to_unpadded_xy(n->get_id(), x, y);
+	out << "(" << x << ", " << y << ")...";
+	n->print(out);
+}
 
 void
 vl_gridmap_expansion_policy::expand(
@@ -106,51 +174,6 @@ vl_gridmap_expansion_policy::expand(
 	}
 }
 
-search_problem_instance
-vl_gridmap_expansion_policy::get_problem_instance(problem_instance* pi)
-{
-	assert(pi != nullptr);
-	return convert_problem_instance_to_search(*pi, *map_);
-}
-
-pack_id
-vl_gridmap_expansion_policy::get_state(pad_id node_id)
-{
-	return map_->to_unpadded_id(node_id);
-}
-
-pad_id
-vl_gridmap_expansion_policy::unget_state(pack_id node_id)
-{
-	return map_->to_padded_id(node_id);
-}
-
-void
-vl_gridmap_expansion_policy::get_xy(pack_id node_id, int32_t& x, int32_t& y)
-{
-	uint32_t lx, ly;
-	map_->to_unpadded_xy(node_id, lx, ly);
-	x = lx;
-	y = ly;
-}
-void
-vl_gridmap_expansion_policy::get_xy(pad_id node_id, int32_t& x, int32_t& y)
-{
-	uint32_t lx, ly;
-	map_->to_unpadded_xy(node_id, lx, ly);
-	x = lx;
-	y = ly;
-}
-
-void
-vl_gridmap_expansion_policy::print_node(search_node* n, std::ostream& out)
-{
-	uint32_t x, y;
-	map_->to_unpadded_xy(n->get_id(), x, y);
-	out << "(" << x << ", " << y << ")...";
-	n->print(out);
-}
-
 search_node*
 vl_gridmap_expansion_policy::generate_start_node(search_problem_instance* pi)
 {
@@ -165,6 +188,14 @@ vl_gridmap_expansion_policy::generate_target_node(search_problem_instance* pi)
 	uint32_t max_id = map_->width() * map_->height();
 	if(uint32_t{pi->target_} >= max_id) { return 0; }
 	return generate(pi->target_);
+}
+
+size_t
+vl_gridmap_expansion_policy::mem()
+{
+	return vl_gridmap_expansion_policy_base::mem()
+	    + (sizeof(vl_gridmap_expansion_policy)
+	       - sizeof(vl_gridmap_expansion_policy_base));
 }
 
 } // namespace warthog::search

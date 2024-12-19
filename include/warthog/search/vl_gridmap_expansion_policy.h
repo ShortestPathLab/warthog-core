@@ -38,21 +38,12 @@
 namespace warthog::search
 {
 
-class vl_gridmap_expansion_policy : public expansion_policy
+class vl_gridmap_expansion_policy_base : public expansion_policy
 {
 public:
-	vl_gridmap_expansion_policy(
+	vl_gridmap_expansion_policy_base(
 	    domain::vl_gridmap* map, util::cost_table& costs);
-	virtual ~vl_gridmap_expansion_policy();
-
-	void
-	expand(search_node*, search_problem_instance*) override;
-
-	size_t
-	mem() override
-	{
-		return expansion_policy::mem() + sizeof(*this) + map_->mem();
-	}
+	virtual ~vl_gridmap_expansion_policy_base();
 
 	search_problem_instance
 	get_problem_instance(problem_instance* pi) override;
@@ -62,13 +53,49 @@ public:
 	pad_id
 	unget_state(pack_id node_id) override;
 
+	/// get unpadded xy
 	void
 	get_xy(pack_id node_id, int32_t& x, int32_t& y);
+	/// get unpadded xy
 	void
 	get_xy(pad_id node_id, int32_t& x, int32_t& y);
 
+	/// unpadded xy to pack
+	pack_id
+	get_pack(int32_t x, int32_t y);
+	/// unpadded xy to pad
+	pad_id
+	get_pad(int32_t x, int32_t y);
+
+	domain::vl_gridmap*
+	get_map() const noexcept
+	{
+		return map_;
+	}
+	const util::cost_table&
+	get_costs() const noexcept
+	{
+		return costs_;
+	}
+
 	void
 	print_node(search_node* n, std::ostream& out) override;
+
+	size_t
+	mem() override;
+
+protected:
+	domain::vl_gridmap* map_;
+	util::cost_table& costs_;
+};
+
+class vl_gridmap_expansion_policy : public vl_gridmap_expansion_policy_base
+{
+public:
+	using vl_gridmap_expansion_policy_base::vl_gridmap_expansion_policy_base;
+
+	void
+	expand(search_node*, search_problem_instance*) override;
 
 	search_node*
 	generate_start_node(search_problem_instance* pi) override;
@@ -76,9 +103,8 @@ public:
 	search_node*
 	generate_target_node(search_problem_instance* pi) override;
 
-private:
-	domain::vl_gridmap* map_;
-	util::cost_table& costs_;
+	size_t
+	mem() override;
 };
 
 } // namespace warthog::search

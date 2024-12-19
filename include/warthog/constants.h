@@ -8,6 +8,7 @@
 //
 
 #include <bit>
+#include <cassert>
 #include <cfloat>
 #include <climits>
 #include <cmath>
@@ -31,11 +32,12 @@ struct identity_base
 	identity_base() noexcept = default;
 	constexpr explicit identity_base(IdType id_) noexcept : id(id_) { }
 	template<typename IdType2>
-	constexpr identity_base(identity_base<Tag, IdType2> alt)
-	    requires(!std::same_as<IdType, IdType2>)
-	    : id(IdType{alt.id})
+	requires(!std::same_as<IdType, IdType2>) explicit(
+	    std::numeric_limits<IdType>::max() < std::numeric_limits<IdType2>::
+	        max()) constexpr identity_base(identity_base<Tag, IdType2> alt)
+	    : id(static_cast<IdType>(alt.id))
 	{
-		assert(id == alt.id);
+		assert(id == alt.id || (is_none() && alt.is_none()));
 	}
 	constexpr identity_base(const identity_base&) noexcept = default;
 	constexpr identity_base(identity_base&&) noexcept = default;
@@ -67,6 +69,12 @@ struct identity_base
 	{
 		return identity_base{std::numeric_limits<IdType>::max()};
 	}
+	consteval static identity_base
+	none() noexcept
+	{
+		return max();
+	}
+	bool constexpr is_none() const noexcept { return (*this) == none(); }
 };
 template<class T>
 constexpr bool is_identity_v = std::false_type{};
@@ -100,18 +108,22 @@ constexpr double DBL_TWO = 2.0;
 constexpr double DBL_ROOT_TWO
     = 1.414213562373095048801688724209698078569671875;
 constexpr double DBL_ONE_OVER_TWO = 0.5;
-constexpr double DBL_ONE_OVER_ROOT_TWO = 1.0 / DBL_ROOT_TWO; // 0.707106781f;
-constexpr double DBL_ROOT_TWO_OVER_FOUR = DBL_ROOT_TWO * 0.25;
+constexpr double DBL_ONE_OVER_ROOT_TWO
+    = 0.70710678118654752440084436210484903928483593768847403658833986;
+constexpr double DBL_ROOT_TWO_OVER_FOUR
+    = 0.35355339059327376220042218105242451964241796884423701829416993;
 constexpr int32_t ONE = 100000;
 
 constexpr uint32_t INF32
-    = UINT32_MAX; // indicates uninitialised or undefined values
+    = std::numeric_limits<uint32_t>::max(); // indicates uninitialised or
+                                            // undefined values
 constexpr uint64_t INFTY
-    = UINT64_MAX; // indicates uninitialised or undefined values
+    = std::numeric_limits<uint64_t>::max(); // indicates uninitialised or
+                                            // undefined values
 
 using cost_t = double;
-constexpr cost_t COST_MAX = DBL_MAX;
-constexpr cost_t COST_MIN = DBL_MIN;
+constexpr cost_t COST_MAX = std::numeric_limits<cost_t>::max();
+constexpr cost_t COST_MIN = std::numeric_limits<cost_t>::max();
 
 // hashing constants
 constexpr uint32_t FNV32_offset_basis = 2166136261;

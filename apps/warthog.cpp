@@ -21,11 +21,9 @@
 #include <warthog/util/scenario_manager.h>
 #include <warthog/util/timer.h>
 
-
 #include "cfg.h"
 #include "config.h"
 #include <getopt.h>
-
 
 #include <cmath>
 #include <filesystem>
@@ -35,7 +33,6 @@
 #include <memory>
 #include <sstream>
 #include <unordered_map>
-
 
 // #include "time_constraints.h"
 
@@ -108,29 +105,32 @@ check_optimality(
 		std::cerr << "precision: " << precision << " epsilon: " << epsilon
 		          << std::endl;
 		std::cerr << "delta: " << delta << std::endl;
-		exit(1);
+		return false;
 	}
 	return true;
 }
 
 template<typename Search>
-void
+int
 run_experiments(
     Search& algo, std::string alg_name,
     warthog::util::scenario_manager& scenmgr, bool verbose, bool checkopt,
     std::ostream& out)
 {
-	std::cout << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
-	          << "\tnanos\tplen\tpcost\tscost\tmap\n";
+	auto* expander = algo.get_expander();
+	if(expander == nullptr) return 1;
+	out << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
+	    << "\tnanos\tplen\tpcost\tscost\tmap\n";
 	for(unsigned int i = 0; i < scenmgr.num_experiments(); i++)
 	{
 		warthog::util::experiment* exp = scenmgr.get_experiment(i);
 
-		warthog::pack_id startid{
-		    exp->starty() * exp->mapwidth() + exp->startx()};
-		warthog::pack_id goalid{exp->goaly() * exp->mapwidth() + exp->goalx()};
+		warthog::pack_id startid
+		    = expander->get_pack(exp->startx(), exp->starty());
+		warthog::pack_id goalid
+		    = expander->get_pack(exp->goalx(), exp->goaly());
 		warthog::search::problem_instance pi(startid, goalid, verbose);
-        warthog::search::search_parameters par;
+		warthog::search::search_parameters par;
 		warthog::search::solution sol;
 
 		algo.get_path(&pi, &par, &sol);
@@ -144,11 +144,16 @@ run_experiments(
 		    << exp->distance() << "\t" << scenmgr.last_file_loaded()
 		    << std::endl;
 
-		if(checkopt) { check_optimality(sol, exp); }
+		if(checkopt)
+		{
+			if(!check_optimality(sol, exp)) return 4;
+		}
 	}
+
+	return 0;
 }
 
-void
+int
 run_astar(
     warthog::util::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name)
@@ -160,11 +165,18 @@ run_astar(
 
 	warthog::search::unidirectional_search astar(&heuristic, &expander, &open);
 
-	run_experiments(astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	int ret = run_experiments(
+	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	if(ret != 0)
+	{
+		std::cerr << "run_experiments error code " << ret << std::endl;
+		return ret;
+	}
 	std::cerr << "done. total memory: " << astar.mem() + scenmgr.mem() << "\n";
+	return 0;
 }
 
-void
+int
 run_astar4c(
     warthog::util::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name)
@@ -177,11 +189,18 @@ run_astar4c(
 
 	warthog::search::unidirectional_search astar(&heuristic, &expander, &open);
 
-	run_experiments(astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	int ret = run_experiments(
+	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	if(ret != 0)
+	{
+		std::cerr << "run_experiments error code " << ret << std::endl;
+		return ret;
+	}
 	std::cerr << "done. total memory: " << astar.mem() + scenmgr.mem() << "\n";
+	return 0;
 }
 
-void
+int
 run_dijkstra(
     warthog::util::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name)
@@ -193,11 +212,18 @@ run_dijkstra(
 
 	warthog::search::unidirectional_search astar(&heuristic, &expander, &open);
 
-	run_experiments(astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	int ret = run_experiments(
+	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	if(ret != 0)
+	{
+		std::cerr << "run_experiments error code " << ret << std::endl;
+		return ret;
+	}
 	std::cerr << "done. total memory: " << astar.mem() + scenmgr.mem() << "\n";
+	return 0;
 }
 
-void
+int
 run_wgm_astar(
     warthog::util::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name, std::string costfile)
@@ -219,8 +245,15 @@ run_wgm_astar(
 
 	warthog::search::unidirectional_search astar(&heuristic, &expander, &open);
 
-	run_experiments(astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	int ret = run_experiments(
+	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	if(ret != 0)
+	{
+		std::cerr << "run_experiments error code " << ret << std::endl;
+		return ret;
+	}
 	std::cerr << "done. total memory: " << astar.mem() + scenmgr.mem() << "\n";
+	return 0;
 }
 
 } // namespace
@@ -246,7 +279,7 @@ main(int argc, char** argv)
 	if(argc == 1 || print_help)
 	{
 		help();
-		exit(0);
+		return 0;
 	}
 
 	std::string sfile = cfg.get_param_value("scen");
@@ -268,7 +301,7 @@ main(int argc, char** argv)
 	if(alg == "" || sfile == "")
 	{
 		help();
-		exit(0);
+		return 0;
 	}
 
 	// load up the instances
@@ -278,7 +311,7 @@ main(int argc, char** argv)
 	if(scenmgr.num_experiments() == 0)
 	{
 		std::cerr << "err; scenario file does not contain any instances\n";
-		exit(0);
+		return 1;
 	}
 
 	// the map filename can be given or (default) taken from the scenario file
@@ -299,21 +332,20 @@ main(int argc, char** argv)
 				{
 					std::cerr << "could not locate a corresponding map file\n";
 					help();
-					exit(0);
+					return 1;
 				}
 			}
 		}
 	}
 	std::cerr << "mapfile=" << mapfile << std::endl;
 
-	if(alg == "dijkstra") { run_dijkstra(scenmgr, mapfile, alg); }
-
-	else if(alg == "astar") { run_astar(scenmgr, mapfile, alg); }
-	else if(alg == "astar4c") { run_astar4c(scenmgr, mapfile, alg); }
-
+	if(alg == "dijkstra") { return run_dijkstra(scenmgr, mapfile, alg); }
+	else if(alg == "astar") { return run_astar(scenmgr, mapfile, alg); }
+	else if(alg == "astar4c") { return run_astar4c(scenmgr, mapfile, alg); }
 	else if(alg == "astar_wgm")
 	{
-		run_wgm_astar(scenmgr, mapfile, alg, costfile);
+		return run_wgm_astar(scenmgr, mapfile, alg, costfile);
 	}
-	else { std::cerr << "err; invalid search algorithm: " << alg << "\n"; }
+	std::cerr << "err; invalid search algorithm: " << alg << "\n";
+	return 1;
 }

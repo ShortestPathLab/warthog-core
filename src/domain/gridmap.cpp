@@ -30,13 +30,13 @@ gridmap::gridmap(const char* filename)
 		case 'T':
 		case '@':
 		case 'O': // these terrain types are obstacles
-			this->set_label(uint32_t{to_padded_id(pack_id{i})}, 0);
-			assert(this->get_label(uint32_t{to_padded_id(pack_id{i})}) == 0);
+			this->set_label(to_padded_id(pack_id{i}), 0);
+			assert(this->get_label(to_padded_id(pack_id{i})) == 0);
 			break;
 		default: // everything else is traversable
-			this->set_label(uint32_t{to_padded_id(pack_id{i})}, 1);
+			this->set_label(to_padded_id(pack_id{i}), 1);
 			num_traversable_++;
-			assert(this->get_label(uint32_t{to_padded_id(pack_id{i})}) == 1);
+			assert(this->get_label(to_padded_id(pack_id{i})) == 1);
 			break;
 		}
 	}
@@ -95,7 +95,7 @@ gridmap::print(std::ostream& out)
 	{
 		for(unsigned int x = 0; x < this->width(); x++)
 		{
-			warthog::dbword c = this->get_label(y * this->width() + x);
+			warthog::dbword c = this->get_label(pad_id{y * this->width() + x});
 			out << (c ? '.' : '@');
 		}
 		out << std::endl;
