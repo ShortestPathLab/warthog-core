@@ -51,11 +51,17 @@ public:
 	get_xy(pad_id node_id, int32_t& x, int32_t& y);
 
 	/// unpadded xy to pack
-	pack_id get_pack(int32_t x, int32_t y);
+	pack_id
+	get_pack(int32_t x, int32_t y);
 	/// unpadded xy to pad
-	pad_id get_pad(int32_t x, int32_t y);
+	pad_id
+	get_pad(int32_t x, int32_t y);
 
-	domain::gridmap* get_map() const noexcept { return map_; }
+	domain::gridmap*
+	get_map() const noexcept
+	{
+		return map_;
+	}
 
 	void
 	print_node(search_node* n, std::ostream& out) override;

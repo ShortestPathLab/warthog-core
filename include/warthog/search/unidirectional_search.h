@@ -69,7 +69,8 @@ public:
 		get_path(&spi, par, sol);
 	}
 	void
-	get_path(search_problem_instance* spi, search_parameters* par, solution* sol)
+	get_path(
+	    search_problem_instance* spi, search_parameters* par, solution* sol)
 	{
 		// if successful the search returns an incumbent node. this can be
 		// the target node or it can be another node from which the

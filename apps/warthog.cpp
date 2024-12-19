@@ -118,16 +118,17 @@ run_experiments(
     std::ostream& out)
 {
 	auto* expander = algo.get_expander();
-	if (expander == nullptr)
-		return 1;
+	if(expander == nullptr) return 1;
 	out << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
 	    << "\tnanos\tplen\tpcost\tscost\tmap\n";
 	for(unsigned int i = 0; i < scenmgr.num_experiments(); i++)
 	{
 		warthog::util::experiment* exp = scenmgr.get_experiment(i);
 
-		warthog::pack_id startid = expander->get_pack(exp->startx(), exp->starty());
-		warthog::pack_id goalid = expander->get_pack(exp->goalx(), exp->goaly());
+		warthog::pack_id startid
+		    = expander->get_pack(exp->startx(), exp->starty());
+		warthog::pack_id goalid
+		    = expander->get_pack(exp->goalx(), exp->goaly());
 		warthog::search::problem_instance pi(startid, goalid, verbose);
 		warthog::search::search_parameters par;
 		warthog::search::solution sol;
@@ -143,9 +144,9 @@ run_experiments(
 		    << exp->distance() << "\t" << scenmgr.last_file_loaded()
 		    << std::endl;
 
-		if(checkopt) {
-			if (!check_optimality(sol, exp))
-				return 4;
+		if(checkopt)
+		{
+			if(!check_optimality(sol, exp)) return 4;
 		}
 	}
 
@@ -164,8 +165,10 @@ run_astar(
 
 	warthog::search::unidirectional_search astar(&heuristic, &expander, &open);
 
-	int ret = run_experiments(astar, alg_name, scenmgr, verbose, checkopt, std::cout);
-	if (ret != 0) {
+	int ret = run_experiments(
+	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	if(ret != 0)
+	{
 		std::cerr << "run_experiments error code " << ret << std::endl;
 		return ret;
 	}
@@ -186,8 +189,10 @@ run_astar4c(
 
 	warthog::search::unidirectional_search astar(&heuristic, &expander, &open);
 
-	int ret = run_experiments(astar, alg_name, scenmgr, verbose, checkopt, std::cout);
-	if (ret != 0) {
+	int ret = run_experiments(
+	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	if(ret != 0)
+	{
 		std::cerr << "run_experiments error code " << ret << std::endl;
 		return ret;
 	}
@@ -207,8 +212,10 @@ run_dijkstra(
 
 	warthog::search::unidirectional_search astar(&heuristic, &expander, &open);
 
-	int ret = run_experiments(astar, alg_name, scenmgr, verbose, checkopt, std::cout);
-	if (ret != 0) {
+	int ret = run_experiments(
+	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	if(ret != 0)
+	{
 		std::cerr << "run_experiments error code " << ret << std::endl;
 		return ret;
 	}
@@ -238,8 +245,10 @@ run_wgm_astar(
 
 	warthog::search::unidirectional_search astar(&heuristic, &expander, &open);
 
-	int ret = run_experiments(astar, alg_name, scenmgr, verbose, checkopt, std::cout);
-	if (ret != 0) {
+	int ret = run_experiments(
+	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	if(ret != 0)
+	{
 		std::cerr << "run_experiments error code " << ret << std::endl;
 		return ret;
 	}
@@ -330,13 +339,11 @@ main(int argc, char** argv)
 	}
 	std::cerr << "mapfile=" << mapfile << std::endl;
 
-	if(alg == "dijkstra") {
-		return run_dijkstra(scenmgr, mapfile, alg);
-	} else if (alg == "astar") {
-		return run_astar(scenmgr, mapfile, alg);
-	} else if(alg == "astar4c") {
-		return run_astar4c(scenmgr, mapfile, alg);
-	} else if(alg == "astar_wgm") {
+	if(alg == "dijkstra") { return run_dijkstra(scenmgr, mapfile, alg); }
+	else if(alg == "astar") { return run_astar(scenmgr, mapfile, alg); }
+	else if(alg == "astar4c") { return run_astar4c(scenmgr, mapfile, alg); }
+	else if(alg == "astar_wgm")
+	{
 		return run_wgm_astar(scenmgr, mapfile, alg, costfile);
 	}
 	std::cerr << "err; invalid search algorithm: " << alg << "\n";
