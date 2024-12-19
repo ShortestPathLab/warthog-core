@@ -50,31 +50,30 @@ gridmap::init_db()
 	// fetching the neighbours of a node.
 	this->padded_rows_before_first_row_ = 3;
 	this->padded_rows_after_last_row_ = 3;
-	this->padded_height_ = this->header_.height_ + padded_rows_after_last_row_
+	uint32_t store_width, store_height;
+	store_height = this->header_.height_ + padded_rows_after_last_row_
 	    + padded_rows_before_first_row_;
 
 	// calculate # of extra/redundant padding bits required,
 	// per row, to align map width with dbword size
-	this->padded_width_ = this->header_.width_ + 1;
-	if((padded_width_ % 64) != 0)
+	store_width = this->header_.width_ + 1;
+	if((store_width % 64) != 0)
 	{
-		padded_width_ = (this->header_.width_ / 64 + 1) * 64;
+		store_width = (this->header_.width_ / 64 + 1) * 64;
 	}
-	this->padding_per_row_ = this->padded_width_ - this->header_.width_;
+	this->padding_per_row_ = store_width - this->header_.width_;
 
-	this->dbheight_ = padded_height_;
-	this->dbwidth_ = padded_width_ >> warthog::LOG2_DBWORD_BITS;
-	this->dbwidth64_ = padded_width_ >> 6;
-	this->db_size_ = this->dbwidth_ * this->dbheight_;
+	this->dbheight_ = store_height;
+	this->dbwidth_ = store_width >> warthog::LOG2_DBWORD_BITS;
+	this->dbwidth64_ = store_width >> 6;
+	this->db_size_ = bittable::calc_array_size(store_width, store_height);
 
 	// create a one dimensional dbword array to store the grid
 	this->db_ = new warthog::dbword[db_size_];
-	for(unsigned int i = 0; i < db_size_; i++)
-	{
-		db_[i] = 0;
-	}
+	bittable::setup(this->db_, store_width, store_height);
+	fill(0);
 
-	max_id_ = db_size_ - 1;
+	max_id_ = this->dbheight_ * this->dbwidth_ - 1;
 }
 
 gridmap::~gridmap()
