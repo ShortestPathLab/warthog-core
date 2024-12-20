@@ -24,3 +24,26 @@ target_link_libraries(warthog_app PUBLIC warthog::core)
 
 add_subdirectory(src)
 add_subdirectory(apps)
+
+
+#
+# Testing setup
+#
+
+warthog_top_level()
+if(_is_top)
+	option(BUILD_TESTING "Building testing suite" OFF)
+	include(CTest)
+	include(FetchContent)
+	FetchContent_Declare(
+		Catch2
+		GIT_REPOSITORY https://github.com/catchorg/Catch2.git
+		GIT_TAG        v3.7.1
+	)
+
+	if(BUILD_TESTING)
+		FetchContent_MakeAvailable(Catch2)
+		include(Catch)
+		add_subdirectory(tests)
+	endif()
+endif()

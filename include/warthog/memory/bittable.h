@@ -118,10 +118,10 @@ public:
 			std::fill_n(m_data, data_elements(), value);
 		}
 	}
-	constexpr void flip(value_type value) noexcept
+	constexpr void flip() noexcept
 	{
-		for (value_type* p = m_data, pe = p + data_elements(); p != pe; ++p) {
-			*p ^= ~static_cast<value_type>(0);
+		for (value_type *p = m_data, *pe = p + data_elements(); p != pe; ++p) {
+			*p = ~*p;
 		}
 	}
 
