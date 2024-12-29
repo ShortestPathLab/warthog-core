@@ -30,10 +30,11 @@ public:
 	static_assert(ValueBits <= sizeof(BaseType) * CHAR_BIT && std::popcount(ValueBits) == 1, "ValueBits must be to power of 2 and fit inside BaseType bits.");
 	using value_type = BaseType;
 	using id_value_type = std::conditional_t<sizeof(IdType) <= 4, uint32_t, uint64_t>;
+	constexpr static size_t base_bit_count = sizeof(BaseType) * CHAR_BIT;
 	constexpr static size_t base_bit_width = std::bit_width(sizeof(BaseType) * CHAR_BIT - 1);
 	constexpr static size_t value_bit_width = std::bit_width(ValueBits - 1);
 	constexpr static id_value_type base_bit_mask = id_value_type{(uint64_t{1} << base_bit_width) - 1};
-	constexpr static BaseType value_bit_mask = BaseType{(uint64_t{1} << ValueBits) - 1};
+	constexpr static value_type value_bit_mask = ValueBits < base_bit_count ? BaseType{(uint64_t{1} << ValueBits) - 1} : static_cast<BaseType>(~0ull);
 
 	static constexpr size_t calc_array_size(uint32_t width, uint32_t height) noexcept
 	{
@@ -55,7 +56,7 @@ public:
 	xy_to_id(uint32_t x, uint32_t y) const noexcept
 	{
 		assert(m_dim.width != 0);
-		return {static_cast<size_t>(y) * m_dim.width + static_cast<size_t>(x)};
+		return static_cast<IdType>(static_cast<size_t>(y) * m_dim.width + static_cast<size_t>(x));
 	}
 
 	constexpr std::pair<uint32_t, uint32_t>
@@ -110,7 +111,7 @@ public:
 			for (int i = ValueBits; i < CHAR_BIT; i <<= 1) {
 				value = (value << i) | value;
 			}
-			std::memset(m_data, value, data_elements());
+			std::memset(m_data, value, sizeof(BaseType) * data_elements());
 		} else {
 			for (int i = ValueBits; i < sizeof(BaseType) * CHAR_BIT; i <<= 1) {
 				value = (value << i) | value;
@@ -131,7 +132,15 @@ public:
 		assert(value <= value_bit_mask);
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
-		*data_pos = (*data_pos & (~value_bit_mask << (idval & base_bit_mask))) | (value << (idval & base_bit_mask));
+		*data_pos = (*data_pos & ~(value_bit_mask << (idval & base_bit_mask))) | (value << (idval & base_bit_mask));
+	}
+	constexpr void bit_and(IdType id, value_type value) noexcept
+	{
+		assert(uint64_t{id} < size());
+		assert(value <= value_bit_mask);
+		id_value_type idval = id_value_type{id} << value_bit_width;
+		BaseType* data_pos = m_data + (idval >> base_bit_width);
+		*data_pos &= std::rotl(static_cast<value_type>(value | ~value_bit_mask), idval & base_bit_mask);
 	}
 	constexpr void bit_or(IdType id, value_type value) noexcept
 	{
@@ -141,14 +150,6 @@ public:
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
 		*data_pos |= value << (idval & base_bit_mask);
 	}
-	constexpr void bit_and(IdType id, value_type value) noexcept
-	{
-		assert(uint64_t{id} < size());
-		assert(value <= value_bit_mask);
-		id_value_type idval = id_value_type{id} << value_bit_width;
-		BaseType* data_pos = m_data + (idval >> base_bit_width);
-		*data_pos &= value << (idval & base_bit_mask);
-	}
 	constexpr void bit_xor(IdType id, value_type value) noexcept
 	{
 		assert(uint64_t{id} < size());
@@ -156,6 +157,13 @@ public:
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
 		*data_pos ^= value << (idval & base_bit_mask);
+	}
+	constexpr void bit_neg(IdType id) noexcept
+	{
+		assert(uint64_t{id} < size());
+		id_value_type idval = id_value_type{id} << value_bit_width;
+		BaseType* data_pos = m_data + (idval >> base_bit_width);
+		*data_pos ^= value_bit_mask << (idval & base_bit_mask);
 	}
 
 	constexpr value_type get(IdType id) const noexcept
