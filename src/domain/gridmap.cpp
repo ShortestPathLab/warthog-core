@@ -1,11 +1,11 @@
 #include <warthog/domain/gridmap.h>
 
+#include <bit>
 #include <cassert>
 #include <cstring>
-#include <warthog/io/grid.h>
 #include <fstream>
 #include <numeric>
-#include <bit>
+#include <warthog/io/grid.h>
 
 namespace warthog::domain
 {
@@ -20,20 +20,21 @@ gridmap::gridmap(const char* filename)
 	strcpy(filename_, filename);
 	io::bittable_serialize parser;
 	std::ifstream in(filename_);
-	if (!parser.read_header(in))
+	if(!parser.read_header(in))
 		throw std::runtime_error("invalid grid format");
-	if (parser.get_type() != io::bittable_type::OCTILE)
+	if(parser.get_type() != io::bittable_type::OCTILE)
 		throw std::runtime_error("gridmap::gridmap must be OCTILE");
 	this->header_.type_ = "octile";
 	this->header_.width_ = parser.get_dim().width;
 	this->header_.height_ = parser.get_dim().height;
 
 	init_db();
-	if (!parser.read_map(in, *this, 0, padded_rows_before_first_row_))
+	if(!parser.read_map(in, *this, 0, padded_rows_before_first_row_))
 		throw std::runtime_error("invalid grid format");
 	// calculate traversable
-	num_traversable_ = static_cast<uint32_t>( std::transform_reduce(db_, db_ + db_size_, static_cast<int>(0), std::plus<uint32_t>(),
-		&std::popcount<dbword>) );
+	num_traversable_ = static_cast<uint32_t>(std::transform_reduce(
+	    db_, db_ + db_size_, static_cast<int>(0), std::plus<uint32_t>(),
+	    &std::popcount<dbword>));
 }
 
 void

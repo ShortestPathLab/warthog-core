@@ -20,9 +20,9 @@
 
 #include "grid.h"
 #include <warthog/constants.h>
+#include <warthog/memory/bittable.h>
 #include <warthog/util/gm_parser.h>
 #include <warthog/util/helpers.h>
-#include <warthog/memory/bittable.h>
 
 #include <cassert>
 #include <climits>
@@ -41,7 +41,9 @@ public:
 	gridmap(const gridmap&) = delete;
 	~gridmap();
 
-	gridmap& operator=(const gridmap&) = delete;
+	gridmap&
+	operator=(const gridmap&)
+	    = delete;
 
 	// here we convert from the coordinate space of
 	// the original grid to the coordinate space of db_.
@@ -54,8 +56,7 @@ public:
 		    // padded rows before the actual map data starts
 		    padded_rows_before_first_row_ * width() +
 		    // padding from each row of data before this one
-		    (uint32_t{node_id} / header_.width_) * padding_per_row_
-		};
+		    (uint32_t{node_id} / header_.width_) * padding_per_row_};
 	}
 
 	// here we convert from the coordinate space of
@@ -103,9 +104,9 @@ public:
 		    uint32_t{grid_id} -
 		    // padding from each row of data
 		    (uint32_t{grid_id} / width()) * padding_per_row_ -
-		    // padded rows before the actual map data starts, use header_width as the padded width is already removed
-		    padded_rows_before_first_row_ * header_.width_
-		};
+		    // padded rows before the actual map data starts, use header_width
+		    // as the padded width is already removed
+		    padded_rows_before_first_row_ * header_.width_};
 	}
 	pack_id
 	to_unpadded_id_from_unpadded(uint32_t x, uint32_t y) const noexcept

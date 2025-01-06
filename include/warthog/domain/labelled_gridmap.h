@@ -53,7 +53,9 @@ public:
 		}
 	}
 	labelled_gridmap(const labelled_gridmap&) = delete;
-	labelled_gridmap& operator=(const labelled_gridmap&) = delete;
+	labelled_gridmap&
+	operator=(const labelled_gridmap&)
+	    = delete;
 
 	~labelled_gridmap() { delete[] db_; }
 
