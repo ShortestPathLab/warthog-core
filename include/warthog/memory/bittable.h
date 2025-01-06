@@ -11,13 +11,11 @@
 namespace warthog::memory
 {
 
-namespace details {
-struct bittable_Dimension
+struct bittable_dimension
 {
 	uint32_t width;
 	uint32_t height;
 };
-} // namespace details
 
 /**
  * IdType: should be Identity, although integer is allowed.
@@ -28,6 +26,7 @@ class bittable
 {
 public:
 	static_assert(ValueBits <= sizeof(BaseType) * CHAR_BIT && std::popcount(ValueBits) == 1, "ValueBits must be to power of 2 and fit inside BaseType bits.");
+	using id_type = IdType;
 	using value_type = BaseType;
 	using id_value_type = std::conditional_t<sizeof(IdType) <= 4, uint32_t, uint64_t>;
 	constexpr static size_t base_bit_count = sizeof(BaseType) * CHAR_BIT;
@@ -52,15 +51,15 @@ public:
 		m_dim.height = height;
 	}
 
-	constexpr IdType
+	constexpr id_type
 	xy_to_id(uint32_t x, uint32_t y) const noexcept
 	{
 		assert(m_dim.width != 0);
-		return static_cast<IdType>(static_cast<size_t>(y) * m_dim.width + static_cast<size_t>(x));
+		return static_cast<id_type>(static_cast<size_t>(y) * m_dim.width + static_cast<size_t>(x));
 	}
 
 	constexpr std::pair<uint32_t, uint32_t>
-	id_to_xy(IdType id) const noexcept
+	id_to_xy(id_type id) const noexcept
 	{
 		assert(m_dim.width != 0);
 		const id_value_type value = static_cast<id_value_type>(id);
@@ -98,6 +97,10 @@ public:
 	{
 		return static_cast<uint64_t>(m_dim.width) * m_dim.height;
 	}
+	constexpr bittable_dimension dim() const noexcept
+	{
+		return m_dim;
+	}
 	
 	constexpr size_t data_elements() const noexcept
 	{
@@ -126,7 +129,7 @@ public:
 		}
 	}
 
-	constexpr void set(IdType id, value_type value) noexcept
+	constexpr void set(id_type id, value_type value) noexcept
 	{
 		assert(uint64_t{id} < size());
 		assert(value <= value_bit_mask);
@@ -134,7 +137,7 @@ public:
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
 		*data_pos = (*data_pos & ~(value_bit_mask << (idval & base_bit_mask))) | (value << (idval & base_bit_mask));
 	}
-	constexpr void bit_and(IdType id, value_type value) noexcept
+	constexpr void bit_and(id_type id, value_type value) noexcept
 	{
 		assert(uint64_t{id} < size());
 		assert(value <= value_bit_mask);
@@ -142,7 +145,7 @@ public:
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
 		*data_pos &= std::rotl(static_cast<value_type>(value | ~value_bit_mask), idval & base_bit_mask);
 	}
-	constexpr void bit_or(IdType id, value_type value) noexcept
+	constexpr void bit_or(id_type id, value_type value) noexcept
 	{
 		assert(uint64_t{id} < size());
 		assert(value <= value_bit_mask);
@@ -150,7 +153,7 @@ public:
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
 		*data_pos |= value << (idval & base_bit_mask);
 	}
-	constexpr void bit_xor(IdType id, value_type value) noexcept
+	constexpr void bit_xor(id_type id, value_type value) noexcept
 	{
 		assert(uint64_t{id} < size());
 		assert(value <= value_bit_mask);
@@ -158,7 +161,7 @@ public:
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
 		*data_pos ^= value << (idval & base_bit_mask);
 	}
-	constexpr void bit_neg(IdType id) noexcept
+	constexpr void bit_neg(id_type id) noexcept
 	{
 		assert(uint64_t{id} < size());
 		id_value_type idval = id_value_type{id} << value_bit_width;
@@ -166,7 +169,7 @@ public:
 		*data_pos ^= value_bit_mask << (idval & base_bit_mask);
 	}
 
-	constexpr value_type get(IdType id) const noexcept
+	constexpr value_type get(id_type id) const noexcept
 	{
 		assert(uint64_t{id} < size());
 		id_value_type idval = id_value_type{id} << value_bit_width;
@@ -176,7 +179,7 @@ public:
 
 	// return id position split
 	// `m_data[first] >> second` will return the value as position id
-	constexpr std::pair<uint32_t, uint32_t> id_split(IdType id) const noexcept
+	constexpr std::pair<uint32_t, uint32_t> id_split(id_type id) const noexcept
 	{
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		return {static_cast<uint32_t>(idval >> base_bit_width), static_cast<uint32_t>(idval & base_bit_mask)};
@@ -184,9 +187,9 @@ public:
 
 protected:
 	BaseType* m_data;
-	details::bittable_Dimension m_dim;
+	bittable_dimension m_dim;
 };
 
 } // namespace warthog::memory
 
-#endif // WARTHOG_MEMORY_ARRAYLIST_H
+#endif // WARTHOG_MEMORY_BITTABLE_H

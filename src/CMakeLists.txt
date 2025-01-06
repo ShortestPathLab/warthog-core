@@ -6,6 +6,8 @@ domain/gridmap.cpp
 geometry/geography.cpp
 geometry/geom.cpp
 
+io/grid.cpp
+
 memory/node_pool.cpp
 
 search/expansion_policy.cpp

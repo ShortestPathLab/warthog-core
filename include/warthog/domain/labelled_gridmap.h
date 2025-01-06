@@ -52,6 +52,8 @@ public:
 			assert(get_label(uint32_t{to_padded_id(pack_id{i})}) == cell);
 		}
 	}
+	labelled_gridmap(const labelled_gridmap&) = delete;
+	labelled_gridmap& operator=(const labelled_gridmap&) = delete;
 
 	~labelled_gridmap() { delete[] db_; }
 
@@ -184,13 +186,6 @@ private:
 	uint32_t padded_rows_after_last_row_;
 	uint32_t padded_width_;
 	uint32_t padded_height_;
-
-	labelled_gridmap(const labelled_gridmap<CELL>& other) { }
-	labelled_gridmap&
-	operator=(const labelled_gridmap<CELL>& other)
-	{
-		return *this;
-	}
 
 	void
 	init_db()

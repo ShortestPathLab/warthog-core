@@ -2,6 +2,10 @@
 
 #include <cassert>
 #include <cstring>
+#include <warthog/io/grid.h>
+#include <fstream>
+#include <numeric>
+#include <bit>
 
 namespace warthog::domain
 {
@@ -14,32 +18,22 @@ gridmap::gridmap(unsigned int h, unsigned int w) : header_(h, w, "octile")
 gridmap::gridmap(const char* filename)
 {
 	strcpy(filename_, filename);
-	warthog::util::gm_parser parser(filename);
-	this->header_ = parser.get_header();
+	io::bittable_serialize parser;
+	std::ifstream in(filename_);
+	if (!parser.read_header(in))
+		throw std::runtime_error("invalid grid format");
+	if (parser.get_type() != io::bittable_type::OCTILE)
+		throw std::runtime_error("gridmap::gridmap must be OCTILE");
+	this->header_.type_ = "octile";
+	this->header_.width_ = parser.get_dim().width;
+	this->header_.height_ = parser.get_dim().height;
 
 	init_db();
-	// populate matrix
-	num_traversable_ = 0;
-	for(uint32_t i = 0; i < parser.get_num_tiles(); i++)
-	{
-		unsigned char c = parser.get_tile_at(i);
-		switch(c)
-		{
-		case 'S':
-		case 'W':
-		case 'T':
-		case '@':
-		case 'O': // these terrain types are obstacles
-			this->set_label(to_padded_id(pack_id{i}), 0);
-			assert(this->get_label(to_padded_id(pack_id{i})) == 0);
-			break;
-		default: // everything else is traversable
-			this->set_label(to_padded_id(pack_id{i}), 1);
-			num_traversable_++;
-			assert(this->get_label(to_padded_id(pack_id{i})) == 1);
-			break;
-		}
-	}
+	if (!parser.read_map(in, *this, 0, padded_rows_before_first_row_))
+		throw std::runtime_error("invalid grid format");
+	// calculate traversable
+	num_traversable_ = static_cast<uint32_t>( std::transform_reduce(db_, db_ + db_size_, static_cast<int>(0), std::plus<uint32_t>(),
+		&std::popcount<dbword>) );
 }
 
 void

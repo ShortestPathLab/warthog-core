@@ -5,6 +5,7 @@ cmake_minimum_required(VERSION 3.13)
 target_sources(warthog_core PUBLIC
 include/warthog/constants.h
 include/warthog/forward.h
+include/warthog/limits.h
 
 include/warthog/domain/grid.h
 include/warthog/domain/gridmap.h
@@ -17,6 +18,8 @@ include/warthog/heuristic/heuristic_value.h
 include/warthog/heuristic/manhattan_heuristic.h
 include/warthog/heuristic/octile_heuristic.h
 include/warthog/heuristic/zero_heuristic.h
+
+include/warthog/io/grid.h
 
 include/warthog/memory/arraylist.h
 include/warthog/memory/bittable.h

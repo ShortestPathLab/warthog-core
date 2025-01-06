@@ -38,7 +38,10 @@ class gridmap : public memory::bittable<pad_id, warthog::dbword>
 public:
 	gridmap(uint32_t height, uint32_t width);
 	gridmap(const char* filename);
+	gridmap(const gridmap&) = delete;
 	~gridmap();
+
+	gridmap& operator=(const gridmap&) = delete;
 
 	// here we convert from the coordinate space of
 	// the original grid to the coordinate space of db_.
@@ -315,12 +318,6 @@ private:
 	uint32_t max_id_;
 	uint32_t num_traversable_;
 
-	gridmap(const gridmap& other) { }
-	gridmap&
-	operator=(const gridmap& other)
-	{
-		return *this;
-	}
 	void
 	init_db();
 };
