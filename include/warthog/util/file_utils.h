@@ -47,12 +47,11 @@ isFileExists(const std::string& name);
 consteval const char*
 getBaseName_(const char* filepath)
 {
-	if (filepath == nullptr)
-		return nullptr;
+	if(filepath == nullptr) return nullptr;
 	const char* name_start = filepath;
-	for (const char* p = filepath; *p != '\0'; ++p) {
-		if (*p == '/' || *p == '\\')
-			name_start = p + 1;
+	for(const char* p = filepath; *p != '\0'; ++p)
+	{
+		if(*p == '/' || *p == '\\') name_start = p + 1;
 	}
 	return name_start;
 }

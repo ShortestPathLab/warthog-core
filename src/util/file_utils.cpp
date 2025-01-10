@@ -5,25 +5,25 @@
  *      Author: koldar
  */
 
+#include <filesystem>
 #include <fstream>
 #include <stdio.h>
 #include <warthog/util/file_utils.h>
 #include <warthog/util/log.h>
-#include <filesystem>
 
 namespace warthog::util
 {
 
-namespace {
+namespace
+{
 const char*
 getBaseName_aux(const char* filepath)
 {
-	if (filepath == nullptr)
-		return nullptr;
+	if(filepath == nullptr) return nullptr;
 	const char* name_start = filepath;
-	for (const char* p = filepath; *p != '\0'; ++p) {
-		if (*p == '/' || *p == '\\')
-			name_start = p + 1;
+	for(const char* p = filepath; *p != '\0'; ++p)
+	{
+		if(*p == '/' || *p == '\\') name_start = p + 1;
 	}
 	return name_start;
 }
