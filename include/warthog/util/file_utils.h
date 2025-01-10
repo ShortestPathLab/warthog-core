@@ -44,6 +44,28 @@ isFileExists(const std::string& name);
  * @param[in] filepath the absolute path to handle
  * @return a pointer in @c filepath where the basename of the file starts
  */
+consteval const char*
+getBaseName_(const char* filepath)
+{
+	if (filepath == nullptr)
+		return nullptr;
+	const char* name_start = filepath;
+	for (const char* p = filepath; *p != '\0'; ++p) {
+		if (*p == '/' || *p == '\\')
+			name_start = p + 1;
+	}
+	return name_start;
+}
+
+/**
+ * Get the basename of a file given its absolute path
+ *
+ * @pre
+ *  @li filepath is an absolute path (like the one returneed by __FILE__);
+ *
+ * @param[in] filepath the absolute path to handle
+ * @return a pointer in @c filepath where the basename of the file starts
+ */
 [[deprecated("Move to std::filesystem")]]
 const char*
 getBaseName(const char* filepath);
