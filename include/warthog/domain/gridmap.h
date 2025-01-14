@@ -23,14 +23,19 @@
 #include <warthog/memory/bittable.h>
 #include <warthog/util/gm_parser.h>
 #include <warthog/util/helpers.h>
+#include <warthog/util/cast.h>
 
 #include <cassert>
 #include <climits>
 #include <cstdint>
 #include <limits>
+#include <cstring>
+#include <bit>
 
 namespace warthog::domain
 {
+
+class gridmap_slider;
 
 constexpr uint32_t GRID_ID_MAX = std::numeric_limits<uint32_t>::max();
 class gridmap : public memory::bittable<pad_id, warthog::dbword>
@@ -225,6 +230,18 @@ public:
 		tiles[2] = *((uint64_t*)(db_) + pos3);
 	}
 
+	// fetches a contiguous set of tiles from three adjacent rows.
+	// the middle row contains tile grid_id_p.
+	// the other tiles are from the row above and below grid_id_p.
+	// returns rows in little endian. Will perform byte_swap in big endian systems.
+	gridmap_slider
+	get_neighbours_slider(pad_id grid_id)
+	{
+		return {data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
+			static_cast<uint32_t>(dbwidth_ >> base_bit_width),
+			static_cast<uint32_t>(dbwidth_ & base_bit_mask)};
+	}
+
 	// get the label associated with the padded coordinate pair (x, y)
 	bool
 	get_label(uint32_t x, uint32_t y)
@@ -321,6 +338,34 @@ private:
 
 	void
 	init_db();
+};
+
+struct gridmap_slider
+{
+	warthog::dbword* loc;
+	uint32_t width8;
+	uint32_t width8_bits; /// only used for end-user
+
+	constexpr void adj_bytes(int i) noexcept { loc += i; }
+
+	constexpr std::array<uint64_t, 3>
+	get_neighbours_64bit_le() const noexcept
+	{
+		std::array<uint64_t, 3> return_value;
+		std::memcpy(&return_value[0], loc - width8, sizeof(uint64_t));
+		std::memcpy(&return_value[1], loc, sizeof(uint64_t));
+		std::memcpy(&return_value[2], loc + width8, sizeof(uint64_t));
+
+		if constexpr (std::endian::native == std::endian::big)
+		{
+			// big endian, perform byte swap
+			return_value[0] = util::byteswap_u64(return_value[0]);
+			return_value[1] = util::byteswap_u64(return_value[1]);
+			return_value[2] = util::byteswap_u64(return_value[2]);
+		}
+
+		return return_value;
+	}
 };
 
 } // namespace warthog::domain
