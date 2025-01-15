@@ -1,7 +1,7 @@
 #ifndef WARTHOG_LIMITS_H
 #define WARTHOG_LIMITS_H
 
-#include "constants.h"
+#include <cstddef>
 
 namespace warthog
 {

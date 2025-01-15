@@ -1,5 +1,11 @@
 cmake_minimum_required(VERSION 3.13)
 
+configure_file(cmake/config.h.in warthog/config.h @ONLY)
+target_sources(warthog_core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/warthog/config.h)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/warthog/config.h
+	PUBLIC_HEADER
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/warthog)
+
 # use `find include/warthog -maxdepth 1 -type f -name '*.h' | sort`
 # use `find include/warthog/*/ -type f -name '*.h' | sort`
 target_sources(warthog_core PUBLIC

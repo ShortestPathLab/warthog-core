@@ -6,6 +6,7 @@
 #ifdef _MSC_VER
 #include <stdlib.h>
 #endif // byteswap
+#include <warthog/defines.h>
 
 namespace warthog::util
 {
@@ -84,6 +85,13 @@ constexpr uint64_t byteswap_u64(uint64_t value) noexcept
 #endif
 #undef byteswap_u64_default_return
 }
+
+#ifdef WARTHOG_INT128_ENABLED
+constexpr unsigned __int128 byteswap_u128(unsigned __int128 value) noexcept
+{
+	return __builtin_bswap128(value);
+}
+#endif
 
 } // namespace warthog::util
 

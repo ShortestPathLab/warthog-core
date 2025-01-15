@@ -7,14 +7,25 @@ project(Warthog
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
+option(WARTHOG_INT128 "Enable support for __int128 on gcc and clang" OFF)
+
 include(cmake/submodule.cmake)
+
+add_library(warthog_compile INTERFACE)
+add_library(warthog::compile ALIAS warthog_compile)
+if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
+	target_compile_options(warthog_compile INTERFACE
+		$<$<BOOL:${WARTHOG_INT128}>:-march=native>)
+endif()
 
 add_library(warthog_core)
 add_library(warthog::core ALIAS warthog_core)
 target_include_directories(warthog_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
   $<INSTALL_INTERFACE:include>
 )
+target_link_libraries(warthog_core PUBLIC warthog::compile)
 include(cmake/headers.cmake)
 
 add_executable(warthog_app)

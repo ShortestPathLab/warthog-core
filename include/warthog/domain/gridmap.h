@@ -348,12 +348,16 @@ struct gridmap_slider
 
 	constexpr void adj_bytes(int i) noexcept { loc += i; }
 
+	// returns rows as:
+	// [0] = middle
+	// [1] = above (-y)
+	// [2] = below (+y)
 	constexpr std::array<uint64_t, 3>
 	get_neighbours_64bit_le() const noexcept
 	{
 		std::array<uint64_t, 3> return_value;
-		std::memcpy(&return_value[0], loc - width8, sizeof(uint64_t));
-		std::memcpy(&return_value[1], loc, sizeof(uint64_t));
+		std::memcpy(&return_value[0], loc, sizeof(uint64_t));
+		std::memcpy(&return_value[1], loc - width8, sizeof(uint64_t));
 		std::memcpy(&return_value[2], loc + width8, sizeof(uint64_t));
 
 		if constexpr (std::endian::native == std::endian::big)
@@ -366,6 +370,28 @@ struct gridmap_slider
 
 		return return_value;
 	}
+
+#ifdef WARTHOG_INT128_ENABLED
+	constexpr std::array<unsigned __int128, 3>
+	get_neighbours_128bit_le() const noexcept
+	{
+		using int128 = unsigned __int128;
+		std::array<int128, 3> return_value;
+		std::memcpy(&return_value[0], loc, sizeof(int128));
+		std::memcpy(&return_value[1], loc - width8, sizeof(int128));
+		std::memcpy(&return_value[2], loc + width8, sizeof(int128));
+
+		if constexpr (std::endian::native == std::endian::big)
+		{
+			// big endian, perform byte swap
+			return_value[0] = util::byteswap_u128(return_value[0]);
+			return_value[1] = util::byteswap_u128(return_value[1]);
+			return_value[2] = util::byteswap_u128(return_value[2]);
+		}
+
+		return return_value;
+	}
+#endif
 };
 
 } // namespace warthog::domain
