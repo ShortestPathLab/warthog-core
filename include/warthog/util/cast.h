@@ -124,7 +124,7 @@ constexpr T byteswap_auto(T value) noexcept
 			return byteswap_u16(value);
 		} else if constexpr (std::same_as<T, uint32_t>) {
 			return byteswap_u32(value);
-		} else (std::same_as<T, uint64_t>) {
+		} else {
 			return byteswap_u64(value);
 		}
 	}

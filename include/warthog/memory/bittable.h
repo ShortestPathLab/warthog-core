@@ -17,6 +17,39 @@ struct bittable_dimension
 	uint32_t height;
 };
 
+namespace details {
+
+template <size_t Bits>
+struct bittable_span_type;
+// to fit n-bits into a m-byte array,
+// the max number of bits is (m-1)*8 + 1
+template <size_t Bits>
+requires (Bits == 1)
+struct bittable_span_type<Bits>
+{
+	using type = uint8_t;
+};
+template <size_t Bits>
+requires (Bits > 1 && Bits <= 9) // m=2, n = (2-1)*8 + 1
+struct bittable_span_type<Bits>
+{
+	using type = uint16_t;
+};
+template <size_t Bits>
+requires (Bits > 9 && Bits <= 25) // m=2, n = (4-1)*8 + 1
+struct bittable_span_type<Bits>
+{
+	using type = uint32_t;
+};
+template <size_t Bits>
+requires (Bits > 25 && Bits <= 57) // m=2, n = (8-1)*8 + 1
+struct bittable_span_type<Bits>
+{
+	using type = uint64_t;
+};
+
+} // namespace details
+
 /**
  * IdType: should be Identity, although integer is allowed.
  * ValueBits: size of bits stored for each value. Must be power of 2 and
@@ -31,6 +64,7 @@ public:
 	    ValueBits <= sizeof(BaseType) * CHAR_BIT
 	        && std::popcount(ValueBits) == 1,
 	    "ValueBits must be to power of 2 and fit inside BaseType bits.");
+	constexpr static size_t value_bits = ValueBits;
 	using id_type = IdType;
 	using value_type = BaseType;
 	using id_value_type
@@ -50,7 +84,7 @@ public:
 	{
 		const size_t total_bits
 		    = static_cast<size_t>(width) * height * ValueBits;
-		return (total_bits + ((1u << base_bit_width) - 1)) >> base_bit_width;
+		return ( (total_bits + ((1u << base_bit_width) - 1)) >> base_bit_width );
 	}
 
 	constexpr bittable() noexcept : m_data{}, m_dim{} { }
@@ -227,6 +261,42 @@ public:
 		return {
 		    static_cast<uint32_t>(idval >> base_bit_width),
 		    static_cast<uint32_t>(idval & base_bit_mask)};
+	}
+
+	/**
+	 * Read bits into single integer I.  Bits will be stored such that id is
+	 * in I bit position 0, I+1 in position 1, and so on.
+	 * Up to 57 bits (Count * value_bits) are supported as only a single non-memory aligned read is performed
+	 * (if CPU supports this).
+	 * 
+	 * This feature is only supported in 1-byte base type systems due to limitations with
+	 * big-endian.
+	 * Padding of 8 bytes in setup is recommended to avoid segfault of integer access.
+	 * 
+	 * @tparam Count number of bits, max 57.
+	 * @tparam Mask mask out all bits not in Count (i.e. zero out)
+	 * @param id the index position to 
+	 */
+	template <size_t Count = 56 / value_bits, bool Mask = false>
+	requires (sizeof(BaseType) == 1)
+	constexpr typename details::bittable_span_type<Count * value_bits>::type
+	get_span(id_type id) const noexcept
+	{
+		using type = typename details::bittable_span_type<Count * value_bits>;
+		if constexpr (Count == 1) {
+			return static_cast<type>(get(id));
+		} else {
+			assert(uint64_t{id} < size());
+			id_value_type idval = id_value_type{id} << value_bit_width;
+			BaseType* data_pos = m_data + (idval >> base_bit_width);
+			type value_span{};
+			std::memcpy(&value_span, data_pos, sizeof(type));
+			value_span >>= (idval & base_bit_mask);
+			if constexpr (Mask) {
+				value_span &= static_cast<type>( ~(~0ull << (Count * value_bits)) );
+			}
+			return value_span;
+		}
 	}
 
 protected:
