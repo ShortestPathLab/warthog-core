@@ -282,7 +282,7 @@ public:
 	constexpr typename details::bittable_span_type<Count * value_bits>::type
 	get_span(id_type id) const noexcept
 	{
-		using type = typename details::bittable_span_type<Count * value_bits>;
+		using type = typename details::bittable_span_type<Count * value_bits>::type;
 		if constexpr (Count == 1) {
 			return static_cast<type>(get(id));
 		} else {
