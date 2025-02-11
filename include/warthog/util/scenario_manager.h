@@ -26,6 +26,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <filesystem>
 
 namespace warthog::util
 {
@@ -36,37 +37,43 @@ public:
 	scenario_manager();
 	~scenario_manager();
 
-	inline experiment*
+	experiment*
 	get_experiment(unsigned int which)
 	{
 		if(which < experiments_.size()) { return experiments_[which]; }
 		return 0;
 	}
+	const experiment*
+	get_experiment(unsigned int which) const
+	{
+		if(which < experiments_.size()) { return experiments_[which]; }
+		return 0;
+	}
 
-	inline void
+	void
 	add_experiment(experiment* newexp)
 	{
 		experiments_.push_back(newexp);
 	}
 
-	inline uint32_t
-	num_experiments()
+	uint32_t
+	num_experiments() const noexcept
 	{
 		return (uint32_t)experiments_.size();
 	}
 
-	inline size_t
-	mem()
+	size_t
+	mem() const noexcept
 	{
 		return sizeof(*this) + sizeof(experiment) * experiments_.size();
 	}
 
-	inline std::string
-	last_file_loaded()
+	const std::string&
+	last_file_loaded() noexcept
 	{
 		return sfile_;
 	}
-	inline void
+	void
 	clear()
 	{
 		experiments_.clear();
@@ -88,6 +95,8 @@ private:
 	std::vector<experiment*> experiments_;
 	std::string sfile_;
 };
+
+std::filesystem::path find_map_filename(const scenario_manager& scenmgr, std::filesystem::path sfilename = {});
 
 } // namespace warthog::util
 
