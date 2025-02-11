@@ -318,23 +318,12 @@ main(int argc, char** argv)
 	if(mapfile == "")
 	{
 		// first, try to load the map from the scenario file
-		mapfile = scenmgr.get_experiment(0)->map().c_str();
-		if(!std::filesystem::exists(std::filesystem::path(mapfile)))
+		mapfile = warthog::util::find_map_filename(scenmgr, sfile);
+		if(mapfile.empty())
 		{
-			// else, look for the map in the current directory
-			mapfile = std::filesystem::path(mapfile).filename();
-			if(!std::filesystem::exists(std::filesystem::path(mapfile)))
-			{
-				// else, try to infer the map name from the scenario filename
-				std::filesystem::path p(sfile);
-				mapfile = std::filesystem::path(sfile).replace_extension("");
-				if(!std::filesystem::exists(std::filesystem::path(mapfile)))
-				{
-					std::cerr << "could not locate a corresponding map file\n";
-					help();
-					return 1;
-				}
-			}
+			std::cerr << "could not locate a corresponding map file\n";
+			help(std::cout);
+			return 0;
 		}
 	}
 	std::cerr << "mapfile=" << mapfile << std::endl;

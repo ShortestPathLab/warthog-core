@@ -117,4 +117,39 @@ scenario_manager::sort()
 	}
 }
 
+std::filesystem::path find_map_filename(const scenario_manager& scenmgr, std::filesystem::path sfilename)
+{
+	namespace fs = std::filesystem;
+	const auto& mapname = scenmgr.get_experiment(0)->map();
+	bool replace_sfilename = false;
+	bool load_mapname = false;
+	if (mapname.empty()) {
+		replace_sfilename = true;
+	} else {
+		auto mappath = fs::path(mapname);
+		if (mappath.is_absolute()) {
+			if (fs::is_regular_file(mappath)) {
+				return mappath;
+			} else {
+				return {};
+			}
+		}
+		// is relative path
+		auto spath = !sfilename.empty() ? sfilename.parent_path() : fs::current_path();
+		if (auto append_path = spath / mapname; fs::is_regular_file(append_path)) {
+			return append_path;
+		}
+		replace_sfilename = true;
+	}
+	if (replace_sfilename && !sfilename.empty()) {
+		auto mapfile = sfilename.replace_extension(".map");
+		if (fs::is_regular_file(mapfile))
+			return mapfile;
+		mapfile = sfilename.replace_extension("");
+		if (fs::is_regular_file(mapfile))
+			return mapfile;
+	}
+	return {};
+}
+
 } // namespace warthog::util
