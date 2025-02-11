@@ -293,8 +293,8 @@ public:
 	get_neighbours_slider(pad_id grid_id) const
 	{
 		return {data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
-			static_cast<uint32_t>(dbwidth_ >> base_bit_width),
-			static_cast<uint32_t>(dbwidth_ & base_bit_mask)};
+			static_cast<uint32_t>(dbwidth_),
+			static_cast<uint32_t>(grid_id.id & base_bit_mask)};
 	}
 
 	// get the label associated with the padded coordinate pair (x, y)
