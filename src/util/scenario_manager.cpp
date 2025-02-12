@@ -122,7 +122,6 @@ std::filesystem::path find_map_filename(const scenario_manager& scenmgr, std::fi
 	namespace fs = std::filesystem;
 	const auto& mapname = scenmgr.get_experiment(0)->map();
 	bool replace_sfilename = false;
-	bool load_mapname = false;
 	if (mapname.empty()) {
 		replace_sfilename = true;
 	} else {
