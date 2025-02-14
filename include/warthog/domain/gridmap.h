@@ -47,7 +47,7 @@ struct gridmap_slider
 	// [0] = middle
 	// [1] = above (-y)
 	// [2] = below (+y)
-	constexpr std::array<uint64_t, 3>
+	std::array<uint64_t, 3>
 	get_neighbours_64bit_le() const noexcept
 	{
 		std::array<uint64_t, 3> return_value;
@@ -67,7 +67,7 @@ struct gridmap_slider
 	}
 
 #ifdef WARTHOG_INT128_ENABLED
-	constexpr std::array<unsigned __int128, 3>
+	std::array<unsigned __int128, 3>
 	get_neighbours_128bit_le() const noexcept
 	{
 		using int128 = unsigned __int128;

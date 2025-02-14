@@ -279,7 +279,7 @@ public:
 	 */
 	template <size_t Count = 56 / value_bits, bool Mask = false>
 	requires (sizeof(BaseType) == 1)
-	constexpr typename details::bittable_span_type<Count * value_bits>::type
+	typename details::bittable_span_type<Count * value_bits>::type
 	get_span(id_type id) const noexcept
 	{
 		using type = typename details::bittable_span_type<Count * value_bits>::type;
