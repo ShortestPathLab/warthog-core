@@ -23,10 +23,10 @@
 #include <warthog/heuristic/octile_heuristic.h>
 #include <warthog/search/gridmap_expansion_policy.h>
 
+#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <vector>
-#include <filesystem>
 
 namespace warthog::util
 {
@@ -96,7 +96,9 @@ private:
 	std::string sfile_;
 };
 
-std::filesystem::path find_map_filename(const scenario_manager& scenmgr, std::filesystem::path sfilename = {});
+std::filesystem::path
+find_map_filename(
+    const scenario_manager& scenmgr, std::filesystem::path sfilename = {});
 
 } // namespace warthog::util
 

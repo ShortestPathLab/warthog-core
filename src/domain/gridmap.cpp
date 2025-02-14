@@ -44,8 +44,7 @@ gridmap::init_db()
 	// zeroes. this eliminates the need for bounds checking when
 	// fetching the neighbours of a node.
 	uint32_t store_width, store_height;
-	store_height = this->header_.height_ + PADDED_ROWS
-	    + PADDED_ROWS;
+	store_height = this->header_.height_ + PADDED_ROWS + PADDED_ROWS;
 
 	// calculate # of extra/redundant padding bits required,
 	// per row, to align map width with dbword size

@@ -42,7 +42,8 @@ public:
 	// no copy
 	experiment(const experiment& other) = delete;
 	experiment&
-	operator=(const experiment& other) = delete;
+	operator=(const experiment& other)
+	    = delete;
 
 	~experiment() { }
 

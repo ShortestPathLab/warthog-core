@@ -21,16 +21,16 @@
 #include "grid.h"
 #include <warthog/constants.h>
 #include <warthog/memory/bittable.h>
+#include <warthog/util/cast.h>
 #include <warthog/util/gm_parser.h>
 #include <warthog/util/helpers.h>
-#include <warthog/util/cast.h>
 
+#include <bit>
 #include <cassert>
 #include <climits>
 #include <cstdint>
-#include <limits>
 #include <cstring>
-#include <bit>
+#include <limits>
 
 namespace warthog::domain
 {
@@ -41,7 +41,11 @@ struct gridmap_slider
 	uint32_t width8;
 	uint32_t width8_bits; /// only used for end-user
 
-	constexpr void adj_bytes(int i) noexcept { loc += i; }
+	constexpr void
+	adj_bytes(int i) noexcept
+	{
+		loc += i;
+	}
 
 	// returns rows as:
 	// [0] = middle
@@ -55,7 +59,7 @@ struct gridmap_slider
 		std::memcpy(&return_value[1], loc - width8, sizeof(uint64_t));
 		std::memcpy(&return_value[2], loc + width8, sizeof(uint64_t));
 
-		if constexpr (std::endian::native == std::endian::big)
+		if constexpr(std::endian::native == std::endian::big)
 		{
 			// big endian, perform byte swap
 			return_value[0] = util::byteswap_u64(return_value[0]);
@@ -76,7 +80,7 @@ struct gridmap_slider
 		std::memcpy(&return_value[1], loc - width8, sizeof(int128));
 		std::memcpy(&return_value[2], loc + width8, sizeof(int128));
 
-		if constexpr (std::endian::native == std::endian::big)
+		if constexpr(std::endian::native == std::endian::big)
 		{
 			// big endian, perform byte swap
 			return_value[0] = util::byteswap_u128(return_value[0]);
@@ -288,13 +292,15 @@ public:
 	// fetches a contiguous set of tiles from three adjacent rows.
 	// the middle row contains tile grid_id_p.
 	// the other tiles are from the row above and below grid_id_p.
-	// returns rows in little endian. Will perform byte_swap in big endian systems.
+	// returns rows in little endian. Will perform byte_swap in big endian
+	// systems.
 	gridmap_slider
 	get_neighbours_slider(pad_id grid_id) const
 	{
-		return {data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
-			static_cast<uint32_t>(dbwidth_),
-			static_cast<uint32_t>(grid_id.id & base_bit_mask)};
+		return {
+		    data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
+		    static_cast<uint32_t>(dbwidth_),
+		    static_cast<uint32_t>(grid_id.id & base_bit_mask)};
 	}
 
 	// get the label associated with the padded coordinate pair (x, y)
