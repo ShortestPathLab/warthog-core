@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.13)
 
-configure_file(cmake/config.h.in warthog/config.h @ONLY)
-target_sources(warthog_core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/warthog/config.h)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/warthog/config.h
+configure_file(cmake/config.h.in include/warthog/config.h @ONLY)
+target_sources(warthog_core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h)
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h
 	PUBLIC_HEADER
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/warthog)
 

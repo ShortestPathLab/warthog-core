@@ -1,8 +1,18 @@
 #ifndef WARTHOG_UTIL_CAST_H
 #define WARTHOG_UTIL_CAST_H
 
+// cast.h
+//
+// Utility file for memory value conversion.
+// Include support for byte swapping over different compilers.
+//
+// @author: Ryan Hechenberger
+// @created: 2024-10-11
+//
+
 #include <cstdint>
 #include <cstring>
+#include <bit>
 #ifdef _MSC_VER
 #include <stdlib.h>
 #endif // byteswap
@@ -12,6 +22,8 @@
 namespace warthog::util
 {
 
+// Removed, use std::bit_cast
+#if 0
 // Thanks Graeme
 //
 // Hack of reinterpret_cast
@@ -26,17 +38,18 @@ conv(const U& x)
 	memcpy(&ret, &x, sizeof(U));
 	return ret;
 }
+#endif
 
 inline uintptr_t
 wt_to_label(double b)
 {
-	return conv<uintptr_t, double>(b);
+	return std::bit_cast<uintptr_t>(b);
 }
 
 inline double
 label_to_wt(uintptr_t b)
 {
-	return conv<double, uintptr_t>(b);
+	return std::bit_cast<double>(b);
 }
 
 constexpr uint16_t

@@ -22,7 +22,7 @@ add_library(warthog_core)
 add_library(warthog::core ALIAS warthog_core)
 target_include_directories(warthog_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(warthog_core PUBLIC warthog::compile)
