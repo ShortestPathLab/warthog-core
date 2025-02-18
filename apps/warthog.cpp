@@ -22,8 +22,8 @@
 #include <warthog/util/timer.h>
 
 #include "cfg.h"
-#include <warthog/config.h>
 #include <getopt.h>
+#include <warthog/config.h>
 
 #include <cmath>
 #include <filesystem>
@@ -56,20 +56,20 @@ help(std::ostream& out)
 	       "Competition\n\n";
 
 	out << "The following are valid parameters for SOLVING instances:\n"
-		<< "\t--alg [alg] (required)\n"
-		<< "\t--scen [scen file] (required) \n"
-		<< "\t--map [map file] (optional; specify this to override map "
-			"values in scen file) \n"
-		<< "\t--costs [costs file] (required if using a weighted "
-			"terrain algorithm)\n"
-		<< "\t--checkopt (optional; compare solution costs against "
-			"values in the scen file)\n"
-		<< "\t--verbose (optional; prints debugging info when compiled "
-			"with debug symbols)\n"
-		<< "Invoking the program this way solves all instances in [scen "
-			"file] with algorithm [alg]\n"
-		<< "Currently recognised values for [alg]:\n"
-		<< "\tastar, astar_wgm, astar4c, dijkstra\n";
+	    << "\t--alg [alg] (required)\n"
+	    << "\t--scen [scen file] (required) \n"
+	    << "\t--map [map file] (optional; specify this to override map "
+	       "values in scen file) \n"
+	    << "\t--costs [costs file] (required if using a weighted "
+	       "terrain algorithm)\n"
+	    << "\t--checkopt (optional; compare solution costs against "
+	       "values in the scen file)\n"
+	    << "\t--verbose (optional; prints debugging info when compiled "
+	       "with debug symbols)\n"
+	    << "Invoking the program this way solves all instances in [scen "
+	       "file] with algorithm [alg]\n"
+	    << "Currently recognised values for [alg]:\n"
+	    << "\tastar, astar_wgm, astar4c, dijkstra\n";
 }
 
 bool

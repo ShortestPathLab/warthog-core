@@ -10,9 +10,9 @@
 // @created: 2024-10-11
 //
 
+#include <bit>
 #include <cstdint>
 #include <cstring>
-#include <bit>
 #ifdef _MSC_VER
 #include <stdlib.h>
 #endif // byteswap
