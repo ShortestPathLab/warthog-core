@@ -29,7 +29,7 @@ gridmap::gridmap(const char* filename)
 	this->header_.height_ = parser.get_dim().height;
 
 	init_db();
-	if(!parser.read_map(in, *this, 0, padded_rows_before_first_row_))
+	if(!parser.read_map(in, *this, 0, PADDED_ROWS))
 		throw std::runtime_error("invalid grid format");
 	// calculate traversable
 	num_traversable_ = static_cast<uint32_t>(std::transform_reduce(
@@ -43,11 +43,8 @@ gridmap::init_db()
 	// when storing the grid we pad the edges of the map with
 	// zeroes. this eliminates the need for bounds checking when
 	// fetching the neighbours of a node.
-	this->padded_rows_before_first_row_ = 3;
-	this->padded_rows_after_last_row_ = 3;
 	uint32_t store_width, store_height;
-	store_height = this->header_.height_ + padded_rows_after_last_row_
-	    + padded_rows_before_first_row_;
+	store_height = this->header_.height_ + PADDED_ROWS + PADDED_ROWS;
 
 	// calculate # of extra/redundant padding bits required,
 	// per row, to align map width with dbword size
@@ -61,7 +58,8 @@ gridmap::init_db()
 	this->dbheight_ = store_height;
 	this->dbwidth_ = store_width >> warthog::LOG2_DBWORD_BITS;
 	this->dbwidth64_ = store_width >> 6;
-	this->db_size_ = bittable::calc_array_size(store_width, store_height);
+	// the +8 is to allow unaligned access past the end
+	this->db_size_ = bittable::calc_array_size(store_width, store_height) + 8;
 
 	// create a one dimensional dbword array to store the grid
 	this->db_ = new warthog::dbword[db_size_];

@@ -21,16 +21,77 @@
 #include "grid.h"
 #include <warthog/constants.h>
 #include <warthog/memory/bittable.h>
+#include <warthog/util/cast.h>
 #include <warthog/util/gm_parser.h>
 #include <warthog/util/helpers.h>
 
+#include <bit>
 #include <cassert>
 #include <climits>
 #include <cstdint>
+#include <cstring>
 #include <limits>
 
 namespace warthog::domain
 {
+
+struct gridmap_slider
+{
+	const warthog::dbword* loc;
+	uint32_t width8;
+	uint32_t width8_bits; /// only used for end-user
+
+	constexpr void
+	adj_bytes(int i) noexcept
+	{
+		loc += i;
+	}
+
+	// returns rows as:
+	// [0] = middle
+	// [1] = above (-y)
+	// [2] = below (+y)
+	std::array<uint64_t, 3>
+	get_neighbours_64bit_le() const noexcept
+	{
+		std::array<uint64_t, 3> return_value;
+		std::memcpy(&return_value[0], loc, sizeof(uint64_t));
+		std::memcpy(&return_value[1], loc - width8, sizeof(uint64_t));
+		std::memcpy(&return_value[2], loc + width8, sizeof(uint64_t));
+
+		if constexpr(std::endian::native == std::endian::big)
+		{
+			// big endian, perform byte swap
+			return_value[0] = util::byteswap_u64(return_value[0]);
+			return_value[1] = util::byteswap_u64(return_value[1]);
+			return_value[2] = util::byteswap_u64(return_value[2]);
+		}
+
+		return return_value;
+	}
+
+#ifdef WARTHOG_INT128_ENABLED
+	std::array<unsigned __int128, 3>
+	get_neighbours_128bit_le() const noexcept
+	{
+		using int128 = unsigned __int128;
+		std::array<int128, 3> return_value;
+		std::memcpy(&return_value[0], loc, sizeof(int128));
+		std::memcpy(&return_value[1], loc - width8, sizeof(int128));
+		std::memcpy(&return_value[2], loc + width8, sizeof(int128));
+
+		if constexpr(std::endian::native == std::endian::big)
+		{
+			// big endian, perform byte swap
+			return_value[0] = util::byteswap_u128(return_value[0]);
+			return_value[1] = util::byteswap_u128(return_value[1]);
+			return_value[2] = util::byteswap_u128(return_value[2]);
+		}
+
+		return return_value;
+	}
+#endif
+};
 
 constexpr uint32_t GRID_ID_MAX = std::numeric_limits<uint32_t>::max();
 class gridmap : public memory::bittable<pad_id, warthog::dbword>
@@ -40,6 +101,9 @@ public:
 	gridmap(const char* filename);
 	gridmap(const gridmap&) = delete;
 	~gridmap();
+
+	/// The number of padded rows before and after
+	static constexpr uint32_t PADDED_ROWS = 3;
 
 	gridmap&
 	operator=(const gridmap&)
@@ -54,7 +118,7 @@ public:
 		return pad_id{
 		    uint32_t{node_id} +
 		    // padded rows before the actual map data starts
-		    padded_rows_before_first_row_ * width() +
+		    PADDED_ROWS * width() +
 		    // padding from each row of data before this one
 		    (uint32_t{node_id} / header_.width_) * padding_per_row_};
 	}
@@ -64,7 +128,7 @@ public:
 	pad_id
 	to_padded_id_from_unpadded(uint32_t x, uint32_t y) const noexcept
 	{
-		return pad_id{(y + padded_rows_before_first_row_) * width() + x};
+		return pad_id{(y + PADDED_ROWS) * width() + x};
 	}
 	pad_id
 	to_padded_id_from_padded(uint32_t x, uint32_t y) const noexcept
@@ -84,7 +148,7 @@ public:
 	to_unpadded_xy(pad_id grid_id, uint32_t& x, uint32_t& y) const noexcept
 	{
 		to_padded_xy(grid_id, x, y);
-		y -= padded_rows_before_first_row_;
+		y -= PADDED_ROWS;
 		assert(x < header_.width_ && y < header_.height_);
 	}
 
@@ -106,7 +170,7 @@ public:
 		    (uint32_t{grid_id} / width()) * padding_per_row_ -
 		    // padded rows before the actual map data starts, use header_width
 		    // as the padded width is already removed
-		    padded_rows_before_first_row_ * header_.width_};
+		    PADDED_ROWS * header_.width_};
 	}
 	pack_id
 	to_unpadded_id_from_unpadded(uint32_t x, uint32_t y) const noexcept
@@ -122,7 +186,7 @@ public:
 	// lowest positions of the byte.
 	// position :0 is the nei in direction NW, :1 is N and :2 is NE
 	void
-	get_neighbours(pad_id grid_id, uint8_t tiles[3])
+	get_neighbours(pad_id grid_id, uint8_t tiles[3]) const
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
@@ -152,7 +216,7 @@ public:
 	// tiles are from the row immediately above and immediately below
 	// grid_id_p.
 	void
-	get_neighbours_32bit(pad_id grid_id, uint32_t tiles[3])
+	get_neighbours_32bit(pad_id grid_id, uint32_t tiles[3]) const
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
@@ -178,7 +242,7 @@ public:
 	// upper bit of the return value. this variant is useful when jumping
 	// toward smaller memory addresses (i.e. west instead of east).
 	void
-	get_neighbours_upper_32bit(pad_id grid_id, uint32_t tiles[3])
+	get_neighbours_upper_32bit(pad_id grid_id, uint32_t tiles[3]) const
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
@@ -208,7 +272,7 @@ public:
 	// the middle row contains tile grid_id_p.
 	// the other tiles are from the row above and below grid_id_p.
 	void
-	get_neighbours_64bit(pad_id grid_id, uint64_t tiles[3])
+	get_neighbours_64bit(pad_id grid_id, uint64_t tiles[3]) const
 	{
 		// convert grid_id_p into a 64bit db_ index.
 		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> 6);
@@ -225,23 +289,37 @@ public:
 		tiles[2] = *((uint64_t*)(db_) + pos3);
 	}
 
+	// fetches a contiguous set of tiles from three adjacent rows.
+	// the middle row contains tile grid_id_p.
+	// the other tiles are from the row above and below grid_id_p.
+	// returns rows in little endian. Will perform byte_swap in big endian
+	// systems.
+	gridmap_slider
+	get_neighbours_slider(pad_id grid_id) const
+	{
+		return {
+		    data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
+		    static_cast<uint32_t>(dbwidth_),
+		    static_cast<uint32_t>(grid_id.id & base_bit_mask)};
+	}
+
 	// get the label associated with the padded coordinate pair (x, y)
 	bool
-	get_label(uint32_t x, uint32_t y)
+	get_label(uint32_t x, uint32_t y) const
 	{
 		return this->get_label(to_padded_id_from_padded(x, y));
 	}
 
 	// change: now does not check bounds
 	warthog::dbword
-	get_label(pad_id grid_id)
+	get_label(pad_id grid_id) const
 	{
 		return bittable::get(grid_id);
 	}
 
 	// get a pointer to the word that contains the label of node @grid_id_p
-	warthog::dbword*
-	get_mem_ptr(pad_id grid_id)
+	const warthog::dbword*
+	get_mem_ptr(pad_id grid_id) const
 	{
 		return data() + id_split(grid_id).first;
 	}
@@ -314,8 +392,6 @@ private:
 	uint32_t db_size_;
 	uint32_t padding_per_row_;
 	uint32_t padding_column_above_;
-	uint32_t padded_rows_before_first_row_;
-	uint32_t padded_rows_after_last_row_;
 	uint32_t max_id_;
 	uint32_t num_traversable_;
 

@@ -38,64 +38,71 @@ public:
 	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d), map_(m),
 	      precision_(4)
 	{ }
+
+	// no copy
+	experiment(const experiment& other) = delete;
+	experiment&
+	operator=(const experiment& other)
+	    = delete;
+
 	~experiment() { }
 
-	inline uint32_t
-	startx()
+	uint32_t
+	startx() const noexcept
 	{
 		return startx_;
 	}
 
-	inline uint32_t
-	starty()
+	uint32_t
+	starty() const noexcept
 	{
 		return starty_;
 	}
 
-	inline uint32_t
-	goalx()
+	uint32_t
+	goalx() const noexcept
 	{
 		return goalx_;
 	}
 
-	inline uint32_t
-	goaly()
+	uint32_t
+	goaly() const noexcept
 	{
 		return goaly_;
 	}
 
-	inline double
-	distance()
+	double
+	distance() const noexcept
 	{
 		return distance_;
 	}
 
-	inline std::string
-	map()
+	const std::string&
+	map() const noexcept
 	{
 		return map_;
 	}
 
-	inline uint32_t
-	mapwidth()
+	uint32_t
+	mapwidth() const noexcept
 	{
 		return mapwidth_;
 	}
 
-	inline uint32_t
-	mapheight()
+	uint32_t
+	mapheight() const noexcept
 	{
 		return mapheight_;
 	}
 
-	inline int32_t
-	precision()
+	int32_t
+	precision() const noexcept
 	{
 		return precision_;
 	}
 
-	inline void
-	set_precision(int32_t prec)
+	void
+	set_precision(int32_t prec) noexcept
 	{
 		precision_ = prec;
 	}
@@ -104,7 +111,7 @@ public:
 	print(std::ostream& out);
 
 	search::problem_instance
-	get_instance()
+	get_instance() const noexcept
 	{
 		return search::problem_instance(
 		    pack_id{starty_ * mapwidth_ + startx_},
@@ -117,14 +124,6 @@ private:
 	double distance_;
 	std::string map_;
 	int32_t precision_;
-
-	// no copy
-	experiment(const experiment& other) { }
-	experiment&
-	operator=(const experiment& other)
-	{
-		return *this;
-	}
 };
 
 } // namespace warthog::util

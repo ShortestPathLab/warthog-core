@@ -74,7 +74,22 @@ struct identity_base
 	{
 		return max();
 	}
-	bool constexpr is_none() const noexcept { return (*this) == none(); }
+	constexpr bool
+	is_none() const noexcept
+	{
+		return (*this) == none();
+	}
+
+	consteval static identity_base
+	zero() noexcept
+	{
+		return identity_base{0};
+	}
+	constexpr bool
+	is_zero() const noexcept
+	{
+		return id == 0;
+	}
 };
 template<class T>
 constexpr bool is_identity_v = std::false_type{};
