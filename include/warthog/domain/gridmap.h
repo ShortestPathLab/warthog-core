@@ -241,13 +241,7 @@ public:
 	// returns rows in little endian. Will perform byte_swap in big endian
 	// systems.
 	gridmap_slider
-	get_neighbours_slider(pad_id grid_id) const
-	{
-		return {
-		    data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
-		    static_cast<uint32_t>(dbwidth_),
-		    static_cast<uint32_t>(grid_id.id & base_bit_mask)};
-	}
+	get_neighbours_slider(pad_id grid_id) const;
 
 	// get the label associated with the padded coordinate pair (x, y)
 	bool
@@ -362,7 +356,7 @@ struct gridmap_slider
 	/// @param grid base grid for slider
 	/// @param grid_id id location starting slider location
 	/// @return the slider object
-	constexpr gridmap_slider
+	constexpr static gridmap_slider
 	from_bittable(gridmap::bittable grid, gridmap::id_type grid_id) noexcept
 	{
 		using ba = gridmap::bitarray;
@@ -423,6 +417,14 @@ struct gridmap_slider
 	}
 #endif
 };
+
+inline gridmap_slider gridmap::get_neighbours_slider(pad_id grid_id) const
+{
+	return {
+		data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
+		static_cast<uint32_t>(dbwidth_),
+		static_cast<uint32_t>(grid_id.id & base_bit_mask)};
+}
 
 } // namespace warthog::domain
 

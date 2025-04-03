@@ -220,7 +220,6 @@ public:
 		if constexpr(Count == 1) { return static_cast<type>(get(id)); }
 		else
 		{
-			assert(uint64_t{id} < size());
 			id_value_type idval = id_value_type{id} << value_bit_width;
 			BaseType* data_pos = m_data + (idval >> base_bit_width);
 			type value_span{};
@@ -266,6 +265,7 @@ public:
 
 	constexpr bittable() noexcept : bittable::bitarray(), m_dim{} { }
 	constexpr bittable(value_type* ptr, uint32_t width, uint32_t height) noexcept : bittable::bitarray(ptr), m_dim{width, height} { }
+	constexpr bittable(bittable::bitarray arr, uint32_t width, uint32_t height) noexcept : bittable::bitarray(arr), m_dim{width, height} { }
 	constexpr bittable(const bittable&) noexcept = default;
 	constexpr bittable(bittable&&) noexcept = default;
 
@@ -320,8 +320,7 @@ public:
 	constexpr uint32_t
 	width_bytes() const noexcept
 	{	
-		return (static_cast<uint32_t>(m_dim.width * ValueBits) >> base_bit_width);
-		return m_dim.width;
+		return (static_cast<uint32_t>(m_dim.width * ValueBits) >> bittable::bitarray::base_bit_width);
 	}
 	constexpr uint32_t
 	height() const noexcept
