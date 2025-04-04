@@ -24,6 +24,8 @@
 #include <warthog/util/cast.h>
 #include <warthog/util/gm_parser.h>
 #include <warthog/util/helpers.h>
+// TODO: 
+#include <x86intrin.h>
 
 #include <bit>
 #include <cassert>
@@ -132,7 +134,7 @@ public:
 	// lowest positions of the byte.
 	// position :0 is the nei in direction NW, :1 is N and :2 is NE
 	void
-	get_neighbours(pad_id grid_id, uint8_t tiles[3]) const
+	get_neighbours(pad_id grid_id, uint8_t tiles[3]) const noexcept
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
@@ -157,12 +159,38 @@ public:
 		    = (uint8_t)(*((uint32_t*)(db_ + (pos3 - 1))) >> (bit_offset + 7));
 	}
 
+	// takes the tiles from get_neighbours and tightly packs them into 8-bits
+	// bit number in lsb order, rep 0b76543210 bit
+	// since it fits into 1 byte, result is endian agnostic
+	// 0=NW, 1=N, 2=NE, 3=W, 4=E, 5=SW, 6=S, 7=SE
+	// grid_id is skipped, as 3x3 does not fit in 8-bits
+	static constexpr uint8_t
+	pack_neighbours(uint8_t tiles[3]) noexcept
+	{
+#if 1
+		uint32_t word;
+		std::memcpy(&word, tiles, 4);
+		// the undefined 4th bytes affects nothing
+		return static_cast<uint8_t>(_pext_u32(word, 0b00000111'00000101'00000111));
+#else
+		// set 012
+		uint8_t res = static_cast<uint8_t>(tiles[0]);
+		// set 3
+		res |= static_cast<uint8_t>(tiles[1] & 0b001) << 3;
+		// set 4
+		res |= static_cast<uint8_t>(tiles[1] & 0b100) << 2;
+		// set 567
+		res |= (static_cast<uint8_t>(tiles[2]) << 5);
+		return res;
+#endif
+	}
+
 	// fetches a contiguous set of tiles from three adjacent rows. each row is
 	// 32 tiles long. the middle row begins with tile grid_id_p. the other
 	// tiles are from the row immediately above and immediately below
 	// grid_id_p.
 	void
-	get_neighbours_32bit(pad_id grid_id, uint32_t tiles[3]) const
+	get_neighbours_32bit(pad_id grid_id, uint32_t tiles[3]) const noexcept
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
@@ -188,7 +216,7 @@ public:
 	// upper bit of the return value. this variant is useful when jumping
 	// toward smaller memory addresses (i.e. west instead of east).
 	void
-	get_neighbours_upper_32bit(pad_id grid_id, uint32_t tiles[3]) const
+	get_neighbours_upper_32bit(pad_id grid_id, uint32_t tiles[3]) const noexcept
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
@@ -218,7 +246,7 @@ public:
 	// the middle row contains tile grid_id_p.
 	// the other tiles are from the row above and below grid_id_p.
 	void
-	get_neighbours_64bit(pad_id grid_id, uint64_t tiles[3]) const
+	get_neighbours_64bit(pad_id grid_id, uint64_t tiles[3]) const noexcept
 	{
 		// convert grid_id_p into a 64bit db_ index.
 		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> 6);
@@ -241,7 +269,7 @@ public:
 	// returns rows in little endian. Will perform byte_swap in big endian
 	// systems.
 	gridmap_slider
-	get_neighbours_slider(pad_id grid_id) const;
+	get_neighbours_slider(pad_id grid_id) const noexcept;
 
 	// get the label associated with the padded coordinate pair (x, y)
 	bool
@@ -259,7 +287,7 @@ public:
 
 	// get a pointer to the word that contains the label of node @grid_id_p
 	const warthog::dbword*
-	get_mem_ptr(pad_id grid_id) const
+	get_mem_ptr(pad_id grid_id) const noexcept
 	{
 		return data() + id_split(grid_id).first;
 	}
