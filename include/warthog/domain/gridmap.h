@@ -24,8 +24,7 @@
 #include <warthog/util/cast.h>
 #include <warthog/util/gm_parser.h>
 #include <warthog/util/helpers.h>
-// TODO: 
-#include <x86intrin.h>
+#include <warthog/util/intrin.h>
 
 #include <bit>
 #include <cassert>
@@ -164,17 +163,17 @@ public:
 	// since it fits into 1 byte, result is endian agnostic
 	// 0=NW, 1=N, 2=NE, 3=W, 4=E, 5=SW, 6=S, 7=SE
 	// grid_id is skipped, as 3x3 does not fit in 8-bits
-	static constexpr uint8_t
+	static uint8_t
 	pack_neighbours(uint8_t tiles[3]) noexcept
 	{
-#if 1
+#if WARTHOG_INTRIN_HAS(BMI2)
 		uint32_t word;
 		std::memcpy(&word, tiles, 4);
-		// the undefined 4th bytes affects nothing
+		// the undefined 4th byte affects nothing
 		return static_cast<uint8_t>(_pext_u32(word, 0b00000111'00000101'00000111));
 #else
 		// set 012
-		uint8_t res = static_cast<uint8_t>(tiles[0]);
+		uint8_t res = static_cast<uint8_t>(tiles[0] & 0b111);
 		// set 3
 		res |= static_cast<uint8_t>(tiles[1] & 0b001) << 3;
 		// set 4
@@ -446,7 +445,7 @@ struct gridmap_slider
 #endif
 };
 
-inline gridmap_slider gridmap::get_neighbours_slider(pad_id grid_id) const
+inline gridmap_slider gridmap::get_neighbours_slider(pad_id grid_id) const noexcept
 {
 	return {
 		data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),

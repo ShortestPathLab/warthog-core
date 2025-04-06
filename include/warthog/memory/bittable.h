@@ -265,7 +265,7 @@ public:
 
 	constexpr bittable() noexcept : bittable::bitarray(), m_dim{} { }
 	constexpr bittable(value_type* ptr, uint32_t width, uint32_t height) noexcept : bittable::bitarray(ptr), m_dim{width, height} { }
-	constexpr bittable(bittable::bitarray arr, uint32_t width, uint32_t height) noexcept : bittable::bitarray(arr), m_dim{width, height} { }
+	constexpr bittable(typename bittable::bitarray arr, uint32_t width, uint32_t height) noexcept : bittable::bitarray(arr), m_dim{width, height} { }
 	constexpr bittable(const bittable&) noexcept = default;
 	constexpr bittable(bittable&&) noexcept = default;
 
