@@ -11,7 +11,8 @@
 // WARTHOG_INTRIN_HAS(BMI2) for example sees if __BMI2__ is defined.
 // It must align with __##inst##__ in compiler to work.
 //
-// Check https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html
+// Check
+// https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html
 
 #if defined(__x86_64__) && __has_include(<immintrin.h>)
 #include <immintrin.h>

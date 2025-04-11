@@ -25,37 +25,37 @@ struct bittable_span_type;
 // to fit n-bits into a m-byte array,
 // the max number of bits is (m-1)*8 + 1
 template<size_t Bits>
-requires(Bits == 1) struct bittable_span_type<Bits>
+    requires(Bits == 1)
+struct bittable_span_type<Bits>
 {
 	using type = uint8_t;
 };
 template<size_t Bits>
-requires(Bits > 1 && Bits <= 9) // m=2, n = (2-1)*8 + 1
-    struct bittable_span_type<Bits>
+    requires(Bits > 1 && Bits <= 9) // m=2, n = (2-1)*8 + 1
+struct bittable_span_type<Bits>
 {
 	using type = uint16_t;
 };
 template<size_t Bits>
-requires(Bits > 9 && Bits <= 25) // m=2, n = (4-1)*8 + 1
-    struct bittable_span_type<Bits>
+    requires(Bits > 9 && Bits <= 25) // m=2, n = (4-1)*8 + 1
+struct bittable_span_type<Bits>
 {
 	using type = uint32_t;
 };
 template<size_t Bits>
-requires(Bits > 25 && Bits <= 57) // m=2, n = (8-1)*8 + 1
-    struct bittable_span_type<Bits>
+    requires(Bits > 25 && Bits <= 57) // m=2, n = (8-1)*8 + 1
+struct bittable_span_type<Bits>
 {
 	using type = uint64_t;
 };
 
 } // namespace details
 
-
 /**
  * IdType: should be Identity, although integer is allowed.
  * ValueBits: size of bits stored for each value. Must be power of 2 and
  * smaller than BaseType.
- * 
+ *
  * bittable does not own its own data.
  * copy results in sharing underlying table data.
  */
@@ -65,38 +65,42 @@ struct bitarray
 {
 public:
 	static_assert(
-		ValueBits <= sizeof(BaseType) * CHAR_BIT
-			&& std::popcount(ValueBits) == 1,
-		"ValueBits must be to power of 2 and fit inside BaseType bits.");
+	    ValueBits <= sizeof(BaseType) * CHAR_BIT
+	        && std::popcount(ValueBits) == 1,
+	    "ValueBits must be to power of 2 and fit inside BaseType bits.");
 	constexpr static size_t value_bits = ValueBits;
 	using id_type = IdType;
 	using value_type = BaseType;
 	using id_value_type
-		= std::conditional_t<sizeof(IdType) <= 4, uint32_t, uint64_t>;
+	    = std::conditional_t<sizeof(IdType) <= 4, uint32_t, uint64_t>;
 	constexpr static size_t base_bit_count = sizeof(BaseType) * CHAR_BIT;
 	constexpr static size_t base_bit_width
-		= std::bit_width(sizeof(BaseType) * CHAR_BIT - 1);
+	    = std::bit_width(sizeof(BaseType) * CHAR_BIT - 1);
 	constexpr static size_t value_bit_width = std::bit_width(ValueBits - 1);
 	constexpr static id_value_type base_bit_mask
-		= id_value_type{(uint64_t{1} << base_bit_width) - 1};
+	    = id_value_type{(uint64_t{1} << base_bit_width) - 1};
 	constexpr static value_type value_bit_mask = ValueBits < base_bit_count
-		? BaseType{(uint64_t{1} << ValueBits) - 1}
-		: static_cast<BaseType>(~0ull);
+	    ? BaseType{(uint64_t{1} << ValueBits) - 1}
+	    : static_cast<BaseType>(~0ull);
 
-		static constexpr size_t
-		calc_array_size(size_t elements) noexcept
-		{
-			elements *= ValueBits;
-			return ((elements + ((1u << base_bit_width) - 1)) >> base_bit_width);
-		}
+	static constexpr size_t
+	calc_array_size(size_t elements) noexcept
+	{
+		elements *= ValueBits;
+		return ((elements + ((1u << base_bit_width) - 1)) >> base_bit_width);
+	}
 
 	constexpr bitarray() noexcept : m_data{} { }
 	constexpr bitarray(value_type* ptr) noexcept : m_data(ptr) { }
 	constexpr bitarray(const bitarray&) noexcept = default;
 	constexpr bitarray(bitarray&&) noexcept = default;
 
-	constexpr bitarray& operator=(const bitarray&) noexcept = default;
-	constexpr bitarray& operator=(bitarray&&) noexcept = default;
+	constexpr bitarray&
+	operator=(const bitarray&) noexcept
+	    = default;
+	constexpr bitarray&
+	operator=(bitarray&&) noexcept
+	    = default;
 
 	constexpr void
 	setup(value_type* ptr) noexcept
@@ -141,7 +145,7 @@ public:
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
 		*data_pos = (*data_pos & ~(value_bit_mask << (idval & base_bit_mask)))
-			| (value << (idval & base_bit_mask));
+		    | (value << (idval & base_bit_mask));
 	}
 	constexpr void
 	bit_and(id_type id, value_type value) noexcept
@@ -150,8 +154,8 @@ public:
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
 		*data_pos &= std::rotl(
-			static_cast<value_type>(value | ~value_bit_mask),
-			idval & base_bit_mask);
+		    static_cast<value_type>(value | ~value_bit_mask),
+		    idval & base_bit_mask);
 	}
 	constexpr void
 	bit_or(id_type id, value_type value) noexcept
@@ -192,8 +196,8 @@ public:
 	{
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		return {
-			static_cast<uint32_t>(idval >> base_bit_width),
-			static_cast<uint32_t>(idval & base_bit_mask)};
+		    static_cast<uint32_t>(idval >> base_bit_width),
+		    static_cast<uint32_t>(idval & base_bit_mask)};
 	}
 
 	/**
@@ -211,12 +215,12 @@ public:
 	 * @param id the index position to
 	 */
 	template<size_t Count = 56 / value_bits, bool Mask = false>
-	requires(sizeof(BaseType) == 1)
-		typename details::bittable_span_type<Count * value_bits>::type
-		get_span(id_type id) const noexcept
+	    requires(sizeof(BaseType) == 1)
+	typename details::bittable_span_type<Count * value_bits>::type
+	get_span(id_type id) const noexcept
 	{
 		using type =
-			typename details::bittable_span_type<Count * value_bits>::type;
+		    typename details::bittable_span_type<Count * value_bits>::type;
 		if constexpr(Count == 1) { return static_cast<type>(get(id)); }
 		else
 		{
@@ -228,12 +232,11 @@ public:
 			if constexpr(Mask)
 			{
 				value_span
-					&= static_cast<type>(~(~0ull << (Count * value_bits)));
+				    &= static_cast<type>(~(~0ull << (Count * value_bits)));
 			}
 			return value_span;
 		}
 	}
-
 
 	///
 	/// struct data
@@ -245,7 +248,7 @@ public:
  * IdType: should be Identity, although integer is allowed.
  * ValueBits: size of bits stored for each value. Must be power of 2 and
  * smaller than BaseType.
- * 
+ *
  * bittable does not own its own data.
  * copy results in sharing underlying table data.
  */
@@ -260,17 +263,29 @@ public:
 	static constexpr size_t
 	calc_array_size(uint32_t width, uint32_t height) noexcept
 	{
-		return bittable::bitarray::calc_array_size(static_cast<size_t>(width) * height);
+		return bittable::bitarray::calc_array_size(
+		    static_cast<size_t>(width) * height);
 	}
 
 	constexpr bittable() noexcept : bittable::bitarray(), m_dim{} { }
-	constexpr bittable(value_type* ptr, uint32_t width, uint32_t height) noexcept : bittable::bitarray(ptr), m_dim{width, height} { }
-	constexpr bittable(typename bittable::bitarray arr, uint32_t width, uint32_t height) noexcept : bittable::bitarray(arr), m_dim{width, height} { }
+	constexpr bittable(
+	    value_type* ptr, uint32_t width, uint32_t height) noexcept
+	    : bittable::bitarray(ptr), m_dim{width, height}
+	{ }
+	constexpr bittable(
+	    typename bittable::bitarray arr, uint32_t width,
+	    uint32_t height) noexcept
+	    : bittable::bitarray(arr), m_dim{width, height}
+	{ }
 	constexpr bittable(const bittable&) noexcept = default;
 	constexpr bittable(bittable&&) noexcept = default;
 
-	constexpr bittable& operator=(const bittable&) noexcept = default;
-	constexpr bittable& operator=(bittable&&) noexcept = default;
+	constexpr bittable&
+	operator=(const bittable&) noexcept
+	    = default;
+	constexpr bittable&
+	operator=(bittable&&) noexcept
+	    = default;
 
 	constexpr void
 	setup(value_type* ptr, uint32_t width, uint32_t height) noexcept
@@ -292,7 +307,8 @@ public:
 	id_to_xy(id_type id) const noexcept
 	{
 		assert(m_dim.width != 0);
-		const auto value = static_cast<typename bittable::bitarray::id_value_type>(id);
+		const auto value
+		    = static_cast<typename bittable::bitarray::id_value_type>(id);
 		return {
 		    static_cast<uint32_t>(value % m_dim.width),
 		    static_cast<uint32_t>(value / m_dim.width)};
@@ -319,8 +335,10 @@ public:
 	/// @return width in bytes, rounded down
 	constexpr uint32_t
 	width_bytes() const noexcept
-	{	
-		return (static_cast<uint32_t>(m_dim.width * ValueBits) >> bittable::bitarray::base_bit_width);
+	{
+		return (
+		    static_cast<uint32_t>(m_dim.width * ValueBits)
+		    >> bittable::bitarray::base_bit_width);
 	}
 	constexpr uint32_t
 	height() const noexcept
@@ -402,7 +420,6 @@ public:
 		return bittable::bitarray::id_split(id);
 	}
 
-	
 	///
 	/// struct data
 	///

@@ -170,7 +170,8 @@ public:
 		uint32_t word;
 		std::memcpy(&word, tiles, 4);
 		// the undefined 4th byte affects nothing
-		return static_cast<uint8_t>(_pext_u32(word, 0b00000111'00000101'00000111));
+		return static_cast<uint8_t>(
+		    _pext_u32(word, 0b00000111'00000101'00000111));
 #else
 		// set 012
 		uint8_t res = static_cast<uint8_t>(tiles[0] & 0b111);
@@ -215,7 +216,8 @@ public:
 	// upper bit of the return value. this variant is useful when jumping
 	// toward smaller memory addresses (i.e. west instead of east).
 	void
-	get_neighbours_upper_32bit(pad_id grid_id, uint32_t tiles[3]) const noexcept
+	get_neighbours_upper_32bit(
+	    pad_id grid_id, uint32_t tiles[3]) const noexcept
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
@@ -366,7 +368,6 @@ private:
 	init_db();
 };
 
-
 struct gridmap_slider
 {
 	const warthog::dbword* loc;
@@ -378,7 +379,7 @@ struct gridmap_slider
 	// the other tiles are from the row above and below grid_id_p.
 	// returns rows in little endian. Will perform byte_swap in big endian
 	// systems.
-	
+
 	/// @brief creates a slider from a grid
 	/// @param grid base grid for slider
 	/// @param grid_id id location starting slider location
@@ -388,7 +389,8 @@ struct gridmap_slider
 	{
 		using ba = gridmap::bitarray;
 		return {
-		    grid.data() + static_cast<uint32_t>(grid_id.id >> ba::base_bit_width),
+		    grid.data()
+		        + static_cast<uint32_t>(grid_id.id >> ba::base_bit_width),
 		    static_cast<uint32_t>(grid.width_bytes()),
 		    static_cast<uint32_t>(grid_id.id & ba::base_bit_mask)};
 	}
@@ -445,12 +447,13 @@ struct gridmap_slider
 #endif
 };
 
-inline gridmap_slider gridmap::get_neighbours_slider(pad_id grid_id) const noexcept
+inline gridmap_slider
+gridmap::get_neighbours_slider(pad_id grid_id) const noexcept
 {
 	return {
-		data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
-		static_cast<uint32_t>(dbwidth_),
-		static_cast<uint32_t>(grid_id.id & base_bit_mask)};
+	    data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
+	    static_cast<uint32_t>(dbwidth_),
+	    static_cast<uint32_t>(grid_id.id & base_bit_mask)};
 }
 
 } // namespace warthog::domain
