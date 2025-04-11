@@ -24,6 +24,7 @@
 #include <warthog/util/cast.h>
 #include <warthog/util/gm_parser.h>
 #include <warthog/util/helpers.h>
+#include <warthog/util/intrin.h>
 
 #include <bit>
 #include <cassert>
@@ -35,68 +36,14 @@
 namespace warthog::domain
 {
 
-struct gridmap_slider
-{
-	const warthog::dbword* loc;
-	uint32_t width8;
-	uint32_t width8_bits; /// only used for end-user
-
-	constexpr void
-	adj_bytes(int i) noexcept
-	{
-		loc += i;
-	}
-
-	// returns rows as:
-	// [0] = middle
-	// [1] = above (-y)
-	// [2] = below (+y)
-	std::array<uint64_t, 3>
-	get_neighbours_64bit_le() const noexcept
-	{
-		std::array<uint64_t, 3> return_value;
-		std::memcpy(&return_value[0], loc, sizeof(uint64_t));
-		std::memcpy(&return_value[1], loc - width8, sizeof(uint64_t));
-		std::memcpy(&return_value[2], loc + width8, sizeof(uint64_t));
-
-		if constexpr(std::endian::native == std::endian::big)
-		{
-			// big endian, perform byte swap
-			return_value[0] = util::byteswap_u64(return_value[0]);
-			return_value[1] = util::byteswap_u64(return_value[1]);
-			return_value[2] = util::byteswap_u64(return_value[2]);
-		}
-
-		return return_value;
-	}
-
-#ifdef WARTHOG_INT128_ENABLED
-	std::array<unsigned __int128, 3>
-	get_neighbours_128bit_le() const noexcept
-	{
-		using int128 = unsigned __int128;
-		std::array<int128, 3> return_value;
-		std::memcpy(&return_value[0], loc, sizeof(int128));
-		std::memcpy(&return_value[1], loc - width8, sizeof(int128));
-		std::memcpy(&return_value[2], loc + width8, sizeof(int128));
-
-		if constexpr(std::endian::native == std::endian::big)
-		{
-			// big endian, perform byte swap
-			return_value[0] = util::byteswap_u128(return_value[0]);
-			return_value[1] = util::byteswap_u128(return_value[1]);
-			return_value[2] = util::byteswap_u128(return_value[2]);
-		}
-
-		return return_value;
-	}
-#endif
-};
+struct gridmap_slider;
 
 constexpr uint32_t GRID_ID_MAX = std::numeric_limits<uint32_t>::max();
 class gridmap : public memory::bittable<pad_id, warthog::dbword>
 {
 public:
+	using bittable = gridmap::bittable; // inform of type existing
+	using bitarray = gridmap::bitarray; // inform of type existing
 	gridmap(uint32_t height, uint32_t width);
 	gridmap(const char* filename);
 	gridmap(const gridmap&) = delete;
@@ -186,7 +133,7 @@ public:
 	// lowest positions of the byte.
 	// position :0 is the nei in direction NW, :1 is N and :2 is NE
 	void
-	get_neighbours(pad_id grid_id, uint8_t tiles[3]) const
+	get_neighbours(pad_id grid_id, uint8_t tiles[3]) const noexcept
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
@@ -211,12 +158,39 @@ public:
 		    = (uint8_t)(*((uint32_t*)(db_ + (pos3 - 1))) >> (bit_offset + 7));
 	}
 
+	// takes the tiles from get_neighbours and tightly packs them into 8-bits
+	// bit number in lsb order, rep 0b76543210 bit
+	// since it fits into 1 byte, result is endian agnostic
+	// 0=NW, 1=N, 2=NE, 3=W, 4=E, 5=SW, 6=S, 7=SE
+	// grid_id is skipped, as 3x3 does not fit in 8-bits
+	static uint8_t
+	pack_neighbours(uint8_t tiles[3]) noexcept
+	{
+#if WARTHOG_INTRIN_HAS(BMI2)
+		uint32_t word;
+		std::memcpy(&word, tiles, 4);
+		// the undefined 4th byte affects nothing
+		return static_cast<uint8_t>(
+		    _pext_u32(word, 0b00000111'00000101'00000111));
+#else
+		// set 012
+		uint8_t res = static_cast<uint8_t>(tiles[0] & 0b111);
+		// set 3
+		res |= static_cast<uint8_t>(tiles[1] & 0b001) << 3;
+		// set 4
+		res |= static_cast<uint8_t>(tiles[1] & 0b100) << 2;
+		// set 567
+		res |= (static_cast<uint8_t>(tiles[2]) << 5);
+		return res;
+#endif
+	}
+
 	// fetches a contiguous set of tiles from three adjacent rows. each row is
 	// 32 tiles long. the middle row begins with tile grid_id_p. the other
 	// tiles are from the row immediately above and immediately below
 	// grid_id_p.
 	void
-	get_neighbours_32bit(pad_id grid_id, uint32_t tiles[3]) const
+	get_neighbours_32bit(pad_id grid_id, uint32_t tiles[3]) const noexcept
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
@@ -242,7 +216,8 @@ public:
 	// upper bit of the return value. this variant is useful when jumping
 	// toward smaller memory addresses (i.e. west instead of east).
 	void
-	get_neighbours_upper_32bit(pad_id grid_id, uint32_t tiles[3]) const
+	get_neighbours_upper_32bit(
+	    pad_id grid_id, uint32_t tiles[3]) const noexcept
 	{
 		// 1. calculate the dbword offset for the node at index grid_id_p
 		// 2. convert grid_id_p into a dbword index.
@@ -272,7 +247,7 @@ public:
 	// the middle row contains tile grid_id_p.
 	// the other tiles are from the row above and below grid_id_p.
 	void
-	get_neighbours_64bit(pad_id grid_id, uint64_t tiles[3]) const
+	get_neighbours_64bit(pad_id grid_id, uint64_t tiles[3]) const noexcept
 	{
 		// convert grid_id_p into a 64bit db_ index.
 		uint32_t dbindex = static_cast<uint32_t>(grid_id.id >> 6);
@@ -295,13 +270,7 @@ public:
 	// returns rows in little endian. Will perform byte_swap in big endian
 	// systems.
 	gridmap_slider
-	get_neighbours_slider(pad_id grid_id) const
-	{
-		return {
-		    data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
-		    static_cast<uint32_t>(dbwidth_),
-		    static_cast<uint32_t>(grid_id.id & base_bit_mask)};
-	}
+	get_neighbours_slider(pad_id grid_id) const noexcept;
 
 	// get the label associated with the padded coordinate pair (x, y)
 	bool
@@ -319,7 +288,7 @@ public:
 
 	// get a pointer to the word that contains the label of node @grid_id_p
 	const warthog::dbword*
-	get_mem_ptr(pad_id grid_id) const
+	get_mem_ptr(pad_id grid_id) const noexcept
 	{
 		return data() + id_split(grid_id).first;
 	}
@@ -398,6 +367,94 @@ private:
 	void
 	init_db();
 };
+
+struct gridmap_slider
+{
+	const warthog::dbword* loc;
+	uint32_t width8;
+	uint32_t width8_bits; /// only used for end-user
+
+	// fetches a contiguous set of tiles from three adjacent rows.
+	// the middle row contains tile grid_id_p.
+	// the other tiles are from the row above and below grid_id_p.
+	// returns rows in little endian. Will perform byte_swap in big endian
+	// systems.
+
+	/// @brief creates a slider from a grid
+	/// @param grid base grid for slider
+	/// @param grid_id id location starting slider location
+	/// @return the slider object
+	constexpr static gridmap_slider
+	from_bittable(gridmap::bittable grid, gridmap::id_type grid_id) noexcept
+	{
+		using ba = gridmap::bitarray;
+		return {
+		    grid.data()
+		        + static_cast<uint32_t>(grid_id.id >> ba::base_bit_width),
+		    static_cast<uint32_t>(grid.width_bytes()),
+		    static_cast<uint32_t>(grid_id.id & ba::base_bit_mask)};
+	}
+
+	constexpr void
+	adj_bytes(int i) noexcept
+	{
+		loc += i;
+	}
+
+	// returns rows as:
+	// [0] = middle
+	// [1] = above (-y)
+	// [2] = below (+y)
+	std::array<uint64_t, 3>
+	get_neighbours_64bit_le() const noexcept
+	{
+		std::array<uint64_t, 3> return_value;
+		std::memcpy(&return_value[0], loc, sizeof(uint64_t));
+		std::memcpy(&return_value[1], loc - width8, sizeof(uint64_t));
+		std::memcpy(&return_value[2], loc + width8, sizeof(uint64_t));
+
+		if constexpr(std::endian::native == std::endian::big)
+		{
+			// big endian, perform byte swap
+			return_value[0] = util::byteswap_u64(return_value[0]);
+			return_value[1] = util::byteswap_u64(return_value[1]);
+			return_value[2] = util::byteswap_u64(return_value[2]);
+		}
+
+		return return_value;
+	}
+
+#ifdef WARTHOG_INT128_ENABLED
+	std::array<unsigned __int128, 3>
+	get_neighbours_128bit_le() const noexcept
+	{
+		using int128 = unsigned __int128;
+		std::array<int128, 3> return_value;
+		std::memcpy(&return_value[0], loc, sizeof(int128));
+		std::memcpy(&return_value[1], loc - width8, sizeof(int128));
+		std::memcpy(&return_value[2], loc + width8, sizeof(int128));
+
+		if constexpr(std::endian::native == std::endian::big)
+		{
+			// big endian, perform byte swap
+			return_value[0] = util::byteswap_u128(return_value[0]);
+			return_value[1] = util::byteswap_u128(return_value[1]);
+			return_value[2] = util::byteswap_u128(return_value[2]);
+		}
+
+		return return_value;
+	}
+#endif
+};
+
+inline gridmap_slider
+gridmap::get_neighbours_slider(pad_id grid_id) const noexcept
+{
+	return {
+	    data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
+	    static_cast<uint32_t>(dbwidth_),
+	    static_cast<uint32_t>(grid_id.id & base_bit_mask)};
+}
 
 } // namespace warthog::domain
 

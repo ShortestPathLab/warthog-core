@@ -25,25 +25,26 @@ struct bittable_span_type;
 // to fit n-bits into a m-byte array,
 // the max number of bits is (m-1)*8 + 1
 template<size_t Bits>
-requires(Bits == 1) struct bittable_span_type<Bits>
+    requires(Bits == 1)
+struct bittable_span_type<Bits>
 {
 	using type = uint8_t;
 };
 template<size_t Bits>
-requires(Bits > 1 && Bits <= 9) // m=2, n = (2-1)*8 + 1
-    struct bittable_span_type<Bits>
+    requires(Bits > 1 && Bits <= 9) // m=2, n = (2-1)*8 + 1
+struct bittable_span_type<Bits>
 {
 	using type = uint16_t;
 };
 template<size_t Bits>
-requires(Bits > 9 && Bits <= 25) // m=2, n = (4-1)*8 + 1
-    struct bittable_span_type<Bits>
+    requires(Bits > 9 && Bits <= 25) // m=2, n = (4-1)*8 + 1
+struct bittable_span_type<Bits>
 {
 	using type = uint32_t;
 };
 template<size_t Bits>
-requires(Bits > 25 && Bits <= 57) // m=2, n = (8-1)*8 + 1
-    struct bittable_span_type<Bits>
+    requires(Bits > 25 && Bits <= 57) // m=2, n = (8-1)*8 + 1
+struct bittable_span_type<Bits>
 {
 	using type = uint64_t;
 };
@@ -54,10 +55,13 @@ requires(Bits > 25 && Bits <= 57) // m=2, n = (8-1)*8 + 1
  * IdType: should be Identity, although integer is allowed.
  * ValueBits: size of bits stored for each value. Must be power of 2 and
  * smaller than BaseType.
+ *
+ * bittable does not own its own data.
+ * copy results in sharing underlying table data.
  */
 template<
     typename IdType, std::unsigned_integral BaseType, size_t ValueBits = 1>
-class bittable
+struct bitarray
 {
 public:
 	static_assert(
@@ -80,39 +84,28 @@ public:
 	    : static_cast<BaseType>(~0ull);
 
 	static constexpr size_t
-	calc_array_size(uint32_t width, uint32_t height) noexcept
+	calc_array_size(size_t elements) noexcept
 	{
-		const size_t total_bits
-		    = static_cast<size_t>(width) * height * ValueBits;
-		return ((total_bits + ((1u << base_bit_width) - 1)) >> base_bit_width);
+		elements *= ValueBits;
+		return ((elements + ((1u << base_bit_width) - 1)) >> base_bit_width);
 	}
 
-	constexpr bittable() noexcept : m_data{}, m_dim{} { }
+	constexpr bitarray() noexcept : m_data{} { }
+	constexpr bitarray(value_type* ptr) noexcept : m_data(ptr) { }
+	constexpr bitarray(const bitarray&) noexcept = default;
+	constexpr bitarray(bitarray&&) noexcept = default;
+
+	constexpr bitarray&
+	operator=(const bitarray&) noexcept
+	    = default;
+	constexpr bitarray&
+	operator=(bitarray&&) noexcept
+	    = default;
 
 	constexpr void
-	setup(value_type* ptr, uint32_t width, uint32_t height) noexcept
+	setup(value_type* ptr) noexcept
 	{
 		m_data = ptr;
-		m_dim.width = width;
-		m_dim.height = height;
-	}
-
-	constexpr id_type
-	xy_to_id(uint32_t x, uint32_t y) const noexcept
-	{
-		assert(m_dim.width != 0);
-		return static_cast<id_type>(
-		    static_cast<size_t>(y) * m_dim.width + static_cast<size_t>(x));
-	}
-
-	constexpr std::pair<uint32_t, uint32_t>
-	id_to_xy(id_type id) const noexcept
-	{
-		assert(m_dim.width != 0);
-		const id_value_type value = static_cast<id_value_type>(id);
-		return {
-		    static_cast<uint32_t>(value % m_dim.width),
-		    static_cast<uint32_t>(value / m_dim.width)};
 	}
 
 	constexpr value_type*
@@ -125,71 +118,21 @@ public:
 	{
 		return m_data;
 	}
-	/// data return within span. size will be calculated with data_elements().
-	constexpr std::span<value_type>
-	data_span() noexcept
-	{
-		return {m_data, data_elements()};
-	}
-	/// data return within span. size will be calculated with data_elements().
-	constexpr std::span<const value_type>
-	data_span() const noexcept
-	{
-		return {m_data, data_elements()};
-	}
-
-	constexpr uint32_t
-	width() const noexcept
-	{
-		return m_dim.width;
-	}
-	constexpr uint32_t
-	height() const noexcept
-	{
-		return m_dim.height;
-	}
-	constexpr uint64_t
-	size() const noexcept
-	{
-		return static_cast<uint64_t>(m_dim.width) * m_dim.height;
-	}
-	constexpr bittable_dimension
-	dim() const noexcept
-	{
-		return m_dim;
-	}
-
-	constexpr size_t
-	data_elements() const noexcept
-	{
-		return calc_array_size(m_dim.width, m_dim.height);
-	}
 
 	constexpr void
-	fill(value_type value) noexcept
+	fill(value_type value, size_t count) noexcept
 	{
 		assert(value <= value_bit_mask);
-		if constexpr(ValueBits <= CHAR_BIT)
+		for(int i = ValueBits; i < sizeof(BaseType) * CHAR_BIT; i <<= 1)
 		{
-			for(int i = ValueBits; i < CHAR_BIT; i <<= 1)
-			{
-				value = (value << i) | value;
-			}
-			std::memset(m_data, value, sizeof(BaseType) * data_elements());
+			value = (value << i) | value;
 		}
-		else
-		{
-			for(int i = ValueBits; i < sizeof(BaseType) * CHAR_BIT; i <<= 1)
-			{
-				value = (value << i) | value;
-			}
-			std::fill_n(m_data, data_elements(), value);
-		}
+		std::fill_n(m_data, count, value);
 	}
 	constexpr void
-	flip() noexcept
+	flip(size_t count) noexcept
 	{
-		for(value_type *p = m_data, *pe = p + data_elements(); p != pe; ++p)
+		for(value_type *p = m_data, *pe = p + count; p != pe; ++p)
 		{
 			*p = ~*p;
 		}
@@ -198,7 +141,6 @@ public:
 	constexpr void
 	set(id_type id, value_type value) noexcept
 	{
-		assert(uint64_t{id} < size());
 		assert(value <= value_bit_mask);
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
@@ -208,7 +150,6 @@ public:
 	constexpr void
 	bit_and(id_type id, value_type value) noexcept
 	{
-		assert(uint64_t{id} < size());
 		assert(value <= value_bit_mask);
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
@@ -219,7 +160,6 @@ public:
 	constexpr void
 	bit_or(id_type id, value_type value) noexcept
 	{
-		assert(uint64_t{id} < size());
 		assert(value <= value_bit_mask);
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
@@ -228,7 +168,6 @@ public:
 	constexpr void
 	bit_xor(id_type id, value_type value) noexcept
 	{
-		assert(uint64_t{id} < size());
 		assert(value <= value_bit_mask);
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
@@ -237,7 +176,6 @@ public:
 	constexpr void
 	bit_neg(id_type id) noexcept
 	{
-		assert(uint64_t{id} < size());
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
 		*data_pos ^= value_bit_mask << (idval & base_bit_mask);
@@ -246,7 +184,6 @@ public:
 	constexpr value_type
 	get(id_type id) const noexcept
 	{
-		assert(uint64_t{id} < size());
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		BaseType* data_pos = m_data + (idval >> base_bit_width);
 		return (*data_pos >> (idval & base_bit_mask)) & value_bit_mask;
@@ -278,16 +215,15 @@ public:
 	 * @param id the index position to
 	 */
 	template<size_t Count = 56 / value_bits, bool Mask = false>
-	requires(sizeof(BaseType) == 1)
-	    typename details::bittable_span_type<Count * value_bits>::type
-	    get_span(id_type id) const noexcept
+	    requires(sizeof(BaseType) == 1)
+	typename details::bittable_span_type<Count * value_bits>::type
+	get_span(id_type id) const noexcept
 	{
 		using type =
 		    typename details::bittable_span_type<Count * value_bits>::type;
 		if constexpr(Count == 1) { return static_cast<type>(get(id)); }
 		else
 		{
-			assert(uint64_t{id} < size());
 			id_value_type idval = id_value_type{id} << value_bit_width;
 			BaseType* data_pos = m_data + (idval >> base_bit_width);
 			type value_span{};
@@ -302,8 +238,191 @@ public:
 		}
 	}
 
-protected:
+	///
+	/// struct data
+	///
 	BaseType* m_data;
+};
+
+/**
+ * IdType: should be Identity, although integer is allowed.
+ * ValueBits: size of bits stored for each value. Must be power of 2 and
+ * smaller than BaseType.
+ *
+ * bittable does not own its own data.
+ * copy results in sharing underlying table data.
+ */
+template<
+    typename IdType, std::unsigned_integral BaseType, size_t ValueBits = 1>
+struct bittable : bitarray<IdType, BaseType, ValueBits>
+{
+public:
+	using typename bittable::bitarray::id_type;
+	using typename bittable::bitarray::value_type;
+
+	static constexpr size_t
+	calc_array_size(uint32_t width, uint32_t height) noexcept
+	{
+		return bittable::bitarray::calc_array_size(
+		    static_cast<size_t>(width) * height);
+	}
+
+	constexpr bittable() noexcept : bittable::bitarray(), m_dim{} { }
+	constexpr bittable(
+	    value_type* ptr, uint32_t width, uint32_t height) noexcept
+	    : bittable::bitarray(ptr), m_dim{width, height}
+	{ }
+	constexpr bittable(
+	    typename bittable::bitarray arr, uint32_t width,
+	    uint32_t height) noexcept
+	    : bittable::bitarray(arr), m_dim{width, height}
+	{ }
+	constexpr bittable(const bittable&) noexcept = default;
+	constexpr bittable(bittable&&) noexcept = default;
+
+	constexpr bittable&
+	operator=(const bittable&) noexcept
+	    = default;
+	constexpr bittable&
+	operator=(bittable&&) noexcept
+	    = default;
+
+	constexpr void
+	setup(value_type* ptr, uint32_t width, uint32_t height) noexcept
+	{
+		bittable::bitarray::setup(ptr);
+		m_dim.width = width;
+		m_dim.height = height;
+	}
+
+	constexpr id_type
+	xy_to_id(uint32_t x, uint32_t y) const noexcept
+	{
+		assert(m_dim.width != 0);
+		return static_cast<id_type>(
+		    static_cast<size_t>(y) * m_dim.width + static_cast<size_t>(x));
+	}
+
+	constexpr std::pair<uint32_t, uint32_t>
+	id_to_xy(id_type id) const noexcept
+	{
+		assert(m_dim.width != 0);
+		const auto value
+		    = static_cast<typename bittable::bitarray::id_value_type>(id);
+		return {
+		    static_cast<uint32_t>(value % m_dim.width),
+		    static_cast<uint32_t>(value / m_dim.width)};
+	}
+
+	/// data return within span. size will be calculated with data_elements().
+	constexpr std::span<value_type>
+	data_span() noexcept
+	{
+		return {this->m_data, data_elements()};
+	}
+	/// data return within span. size will be calculated with data_elements().
+	constexpr std::span<const value_type>
+	data_span() const noexcept
+	{
+		return {this->m_data, data_elements()};
+	}
+
+	constexpr uint32_t
+	width() const noexcept
+	{
+		return m_dim.width;
+	}
+	/// @return width in bytes, rounded down
+	constexpr uint32_t
+	width_bytes() const noexcept
+	{
+		return (
+		    static_cast<uint32_t>(m_dim.width * ValueBits)
+		    >> bittable::bitarray::base_bit_width);
+	}
+	constexpr uint32_t
+	height() const noexcept
+	{
+		return m_dim.height;
+	}
+	constexpr size_t
+	size() const noexcept
+	{
+		return static_cast<size_t>(m_dim.width) * m_dim.height;
+	}
+	constexpr bittable_dimension
+	dim() const noexcept
+	{
+		return m_dim;
+	}
+
+	constexpr size_t
+	data_elements() const noexcept
+	{
+		return calc_array_size(m_dim.width, m_dim.height);
+	}
+
+	constexpr void
+	fill(value_type value) noexcept
+	{
+		bittable::bitarray::fill(value, data_elements());
+	}
+	constexpr void
+	flip() noexcept
+	{
+		bittable::bitarray::flip(data_elements());
+	}
+
+	constexpr void
+	set(id_type id, value_type value) noexcept
+	{
+		assert(static_cast<size_t>(id) < size());
+		bittable::bitarray::set(id, value);
+	}
+	constexpr void
+	bit_and(id_type id, value_type value) noexcept
+	{
+		assert(static_cast<size_t>(id) < size());
+		bittable::bitarray::bit_and(id, value);
+	}
+	constexpr void
+	bit_or(id_type id, value_type value) noexcept
+	{
+		assert(static_cast<size_t>(id) < size());
+		bittable::bitarray::bit_or(id, value);
+	}
+	constexpr void
+	bit_xor(id_type id, value_type value) noexcept
+	{
+		assert(static_cast<size_t>(id) < size());
+		bittable::bitarray::bit_xor(id, value);
+	}
+	constexpr void
+	bit_neg(id_type id) noexcept
+	{
+		assert(static_cast<size_t>(id) < size());
+		bittable::bitarray::bit_neg(id);
+	}
+
+	constexpr value_type
+	get(id_type id) const noexcept
+	{
+		assert(static_cast<size_t>(id) < size());
+		return bittable::bitarray::get(id);
+	}
+
+	// return id position split
+	// `m_data[first] >> second` will return the value as position id
+	constexpr std::pair<uint32_t, uint32_t>
+	id_split(id_type id) const noexcept
+	{
+		assert(static_cast<size_t>(id) < size());
+		return bittable::bitarray::id_split(id);
+	}
+
+	///
+	/// struct data
+	///
 	bittable_dimension m_dim;
 };
 
