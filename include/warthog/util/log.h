@@ -19,6 +19,7 @@
 #include "file_utils.h"
 #include "macros.h"
 #include <iostream>
+#include <source_location>
 
 #ifndef QUICK_LOG
 #define QUICK_LOG 0
@@ -216,10 +217,14 @@
  * @param[in] ... the entries to put on stream
  */
 #define _abstractLog(level, p, ...)                                           \
-	if(p)                                                                     \
-	std::cerr << "[" << level << "] " << warthog::util::getBaseName(__FILE__) \
-	          << "@" << __func__ << ":" << __LINE__ << " "                    \
-	          << _debug(__VA_ARGS__) << std::endl
+	{                                                                         \
+		constexpr auto src = std::source_location::current();                 \
+		if(p)                                                                 \
+			std::cerr << "[" << level << "] "                                 \
+			          << warthog::util::getBaseName_(src.file_name()) << "@"  \
+			          << __func__ << ":" << src.line() << " "                 \
+			          << _debug(__VA_ARGS__) << std::endl;                    \
+	}
 
 #else
 

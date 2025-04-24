@@ -22,8 +22,8 @@
 #include <warthog/util/timer.h>
 
 #include "cfg.h"
-#include "config.h"
 #include <getopt.h>
+#include <warthog/config.h>
 
 #include <cmath>
 #include <filesystem>
@@ -46,36 +46,30 @@ int verbose = 0;
 int print_help = 0;
 
 void
-help()
+help(std::ostream& out)
 {
-	std::cerr << "warthog version " << WARTHOG_VERSION << "\n";
-	std::cerr << "==> manual <==\n"
-	          << "This program solves/generates grid-based pathfinding "
-	             "problems using the\n"
-	          << "map/scenario format from the 2014 Grid-based Path Planning "
-	             "Competition\n\n";
+	out << "warthog version " << WARTHOG_VERSION << "\n";
+	out << "==> manual <==\n"
+	    << "This program solves/generates grid-based pathfinding "
+	       "problems using the\n"
+	    << "map/scenario format from the 2014 Grid-based Path Planning "
+	       "Competition\n\n";
 
-	std::cerr << "The following are valid parameters for SOLVING instances:\n"
-	          << "\t--alg [alg] (required)\n"
-	          << "\t--scen [scen file] (required) \n"
-	          << "\t--map [map file] (optional; specify this to override map "
-	             "values in scen file) \n"
-	          << "\t--costs [costs file] (required if using a weighted "
-	             "terrain algorithm)\n"
-	          << "\t--checkopt (optional; compare solution costs against "
-	             "values in the scen file)\n"
-	          << "\t--verbose (optional; prints debugging info when compiled "
-	             "with debug symbols)\n"
-	          << "Invoking the program this way solves all instances in [scen "
-	             "file] with algorithm [alg]\n"
-	          << "Currently recognised values for [alg]:\n"
-	          << "\tastar, astar_wgm, astar4c, dijkstra\n";
-	// << ""
-	// << "The following are valid parameters for GENERATING instances:\n"
-	// << "\t --gen [map file (required)]\n"
-	// << "Invoking the program this way generates at random 1000 valid
-	// problems for \n"
-	// << "gridmap [map file]\n";
+	out << "The following are valid parameters for SOLVING instances:\n"
+	    << "\t--alg [alg] (required)\n"
+	    << "\t--scen [scen file] (required) \n"
+	    << "\t--map [map file] (optional; specify this to override map "
+	       "values in scen file) \n"
+	    << "\t--costs [costs file] (required if using a weighted "
+	       "terrain algorithm)\n"
+	    << "\t--checkopt (optional; compare solution costs against "
+	       "values in the scen file)\n"
+	    << "\t--verbose (optional; prints debugging info when compiled "
+	       "with debug symbols)\n"
+	    << "Invoking the program this way solves all instances in [scen "
+	       "file] with algorithm [alg]\n"
+	    << "Currently recognised values for [alg]:\n"
+	    << "\tastar, astar_wgm, astar4c, dijkstra\n";
 }
 
 bool
@@ -117,6 +111,8 @@ run_experiments(
     warthog::util::scenario_manager& scenmgr, bool verbose, bool checkopt,
     std::ostream& out)
 {
+	warthog::search::search_parameters par;
+	warthog::search::solution sol;
 	auto* expander = algo.get_expander();
 	if(expander == nullptr) return 1;
 	out << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
@@ -130,8 +126,7 @@ run_experiments(
 		warthog::pack_id goalid
 		    = expander->get_pack(exp->goalx(), exp->goaly());
 		warthog::search::problem_instance pi(startid, goalid, verbose);
-		warthog::search::search_parameters par;
-		warthog::search::solution sol;
+		sol.reset();
 
 		algo.get_path(&pi, &par, &sol);
 
@@ -278,7 +273,7 @@ main(int argc, char** argv)
 
 	if(argc == 1 || print_help)
 	{
-		help();
+		help(std::cout);
 		return 0;
 	}
 
@@ -300,7 +295,7 @@ main(int argc, char** argv)
 	// running experiments
 	if(alg == "" || sfile == "")
 	{
-		help();
+		help(std::cout);
 		return 0;
 	}
 
@@ -318,23 +313,12 @@ main(int argc, char** argv)
 	if(mapfile == "")
 	{
 		// first, try to load the map from the scenario file
-		mapfile = scenmgr.get_experiment(0)->map().c_str();
-		if(!std::filesystem::exists(std::filesystem::path(mapfile)))
+		mapfile = warthog::util::find_map_filename(scenmgr, sfile);
+		if(mapfile.empty())
 		{
-			// else, look for the map in the current directory
-			mapfile = std::filesystem::path(mapfile).filename();
-			if(!std::filesystem::exists(std::filesystem::path(mapfile)))
-			{
-				// else, try to infer the map name from the scenario filename
-				std::filesystem::path p(sfile);
-				mapfile = std::filesystem::path(sfile).replace_extension("");
-				if(!std::filesystem::exists(std::filesystem::path(mapfile)))
-				{
-					std::cerr << "could not locate a corresponding map file\n";
-					help();
-					return 1;
-				}
-			}
+			std::cerr << "could not locate a corresponding map file\n";
+			help(std::cout);
+			return 0;
 		}
 	}
 	std::cerr << "mapfile=" << mapfile << std::endl;

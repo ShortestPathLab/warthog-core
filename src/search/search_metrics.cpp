@@ -3,7 +3,7 @@
 std::ostream&
 operator<<(std::ostream& str, const warthog::search::search_metrics& met)
 {
-	str << " time_elapsed_nano=" << met.time_elapsed_nano_
+	str << " time_elapsed_nano=" << met.time_elapsed_nano_.count()
 	    << " nodes expanded=" << met.nodes_expanded_
 	    << " touched=" << met.nodes_generated_
 	    << " reopened=" << met.nodes_reopen_

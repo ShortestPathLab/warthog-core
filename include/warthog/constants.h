@@ -32,7 +32,8 @@ struct identity_base
 	identity_base() noexcept = default;
 	constexpr explicit identity_base(IdType id_) noexcept : id(id_) { }
 	template<typename IdType2>
-	requires(!std::same_as<IdType, IdType2>) explicit(
+	    requires(!std::same_as<IdType, IdType2>)
+	explicit(
 	    std::numeric_limits<IdType>::max() < std::numeric_limits<IdType2>::
 	        max()) constexpr identity_base(identity_base<Tag, IdType2> alt)
 	    : id(static_cast<IdType>(alt.id))
@@ -74,7 +75,22 @@ struct identity_base
 	{
 		return max();
 	}
-	bool constexpr is_none() const noexcept { return (*this) == none(); }
+	constexpr bool
+	is_none() const noexcept
+	{
+		return (*this) == none();
+	}
+
+	consteval static identity_base
+	zero() noexcept
+	{
+		return identity_base{0};
+	}
+	constexpr bool
+	is_zero() const noexcept
+	{
+		return id == 0;
+	}
 };
 template<class T>
 constexpr bool is_identity_v = std::false_type{};
