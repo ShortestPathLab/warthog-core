@@ -19,7 +19,7 @@
 namespace warthog
 {
 
-using sn_id_t = uint64_t; // address space for state identifiers
+using sn_id_t               = uint64_t; // address space for state identifiers
 constexpr sn_id_t SN_ID_MAX = std::numeric_limits<sn_id_t>::max();
 constexpr sn_id_t NO_PARENT = SN_ID_MAX;
 
@@ -27,7 +27,7 @@ template<class Tag, std::unsigned_integral IdType = sn_id_t>
 struct identity_base
 {
 	using id_type = IdType;
-	using tag = Tag;
+	using tag     = Tag;
 	IdType id;
 	identity_base() noexcept = default;
 	constexpr explicit identity_base(IdType id_) noexcept : id(id_) { }
@@ -41,7 +41,7 @@ struct identity_base
 		assert(id == alt.id || (is_none() && alt.is_none()));
 	}
 	constexpr identity_base(const identity_base&) noexcept = default;
-	constexpr identity_base(identity_base&&) noexcept = default;
+	constexpr identity_base(identity_base&&) noexcept      = default;
 	constexpr identity_base&
 	operator=(const identity_base&) noexcept
 	    = default;
@@ -101,11 +101,11 @@ concept Identity = is_identity_v<T>;
 
 struct pack_tag
 { };
-using pack_id = identity_base<pack_tag>;
+using pack_id   = identity_base<pack_tag>;
 using pack32_id = identity_base<pack_tag, uint32_t>;
 struct pad_tag
 { };
-using pad_id = identity_base<pad_tag>;
+using pad_id   = identity_base<pad_tag>;
 using pad32_id = identity_base<pad_tag, uint32_t>;
 
 // each node in a weighted grid map uses sizeof(dbword) memory.
@@ -114,7 +114,7 @@ using pad32_id = identity_base<pad_tag, uint32_t>;
 using dbword = uint8_t;
 
 // gridmap constants
-constexpr uint32_t DBWORD_BITS = sizeof(warthog::dbword) * 8;
+constexpr uint32_t DBWORD_BITS      = sizeof(warthog::dbword) * 8;
 constexpr uint32_t DBWORD_BITS_MASK = (warthog::DBWORD_BITS - 1);
 constexpr uint32_t LOG2_DBWORD_BITS = std::popcount(DBWORD_BITS_MASK);
 
@@ -137,13 +137,13 @@ constexpr uint64_t INFTY
     = std::numeric_limits<uint64_t>::max(); // indicates uninitialised or
                                             // undefined values
 
-using cost_t = double;
+using cost_t              = double;
 constexpr cost_t COST_MAX = std::numeric_limits<cost_t>::max();
 constexpr cost_t COST_MIN = std::numeric_limits<cost_t>::max();
 
 // hashing constants
 constexpr uint32_t FNV32_offset_basis = 2166136261;
-constexpr uint32_t FNV32_prime = 16777619;
+constexpr uint32_t FNV32_prime        = 16777619;
 
 constexpr double DIMACS_RATIO = 1e6;
 

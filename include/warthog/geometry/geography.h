@@ -10,7 +10,7 @@
 namespace warthog::geometry
 {
 
-static const double EARTH_RADIUS = 6371.0009;     // km
+static const double EARTH_RADIUS    = 6371.0009;  // km
 static const double TWO_EARTH_RADII = 12742.0018; // km
 
 // Distance functions ordered by precision

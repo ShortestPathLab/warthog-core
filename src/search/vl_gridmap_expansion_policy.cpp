@@ -88,20 +88,20 @@ vl_gridmap_expansion_policy::expand(
 
 	// ids of current tile and its 8 neighbours
 	uint32_t id_node = uint32_t{current->get_id()};
-	uint32_t id_N = id_node - map_->width();
-	uint32_t id_S = id_node + map_->width();
-	uint32_t id_E = id_node + 1;
-	uint32_t id_W = id_node - 1;
-	uint32_t id_NE = id_N + 1;
-	uint32_t id_NW = id_N - 1;
-	uint32_t id_SE = id_S + 1;
-	uint32_t id_SW = id_S - 1;
+	uint32_t id_N    = id_node - map_->width();
+	uint32_t id_S    = id_node + map_->width();
+	uint32_t id_E    = id_node + 1;
+	uint32_t id_W    = id_node - 1;
+	uint32_t id_NE   = id_N + 1;
+	uint32_t id_NW   = id_N - 1;
+	uint32_t id_SE   = id_S + 1;
+	uint32_t id_SW   = id_S - 1;
 
-	warthog::dbword* label = &map_->get_label(id_node);
-	warthog::dbword* label_N = &map_->get_label(id_N);
-	warthog::dbword* label_S = &map_->get_label(id_S);
-	warthog::dbword* label_E = label + 1;
-	warthog::dbword* label_W = label - 1;
+	warthog::dbword* label    = &map_->get_label(id_node);
+	warthog::dbword* label_N  = &map_->get_label(id_N);
+	warthog::dbword* label_S  = &map_->get_label(id_S);
+	warthog::dbword* label_E  = label + 1;
+	warthog::dbword* label_W  = label - 1;
 	warthog::dbword* label_NE = label_N + 1;
 	warthog::dbword* label_NW = label_N - 1;
 	warthog::dbword* label_SE = label_S + 1;
@@ -111,7 +111,7 @@ vl_gridmap_expansion_policy::expand(
 	if(costs_[*label_N])
 	{
 		search_node* n = generate(pad_id{id_N});
-		double cost = (costs_[*label] + costs_[*label_N]) * 0.5;
+		double cost    = (costs_[*label] + costs_[*label_N]) * 0.5;
 		add_neighbour(n, cost);
 
 		if(costs_[*label_NE] && costs_[*label_E])
@@ -136,7 +136,7 @@ vl_gridmap_expansion_policy::expand(
 	if(costs_[*label_S])
 	{
 		search_node* n = generate(pad_id{id_S});
-		double cost = (costs_[*label] + costs_[*label_S]) * 0.5;
+		double cost    = (costs_[*label] + costs_[*label_S]) * 0.5;
 		add_neighbour(n, cost);
 
 		if(costs_[*label_SE] && costs_[*label_E])
@@ -161,7 +161,7 @@ vl_gridmap_expansion_policy::expand(
 	if(costs_[*label_E])
 	{
 		search_node* n = generate(pad_id{id_E});
-		double cost = (costs_[*label] + costs_[*label_E]) * 0.5;
+		double cost    = (costs_[*label] + costs_[*label_E]) * 0.5;
 		add_neighbour(n, cost);
 	}
 
@@ -169,7 +169,7 @@ vl_gridmap_expansion_policy::expand(
 	if(costs_[*label_W])
 	{
 		search_node* n = generate(pad_id{id_W});
-		double cost = (costs_[*label] + costs_[*label_W]) * 0.5;
+		double cost    = (costs_[*label] + costs_[*label_W]) * 0.5;
 		add_neighbour(n, cost);
 	}
 }

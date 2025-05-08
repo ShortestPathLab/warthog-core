@@ -30,16 +30,16 @@ typedef enum : uint8_t
 
 typedef enum : uint8_t
 {
-	NONE = 0,
-	NORTH = 1 << NORTH_ID,
-	EAST = 1 << EAST_ID,
-	SOUTH = 1 << SOUTH_ID,
-	WEST = 1 << WEST_ID,
+	NONE      = 0,
+	NORTH     = 1 << NORTH_ID,
+	EAST      = 1 << EAST_ID,
+	SOUTH     = 1 << SOUTH_ID,
+	WEST      = 1 << WEST_ID,
 	NORTHEAST = 1 << NORTHEAST_ID,
 	SOUTHEAST = 1 << SOUTHEAST_ID,
 	SOUTHWEST = 1 << SOUTHWEST_ID,
 	NORTHWEST = 1 << NORTHWEST_ID,
-	ALL = 255
+	ALL       = 255
 } direction;
 
 // rotate direction cw

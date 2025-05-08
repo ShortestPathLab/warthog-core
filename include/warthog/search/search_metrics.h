@@ -24,13 +24,13 @@ struct search_metrics
 	operator=(const search_metrics& other)
 	{
 		time_elapsed_nano_ = other.time_elapsed_nano_;
-		nodes_expanded_ = other.nodes_expanded_;
-		nodes_generated_ = other.nodes_generated_;
-		nodes_surplus_ = other.nodes_surplus_;
-		nodes_reopen_ = other.nodes_reopen_;
-		heap_ops_ = other.heap_ops_;
-		lb_ = other.lb_;
-		ub_ = other.ub_;
+		nodes_expanded_    = other.nodes_expanded_;
+		nodes_generated_   = other.nodes_generated_;
+		nodes_surplus_     = other.nodes_surplus_;
+		nodes_reopen_      = other.nodes_reopen_;
+		heap_ops_          = other.heap_ops_;
+		lb_                = other.lb_;
+		ub_                = other.ub_;
 		return *this;
 	}
 
@@ -38,13 +38,13 @@ struct search_metrics
 	reset()
 	{
 		time_elapsed_nano_ = {};
-		nodes_expanded_ = 0;
-		nodes_generated_ = 0;
-		nodes_surplus_ = 0;
-		nodes_reopen_ = 0;
-		heap_ops_ = 0;
-		lb_ = warthog::COST_MAX;
-		ub_ = warthog::COST_MAX;
+		nodes_expanded_    = 0;
+		nodes_generated_   = 0;
+		nodes_surplus_     = 0;
+		nodes_reopen_      = 0;
+		heap_ops_          = 0;
+		lb_                = warthog::COST_MAX;
+		ub_                = warthog::COST_MAX;
 	}
 
 	std::chrono::nanoseconds time_elapsed_nano_;

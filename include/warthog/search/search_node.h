@@ -33,12 +33,12 @@ public:
 	    uint32_t search_number, pad_id parent_id, cost_t g, cost_t f,
 	    cost_t ub = warthog::COST_MAX)
 	{
-		parent_id_ = parent_id;
-		f_ = f;
-		g_ = g;
-		ub_ = ub;
+		parent_id_     = parent_id;
+		f_             = f;
+		g_             = g;
+		ub_            = ub;
 		search_number_ = search_number;
-		status_ = false;
+		status_        = false;
 	}
 
 	inline uint32_t

@@ -16,7 +16,7 @@ warthog::util::cfg::parse_args(
     int argc, char** argv, const char* options, warthog::util::param params[])
 {
 	int current_opt;
-	for(int c = getopt_long(argc, argv, options, params, &current_opt);
+	for(int c      = getopt_long(argc, argv, options, params, &current_opt);
 	    c != -1; c = getopt_long(argc, argv, options, params, &current_opt))
 	{
 		if(c == '?') break;

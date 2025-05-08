@@ -91,7 +91,7 @@ gm_parser::parse_map(std::fstream& mapfs)
 	}
 
 	// read map data
-	uint32_t index = 0;
+	uint32_t index     = 0;
 	uint32_t max_tiles = this->header_.height_ * this->header_.width_;
 	while(true)
 	{
