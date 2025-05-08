@@ -93,7 +93,7 @@ gridmap_expansion_policy::expand(
 
 	// get terrain type of each tile in the 3x3 square around (x, y)
 	uint32_t tiles = 0;
-	pad_id nodeid = current->get_id();
+	pad_id nodeid  = current->get_id();
 	map_->get_neighbours(nodeid, (uint8_t*)&tiles);
 
 	//	#ifndef NDEBUG

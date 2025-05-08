@@ -72,9 +72,9 @@ parallel_compute(
 	std::vector<thread_params> task_data(NUM_THREADS);
 
 	void* (*fn_task_wrapper)(void*) = [](void* in) -> void* {
-		thread_params* par = (thread_params*)in;
+		thread_params* par    = (thread_params*)in;
 		par->thread_finished_ = false;
-		void* retval = par->fn_worker_(in);
+		void* retval          = par->fn_worker_(in);
 		par->thread_finished_ = true;
 		return retval;
 	};
@@ -82,11 +82,11 @@ parallel_compute(
 	for(uint32_t i = 0; i < NUM_THREADS; i++)
 	{
 		// define workloads
-		task_data[i].thread_id_ = i;
+		task_data[i].thread_id_   = i;
 		task_data[i].max_threads_ = NUM_THREADS;
-		task_data[i].nprocessed_ = 0;
-		task_data[i].shared_ = shared_data;
-		task_data[i].fn_worker_ = fn_worker;
+		task_data[i].nprocessed_  = 0;
+		task_data[i].shared_      = shared_data;
+		task_data[i].fn_worker_   = fn_worker;
 
 		// gogogogo
 		pthread_create(
@@ -105,11 +105,11 @@ parallel_compute(
 	{
 		// check progress
 		uint32_t nprocessed = 0;
-		uint32_t nfinished = 0;
+		uint32_t nfinished  = 0;
 		for(uint32_t i = 0; i < NUM_THREADS; i++)
 		{
 			nprocessed += task_data[i].nprocessed_;
-			nfinished += task_data[i].thread_finished_;
+			nfinished  += task_data[i].thread_finished_;
 		}
 
 		uint32_t pct_progress = (nprocessed * 100) / task_total;

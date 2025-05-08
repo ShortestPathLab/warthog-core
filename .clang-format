@@ -18,6 +18,10 @@ AllowShortBlocksOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: WithoutElse
 AllowShortFunctionsOnASingleLine: Inline
 AlignOperands: false
+AlignConsecutiveAssignments:
+  Enabled: true
+  AlignCompound: true
+  PadOperators: false
 BreakBeforeBraces: Custom
 BraceWrapping:
   AfterCaseLabel:  true

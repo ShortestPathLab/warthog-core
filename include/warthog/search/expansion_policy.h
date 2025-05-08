@@ -60,12 +60,12 @@ public:
 	{
 		if(current_ < neis_->size())
 		{
-			ret = (*neis_)[current_].node_;
+			ret  = (*neis_)[current_].node_;
 			cost = (*neis_)[current_].cost_;
 		}
 		else
 		{
-			ret = 0;
+			ret  = 0;
 			cost = 0;
 		}
 	}
@@ -83,7 +83,7 @@ public:
 		}
 		else
 		{
-			ret = 0;
+			ret  = 0;
 			cost = 0;
 		}
 	}

@@ -196,10 +196,10 @@ private:
 		// this eliminates the need for bounds checking when
 		// fetching the neighbours of a node.
 		this->padded_rows_before_first_row_ = 3;
-		this->padded_rows_after_last_row_ = 3;
-		this->padding_per_row_ = 1;
+		this->padded_rows_after_last_row_   = 3;
+		this->padding_per_row_              = 1;
 
-		this->padded_width_ = this->header_.width_ + this->padding_per_row_;
+		this->padded_width_  = this->header_.width_ + this->padding_per_row_;
 		this->padded_height_ = this->header_.height_
 		    + this->padded_rows_after_last_row_
 		    + this->padded_rows_before_first_row_;

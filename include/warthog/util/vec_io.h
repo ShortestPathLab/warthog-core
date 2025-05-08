@@ -125,7 +125,7 @@ load_vector(const char*& ss)
 		T c;
 
 		memcpy(&c, ss, st);
-		ss += st;
+		ss     += st;
 		v.at(i) = c;
 		i++;
 	}

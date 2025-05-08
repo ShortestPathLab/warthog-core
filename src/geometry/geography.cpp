@@ -106,11 +106,11 @@ spherical_distance(double lat_a, double lon_a, double lat_b, double lon_b)
 	double l2 = deg_to_rad(lon_b);
 
 	// (\Delta \phi) ^ 2
-	double D_p = p1 - p2;
+	double D_p   = p1 - p2;
 	double D_p_2 = D_p * D_p;
 
 	double cos_pm = cos((p1 + p2) / 2);
-	double x = cos_pm * (l1 - l2);
+	double x      = cos_pm * (l1 - l2);
 
 	return EARTH_RADIUS * sqrt(D_p_2 + x * x);
 }
@@ -181,41 +181,41 @@ exact_distance(double lat_a, double lon_a, double lat_b, double lon_b)
 	double p2 = deg_to_rad(lat_b);
 	double l2 = deg_to_rad(lon_b);
 
-	double D = l2 - l1;
-	double u1 = atan((1 - f) * tan(p1));
-	double u2 = atan((1 - f) * tan(p2));
-	double sin_u1 = sin(u1);
-	double cos_u1 = cos(u1);
-	double sin_u2 = sin(u2);
-	double cos_u2 = cos(u2);
-	double lambda = D;
+	double D         = l2 - l1;
+	double u1        = atan((1 - f) * tan(p1));
+	double u2        = atan((1 - f) * tan(p2));
+	double sin_u1    = sin(u1);
+	double cos_u1    = cos(u1);
+	double sin_u2    = sin(u2);
+	double cos_u2    = cos(u2);
+	double lambda    = D;
 	double lambda_pi = 2 * M_PI;
 
-	double cos2sigma_m = 0;
+	double cos2sigma_m  = 0;
 	double cos_sq_alpha = 0;
-	double sigma = 0;
-	double sin_sigma = 0;
-	double cos_sigma = 0;
+	double sigma        = 0;
+	double sin_sigma    = 0;
+	double cos_sigma    = 0;
 
 	while(fabs(lambda - lambda_pi) > 1e-12)
 	{
 		double sin_lambda = sin(lambda);
 		double cos_lambda = cos(lambda);
-		sin_sigma = sqrt(
-		    (cos_u2 * sin_lambda) * (cos_u2 * sin_lambda)
-		    + (cos_u1 * sin_u2 - sin_u1 * cos_u2 * cos_lambda)
-		        * (cos_u1 * sin_u2 - sin_u1 * cos_u2 * cos_lambda));
+		sin_sigma         = sqrt(
+            (cos_u2 * sin_lambda) * (cos_u2 * sin_lambda)
+            + (cos_u1 * sin_u2 - sin_u1 * cos_u2 * cos_lambda)
+                * (cos_u1 * sin_u2 - sin_u1 * cos_u2 * cos_lambda));
 		cos_sigma = sin_u1 * sin_u2 + cos_u1 * cos_u2 * cos_lambda;
-		sigma = atan2(sin_sigma, cos_sigma);
+		sigma     = atan2(sin_sigma, cos_sigma);
 
 		double alpha = asin(cos_u1 * cos_u2 * sin_lambda / sin_sigma);
 
 		cos_sq_alpha = cos(alpha) * cos(alpha);
-		cos2sigma_m = cos_sigma - 2 * sin_u1 * sin_u2 / cos_sq_alpha;
+		cos2sigma_m  = cos_sigma - 2 * sin_u1 * sin_u2 / cos_sq_alpha;
 
 		double cc = f / 16 * cos_sq_alpha * (4 + f * (4 - 3 * cos_sq_alpha));
 		lambda_pi = lambda;
-		lambda = D
+		lambda    = D
 		    + (1 - cc) * f * sin(alpha)
 		        * (sigma
 		           + cc * sin_sigma
@@ -267,8 +267,8 @@ haversine_approx(double lat1, double lon1, double lat2, double lon2)
 	double l1 = cos((lat1 + lat2) * PI_360);
 	double Dl = fabs(lat1 - lat2) * PI_360;
 	double Dp = fabs(lon1 - lon2) * PI_360;
-	double f = Dl * Dl + l1 * l1 * Dp * Dp;
-	double c = atan2(sqrt(f), sqrt(1 - f));
+	double f  = Dl * Dl + l1 * l1 * Dp * Dp;
+	double c  = atan2(sqrt(f), sqrt(1 - f));
 
 	return TWO_EARTH_RADII * c;
 }
@@ -276,15 +276,15 @@ haversine_approx(double lat1, double lon1, double lat2, double lon2)
 double
 haversine(double lat1, double lon1, double lat2, double lon2)
 {
-	double p_1 = deg_to_rad(lat1);
-	double p_2 = deg_to_rad(lat2);
-	double D_p = p_1 - p_2;
-	double D_l = deg_to_rad(lon2 - lon1);
+	double p_1   = deg_to_rad(lat1);
+	double p_2   = deg_to_rad(lat2);
+	double D_p   = p_1 - p_2;
+	double D_l   = deg_to_rad(lon2 - lon1);
 	double hav_l = sin(D_l / 2);
-	hav_l *= hav_l;
+	hav_l       *= hav_l;
 	double hav_p = sin(D_p / 2);
-	hav_p *= hav_p;
-	double a = cos(p_1) * cos(p_2) * hav_l;
+	hav_p       *= hav_p;
+	double a     = cos(p_1) * cos(p_2) * hav_l;
 
 	// 2*R*asin...
 	return TWO_EARTH_RADII * asin(sqrt(hav_p + a));
@@ -303,8 +303,8 @@ get_bearing(double lat_a, double lng_a, double lat_b, double lng_b)
 	double l2 = deg_to_rad(lng_b);
 	double p1 = deg_to_rad(lat_a);
 	double p2 = deg_to_rad(lat_b);
-	double y = sin(l2 - l1) * cos(p2);
-	double x = cos(p1) * sin(p2) - sin(p1) * cos(p2) * cos(l2 - l1);
+	double y  = sin(l2 - l1) * cos(p2);
+	double x  = cos(p1) * sin(p2) - sin(p1) * cos(p2) * cos(l2 - l1);
 
 	return rad_to_deg(std::atan2(y, x));
 }

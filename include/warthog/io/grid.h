@@ -74,12 +74,12 @@ public:
 	set_dim(uint32_t width, uint32_t height)
 	{
 		if(bool bad_width = width <= 0 || width > GRID_DIMENSION_MAX,
-		   bad_height = height <= 0 || height > GRID_DIMENSION_MAX;
+		   bad_height     = height <= 0 || height > GRID_DIMENSION_MAX;
 		   bad_width || bad_height)
 		{
 			throw std::out_of_range(bad_width ? "width" : "height");
 		}
-		m_dim.width = width;
+		m_dim.width  = width;
 		m_dim.height = height;
 	}
 	void
@@ -104,8 +104,8 @@ public:
 
 protected:
 	memory::bittable_dimension m_dim = {};
-	bittable_type m_type = bittable_type::AUTO;
-	uint32_t m_patch_count = 0;
+	bittable_type m_type             = bittable_type::AUTO;
+	uint32_t m_patch_count           = 0;
 };
 
 template<typename BitTable>
@@ -113,7 +113,7 @@ bool
 bittable_serialize::read_map(
     std::istream& in, BitTable& table, uint32_t offset_x, uint32_t offset_y)
 {
-	const memory::bittable_dimension dim = table.dim();
+	const memory::bittable_dimension dim      = table.dim();
 	const memory::bittable_dimension read_dim = m_dim;
 	table.fill(0); // set whole table to 0 (blocker)
 	// detect for overflow

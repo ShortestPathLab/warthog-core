@@ -35,8 +35,8 @@ TEMPLATE_TEST_CASE_SIG(
     (uint32_t, 1), (uint32_t, 16), (uint64_t, 32), (uint64_t, 64))
 {
 	using bittable = warthog::memory::bittable<uint32_t, T, B>;
-	auto width = GENERATE(1, 128, 1000);
-	auto height = GENERATE(1, 128, 1000);
+	auto width     = GENERATE(1, 128, 1000);
+	auto height    = GENERATE(1, 128, 1000);
 
 	size_t element_count = bittable::calc_array_size(width, height);
 	REQUIRE(element_count * sizeof(T) * CHAR_BIT >= width * height * B);
@@ -46,7 +46,7 @@ TEMPLATE_TEST_CASE_SIG(
 	bittable table;
 	table.setup(element_data.data(), (uint32_t)width, (uint32_t)height);
 
-	constexpr T value_zero = 0;
+	constexpr T value_zero     = 0;
 	constexpr T value_one_word = static_cast<T>(~0ull);
 	// done with lambda to silence erroneous -Wshift-count-overflow
 	constexpr T value_one = []() {
@@ -54,7 +54,7 @@ TEMPLATE_TEST_CASE_SIG(
 		else { return static_cast<T>(~(value_one_word << B)); }
 	}();
 	constexpr T value_alt_word = static_cast<T>(0xAAAA'AAAA'AAAA'AAAAull);
-	constexpr T value_alt = value_alt_word & value_one;
+	constexpr T value_alt      = value_alt_word & value_one;
 
 	SECTION("WHOLE")
 	{
@@ -121,9 +121,9 @@ TEMPLATE_TEST_CASE_SIG(
 
 		for(size_t i = 0, ie = width * height; i < ie; ++i)
 		{
-			auto x = rng_width(rng_seed);
-			auto y = rng_height(rng_seed);
-			auto value = rng_value(rng_seed);
+			auto x       = rng_width(rng_seed);
+			auto y       = rng_height(rng_seed);
+			auto value   = rng_value(rng_seed);
 			uint32_t pos = table.xy_to_id(x, y);
 			switch(op)
 			{
