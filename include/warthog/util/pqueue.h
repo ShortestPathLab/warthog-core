@@ -53,7 +53,7 @@ public:
 	clear()
 	{
 		queuesize_ = 0;
-		heap_ops_ = 0;
+		heap_ops_  = 0;
 	}
 
 	// reprioritise the specified element (up or down)
@@ -81,7 +81,7 @@ public:
 
 		if(queuesize_ + 1 > maxsize_) { resize(maxsize_ * 2); }
 		unsigned int priority = queuesize_;
-		elts_[priority] = val;
+		elts_[priority]       = val;
 		val->set_priority(priority);
 		queuesize_++;
 		heapify_up(priority);
@@ -195,7 +195,7 @@ private:
 			// find smallest (or largest, depending on heap type) child
 			unsigned int child1 = (index << 1) + 1;
 			unsigned int child2 = (index << 1) + 2;
-			unsigned int which = child1;
+			unsigned int which  = child1;
 			if((child2 < queuesize_)
 			   && (*cmp_)(*elts_[child2], *elts_[child1]))
 			//*elts_[child2] < *elts_[child1])
@@ -232,7 +232,7 @@ private:
 			tmp[i] = elts_[i];
 		}
 		delete[] elts_;
-		elts_ = tmp;
+		elts_    = tmp;
 		maxsize_ = newsize;
 	}
 
@@ -243,7 +243,7 @@ private:
 		assert(index1 < queuesize_ && index2 < queuesize_);
 
 		search::search_node* tmp = elts_[index1];
-		elts_[index1] = elts_[index2];
+		elts_[index1]            = elts_[index2];
 		elts_[index1]->set_priority(index1);
 		elts_[index2] = tmp;
 		tmp->set_priority(index2);

@@ -20,12 +20,12 @@ struct heuristic_value
 
 	heuristic_value()
 	{
-		from_ = warthog::SN_ID_MAX;
-		to_ = warthog::SN_ID_MAX;
-		lb_ = warthog::COST_MAX;
-		ub_ = warthog::COST_MAX;
+		from_     = warthog::SN_ID_MAX;
+		to_       = warthog::SN_ID_MAX;
+		lb_       = warthog::COST_MAX;
+		ub_       = warthog::COST_MAX;
 		feasible_ = false;
-		ub_path_ = 0;
+		ub_path_  = 0;
 	}
 
 	heuristic_value(
@@ -46,12 +46,12 @@ struct heuristic_value
 	void
 	operator()(sn_id_t from, sn_id_t to, std::vector<pack_id>* ub_path = 0)
 	{
-		from_ = from;
-		to_ = to;
-		lb_ = warthog::COST_MAX;
-		ub_ = warthog::COST_MAX;
+		from_     = from;
+		to_       = to;
+		lb_       = warthog::COST_MAX;
+		ub_       = warthog::COST_MAX;
 		feasible_ = false;
-		ub_path_ = ub_path;
+		ub_path_  = ub_path;
 	}
 
 	// lower and upperbound estimates

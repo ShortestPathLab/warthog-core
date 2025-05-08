@@ -33,7 +33,7 @@ namespace warthog::memory
 
 namespace node_pool_ns
 {
-static const uint64_t NBS = 8; // node block size; set this >= 8
+static const uint64_t NBS      = 8; // node block size; set this >= 8
 static const uint64_t LOG2_NBS = 3;
 static const uint64_t NBS_MASK = 7;
 }

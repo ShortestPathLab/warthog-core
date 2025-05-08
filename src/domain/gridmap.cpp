@@ -24,8 +24,8 @@ gridmap::gridmap(const char* filename)
 		throw std::runtime_error("invalid grid format");
 	if(parser.get_type() != io::bittable_type::OCTILE)
 		throw std::runtime_error("gridmap::gridmap must be OCTILE");
-	this->header_.type_ = "octile";
-	this->header_.width_ = parser.get_dim().width;
+	this->header_.type_   = "octile";
+	this->header_.width_  = parser.get_dim().width;
 	this->header_.height_ = parser.get_dim().height;
 
 	init_db();
@@ -55,8 +55,8 @@ gridmap::init_db()
 	}
 	this->padding_per_row_ = store_width - this->header_.width_;
 
-	this->dbheight_ = store_height;
-	this->dbwidth_ = store_width >> warthog::LOG2_DBWORD_BITS;
+	this->dbheight_  = store_height;
+	this->dbwidth_   = store_width >> warthog::LOG2_DBWORD_BITS;
 	this->dbwidth64_ = store_width >> 6;
 	// the +8 is to allow unaligned access past the end
 	this->db_size_ = bittable::calc_array_size(store_width, store_height) + 8;

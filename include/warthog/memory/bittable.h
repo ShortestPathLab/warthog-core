@@ -69,8 +69,8 @@ public:
 	        && std::popcount(ValueBits) == 1,
 	    "ValueBits must be to power of 2 and fit inside BaseType bits.");
 	constexpr static size_t value_bits = ValueBits;
-	using id_type = IdType;
-	using value_type = BaseType;
+	using id_type                      = IdType;
+	using value_type                   = BaseType;
 	using id_value_type
 	    = std::conditional_t<sizeof(IdType) <= 4, uint32_t, uint64_t>;
 	constexpr static size_t base_bit_count = sizeof(BaseType) * CHAR_BIT;
@@ -93,7 +93,7 @@ public:
 	constexpr bitarray() noexcept : m_data{} { }
 	constexpr bitarray(value_type* ptr) noexcept : m_data(ptr) { }
 	constexpr bitarray(const bitarray&) noexcept = default;
-	constexpr bitarray(bitarray&&) noexcept = default;
+	constexpr bitarray(bitarray&&) noexcept      = default;
 
 	constexpr bitarray&
 	operator=(const bitarray&) noexcept
@@ -143,7 +143,7 @@ public:
 	{
 		assert(value <= value_bit_mask);
 		id_value_type idval = id_value_type{id} << value_bit_width;
-		BaseType* data_pos = m_data + (idval >> base_bit_width);
+		BaseType* data_pos  = m_data + (idval >> base_bit_width);
 		*data_pos = (*data_pos & ~(value_bit_mask << (idval & base_bit_mask)))
 		    | (value << (idval & base_bit_mask));
 	}
@@ -152,40 +152,40 @@ public:
 	{
 		assert(value <= value_bit_mask);
 		id_value_type idval = id_value_type{id} << value_bit_width;
-		BaseType* data_pos = m_data + (idval >> base_bit_width);
-		*data_pos &= std::rotl(
-		    static_cast<value_type>(value | ~value_bit_mask),
-		    idval & base_bit_mask);
+		BaseType* data_pos  = m_data + (idval >> base_bit_width);
+		*data_pos          &= std::rotl(
+            static_cast<value_type>(value | ~value_bit_mask),
+            idval & base_bit_mask);
 	}
 	constexpr void
 	bit_or(id_type id, value_type value) noexcept
 	{
 		assert(value <= value_bit_mask);
 		id_value_type idval = id_value_type{id} << value_bit_width;
-		BaseType* data_pos = m_data + (idval >> base_bit_width);
-		*data_pos |= value << (idval & base_bit_mask);
+		BaseType* data_pos  = m_data + (idval >> base_bit_width);
+		*data_pos          |= value << (idval & base_bit_mask);
 	}
 	constexpr void
 	bit_xor(id_type id, value_type value) noexcept
 	{
 		assert(value <= value_bit_mask);
 		id_value_type idval = id_value_type{id} << value_bit_width;
-		BaseType* data_pos = m_data + (idval >> base_bit_width);
-		*data_pos ^= value << (idval & base_bit_mask);
+		BaseType* data_pos  = m_data + (idval >> base_bit_width);
+		*data_pos          ^= value << (idval & base_bit_mask);
 	}
 	constexpr void
 	bit_neg(id_type id) noexcept
 	{
 		id_value_type idval = id_value_type{id} << value_bit_width;
-		BaseType* data_pos = m_data + (idval >> base_bit_width);
-		*data_pos ^= value_bit_mask << (idval & base_bit_mask);
+		BaseType* data_pos  = m_data + (idval >> base_bit_width);
+		*data_pos          ^= value_bit_mask << (idval & base_bit_mask);
 	}
 
 	constexpr value_type
 	get(id_type id) const noexcept
 	{
 		id_value_type idval = id_value_type{id} << value_bit_width;
-		BaseType* data_pos = m_data + (idval >> base_bit_width);
+		BaseType* data_pos  = m_data + (idval >> base_bit_width);
 		return (*data_pos >> (idval & base_bit_mask)) & value_bit_mask;
 	}
 
@@ -225,7 +225,7 @@ public:
 		else
 		{
 			id_value_type idval = id_value_type{id} << value_bit_width;
-			BaseType* data_pos = m_data + (idval >> base_bit_width);
+			BaseType* data_pos  = m_data + (idval >> base_bit_width);
 			type value_span{};
 			std::memcpy(&value_span, data_pos, sizeof(type));
 			value_span >>= (idval & base_bit_mask);
@@ -278,7 +278,7 @@ public:
 	    : bittable::bitarray(arr), m_dim{width, height}
 	{ }
 	constexpr bittable(const bittable&) noexcept = default;
-	constexpr bittable(bittable&&) noexcept = default;
+	constexpr bittable(bittable&&) noexcept      = default;
 
 	constexpr bittable&
 	operator=(const bittable&) noexcept
@@ -291,7 +291,7 @@ public:
 	setup(value_type* ptr, uint32_t width, uint32_t height) noexcept
 	{
 		bittable::bitarray::setup(ptr);
-		m_dim.width = width;
+		m_dim.width  = width;
 		m_dim.height = height;
 	}
 

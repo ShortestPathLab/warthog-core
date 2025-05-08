@@ -109,7 +109,7 @@ scenario_manager::sort()
 		{
 			if(experiments_.at(j)->distance() < experiments_.at(i)->distance())
 			{
-				experiment* tmp = experiments_.at(i);
+				experiment* tmp    = experiments_.at(i);
 				experiments_.at(i) = experiments_.at(j);
 				experiments_.at(j) = tmp;
 			}
@@ -130,7 +130,7 @@ std::filesystem::path
 find_map_filename(
     const scenario_manager& scenmgr, std::filesystem::path sfilename)
 {
-	namespace fs = std::filesystem;
+	namespace fs        = std::filesystem;
 	const auto& mapname = scenmgr.get_experiment(0)->map();
 	// scen file has a map name designated.
 	if(!mapname.empty())

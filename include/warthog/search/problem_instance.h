@@ -26,10 +26,10 @@ public:
 
 	constexpr problem_instance_base(const problem_instance_base<STATE>& other)
 	{
-		this->start_ = other.start_;
-		this->target_ = other.target_;
-		this->instance_id_ = instance_counter_++;
-		this->verbose_ = other.verbose_;
+		this->start_        = other.start_;
+		this->target_       = other.target_;
+		this->instance_id_  = instance_counter_++;
+		this->verbose_      = other.verbose_;
 		this->extra_params_ = other.extra_params_;
 	}
 
@@ -44,10 +44,10 @@ public:
 	constexpr problem_instance_base<STATE>&
 	operator=(const problem_instance_base<STATE>& other)
 	{
-		this->start_ = other.start_;
-		this->target_ = other.target_;
-		this->instance_id_ = instance_counter_++;
-		this->verbose_ = other.verbose_;
+		this->start_        = other.start_;
+		this->target_       = other.target_;
+		this->instance_id_  = instance_counter_++;
+		this->verbose_      = other.verbose_;
 		this->extra_params_ = other.extra_params_;
 		return *this;
 	}
@@ -69,7 +69,7 @@ public:
 	void* extra_params_;
 };
 
-using problem_instance = problem_instance_base<pack_id>;
+using problem_instance        = problem_instance_base<pack_id>;
 using search_problem_instance = problem_instance_base<pad_id>;
 
 template<class Domain>
@@ -77,8 +77,8 @@ search_problem_instance
 convert_problem_instance_to_search(const problem_instance& pi, Domain& d)
 {
 	// convert start/target to padded/unpadded, preserving max value
-	pad_id start = pi.start_ == pack_id::max() ? pad_id::max()
-	                                           : d.to_padded_id(pi.start_);
+	pad_id start  = pi.start_ == pack_id::max() ? pad_id::max()
+	                                            : d.to_padded_id(pi.start_);
 	pad_id target = pi.target_ == pack_id::max() ? pad_id::max()
 	                                             : d.to_padded_id(pi.target_);
 	return search_problem_instance{

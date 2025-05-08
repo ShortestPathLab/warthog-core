@@ -27,7 +27,7 @@ public:
 	arraylist(size_t size = 100) : max_size_(size), terminator_(0)
 	{
 		collection_ = new uint8_t[max_size_ * sizeof(T)];
-		next_ = 0;
+		next_       = 0;
 	}
 
 	~arraylist() { delete[] collection_; }
@@ -108,7 +108,7 @@ private:
 		}
 		delete[] collection_;
 		collection_ = bigcollection;
-		max_size_ = newsize;
+		max_size_   = newsize;
 	}
 };
 

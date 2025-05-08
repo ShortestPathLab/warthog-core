@@ -38,12 +38,12 @@ public:
 			pool_size_ = obj_size_;
 		}
 
-		mem_ = new char[pool_size_];
+		mem_  = new char[pool_size_];
 		next_ = mem_;
-		max_ = mem_ + pool_size_;
+		max_  = mem_ + pool_size_;
 
 		freed_stack_ = new size_t[(pool_size_ / obj_size)];
-		stack_size_ = 0;
+		stack_size_  = 0;
 	}
 
 	~cchunk()
@@ -55,7 +55,7 @@ public:
 	inline void
 	reclaim()
 	{
-		next_ = mem_;
+		next_       = mem_;
 		stack_size_ = 0;
 	}
 
@@ -65,7 +65,7 @@ public:
 		if(next_ < max_)
 		{
 			char* retval = next_;
-			next_ += obj_size_;
+			next_       += obj_size_;
 			return retval;
 		}
 
@@ -121,8 +121,8 @@ public:
 	mem()
 	{
 		size_t bytes = sizeof(*this);
-		bytes += sizeof(char) * pool_size_;
-		bytes += sizeof(int) * (pool_size_ / obj_size_);
+		bytes       += sizeof(char) * pool_size_;
+		bytes       += sizeof(int) * (pool_size_ / obj_size_);
 		return bytes;
 	}
 
@@ -201,7 +201,7 @@ public:
 			// not enough space in any existing chunk; make a new one
 			add_chunk(CHUNK_SIZE_);
 			current_chunk_ = chunks_[num_chunks_ - 1];
-			mem_ptr = current_chunk_->allocate();
+			mem_ptr        = current_chunk_->allocate();
 		}
 		return mem_ptr;
 	}
@@ -292,7 +292,7 @@ private:
 		else
 		{
 			// make room for a new chunk
-			size_t big_max = max_chunks_ * 2;
+			size_t big_max      = max_chunks_ * 2;
 			cchunk** big_chunks = new cchunk*[big_max];
 			for(unsigned int i = 0; i < max_chunks_; i++)
 			{
@@ -300,7 +300,7 @@ private:
 			}
 			delete[] chunks_;
 
-			chunks_ = big_chunks;
+			chunks_     = big_chunks;
 			max_chunks_ = big_max;
 
 			// finally; add a new chunk

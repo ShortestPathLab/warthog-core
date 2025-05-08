@@ -34,8 +34,8 @@ public:
 	operator=(const gm_header& other)
 	{
 		this->height_ = other.height_;
-		this->width_ = other.width_;
-		this->type_ = other.type_;
+		this->width_  = other.width_;
+		this->type_   = other.type_;
 		return *this;
 	}
 

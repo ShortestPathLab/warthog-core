@@ -24,12 +24,12 @@ public:
 	{
 		// defaults:
 		// optimal solution cost, no cutoff limits
-		cost_cutoff_ = DBL_MAX;
-		exp_cutoff_ = UINT32_MAX;
-		time_cutoff_ns_ = std::chrono::nanoseconds::max();
-		w_admissibility_ = 1.0;
+		cost_cutoff_       = DBL_MAX;
+		exp_cutoff_        = UINT32_MAX;
+		time_cutoff_ns_    = std::chrono::nanoseconds::max();
+		w_admissibility_   = 1.0;
 		eps_admissibility_ = 0.0;
-		verbose_ = false;
+		verbose_           = false;
 	}
 
 	// limits the maximum time which is available to find a solution

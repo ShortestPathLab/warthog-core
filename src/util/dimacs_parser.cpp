@@ -43,8 +43,8 @@ dimacs_parser::~dimacs_parser()
 void
 dimacs_parser::init()
 {
-	nodes_ = new std::vector<dimacs_parser::node>();
-	edges_ = new std::vector<dimacs_parser::edge>();
+	nodes_       = new std::vector<dimacs_parser::node>();
+	edges_       = new std::vector<dimacs_parser::edge>();
 	experiments_ = new std::vector<dimacs_parser::experiment>();
 }
 
@@ -72,10 +72,10 @@ dimacs_parser::load_graph(const char* filename)
 		return false;
 	}
 
-	bool retval = true;
-	char* buf = new char[1024];
+	bool retval       = true;
+	char* buf         = new char[1024];
 	const char* delim = " \t";
-	uint32_t line = 1;
+	uint32_t line     = 1;
 	while(fdimacs->good())
 	{
 		fdimacs->getline(buf, 1024);
@@ -83,15 +83,15 @@ dimacs_parser::load_graph(const char* filename)
 
 		if(buf[0] == 'p')
 		{
-			char* token = strtok(buf, delim); // p char
-			token = strtok(NULL, delim);      // file type token
+			char* token = strtok(buf, delim);  // p char
+			token       = strtok(NULL, delim); // file type token
 			if(strcmp(token, "sp") == 0)
 			{
 				char* end;
-				token = strtok(NULL, delim);
+				token                  = strtok(NULL, delim);
 				uint32_t tmp_num_nodes = (uint32_t)strtol(token, &end, 10);
 
-				token = strtok(NULL, delim);
+				token                  = strtok(NULL, delim);
 				uint32_t tmp_num_edges = (uint32_t)strtol(token, &end, 10);
 				if(tmp_num_edges == 0L || tmp_num_nodes == 0L)
 				{
@@ -104,7 +104,7 @@ dimacs_parser::load_graph(const char* filename)
 				std::cerr << "loading " << tmp_num_edges << " arcs " << "from "
 				          << filename << " ... ";
 				edges_->reserve(tmp_num_edges);
-				retval = load_gr_file(*fdimacs);
+				retval   = load_gr_file(*fdimacs);
 				gr_file_ = filename;
 				assert(tmp_num_edges == get_num_edges());
 				std::cerr << "done\n";
@@ -144,7 +144,7 @@ dimacs_parser::load_graph(const char* filename)
 						std::cerr << "loading " << tmp_num_nodes << " nodes "
 						          << "from " << filename << " ... ";
 						nodes_->reserve(tmp_num_nodes);
-						retval = load_co_file(*fdimacs);
+						retval   = load_co_file(*fdimacs);
 						gr_file_ = filename;
 						assert(tmp_num_nodes == get_num_nodes());
 						std::cerr << "done\n";
@@ -173,10 +173,10 @@ bool
 dimacs_parser::load_co_file(std::istream& fdimacs)
 {
 	nodes_->clear();
-	uint32_t line = 1;
-	char* buf = new char[1024];
+	uint32_t line     = 1;
+	char* buf         = new char[1024];
 	const char* delim = " \t";
-	bool all_good = true;
+	bool all_good     = true;
 	while(fdimacs.good() && all_good)
 	{
 		char next_char = (char)fdimacs.peek();
@@ -186,9 +186,9 @@ dimacs_parser::load_co_file(std::istream& fdimacs)
 		{
 			fdimacs.getline(buf, 1024);
 			char* descriptor = strtok(buf, delim);
-			char* id = strtok(NULL, delim);
-			char* x = strtok(NULL, delim);
-			char* y = strtok(NULL, delim);
+			char* id         = strtok(NULL, delim);
+			char* x          = strtok(NULL, delim);
+			char* y          = strtok(NULL, delim);
 			if(!(descriptor && id && x && y))
 			{
 				std::cerr
@@ -199,8 +199,8 @@ dimacs_parser::load_co_file(std::istream& fdimacs)
 			}
 			dimacs_parser::node n;
 			n.id_ = (uint32_t)atoi(id);
-			n.x_ = atoi(x);
-			n.y_ = atoi(y);
+			n.x_  = atoi(x);
+			n.y_  = atoi(y);
 			nodes_->push_back(n);
 			break;
 		}
@@ -226,10 +226,10 @@ dimacs_parser::load_co_file(std::istream& fdimacs)
 bool
 dimacs_parser::load_gr_file(std::istream& fdimacs)
 {
-	uint32_t line = 1;
-	char* buf = new char[1024];
+	uint32_t line     = 1;
+	char* buf         = new char[1024];
 	const char* delim = " \t";
-	bool all_good = true;
+	bool all_good     = true;
 	while(fdimacs.good() && all_good)
 	{
 		char next_char = (char)fdimacs.peek();
@@ -239,9 +239,9 @@ dimacs_parser::load_gr_file(std::istream& fdimacs)
 		{
 			fdimacs.getline(buf, 1024);
 			char* descriptor = strtok(buf, delim);
-			char* from = strtok(NULL, delim);
-			char* to = strtok(NULL, delim);
-			char* cost = strtok(NULL, delim);
+			char* from       = strtok(NULL, delim);
+			char* to         = strtok(NULL, delim);
+			char* cost       = strtok(NULL, delim);
 			if(!(descriptor && from && to && cost))
 			{
 				std::cerr << "warning; badly formatted arc descriptor on line "
@@ -252,7 +252,7 @@ dimacs_parser::load_gr_file(std::istream& fdimacs)
 			dimacs_parser::edge e;
 			e.tail_id_ = (uint32_t)atoi(from);
 			e.head_id_ = (uint32_t)atoi(to);
-			e.weight_ = (uint32_t)atoi(cost);
+			e.weight_  = (uint32_t)atoi(cost);
 			edges_->push_back(e);
 			break;
 		}
@@ -325,14 +325,14 @@ dimacs_parser::load_instance(const char* dimacs_file)
 		// we don't need to adjust the start and target ids
 		else if(strstr(buf, "p aux sp p2p-zero") != 0)
 		{
-			p2p = true;
+			p2p       = true;
 			id_offset = 0;
 			break;
 		}
 		else if(strstr(buf, "p aux sp ss-zero") != 0)
 		{
 			id_offset = 0;
-			p2p = false;
+			p2p       = false;
 			break;
 		}
 		if(strstr(buf, "p aux sp p2p") != 0)
@@ -368,9 +368,9 @@ dimacs_parser::load_instance(const char* dimacs_file)
 				          << "\n";
 				continue;
 			}
-			exp.source = (uint32_t)atoi(tok);
+			exp.source  = (uint32_t)atoi(tok);
 			exp.source -= id_offset;
-			exp.p2p = p2p;
+			exp.p2p     = p2p;
 
 			if(p2p)
 			{
@@ -380,7 +380,7 @@ dimacs_parser::load_instance(const char* dimacs_file)
 					std::cerr << "invalid query in problem file:  " << buf
 					          << "\n";
 				}
-				exp.target = (uint32_t)atoi(tok);
+				exp.target  = (uint32_t)atoi(tok);
 				exp.target -= id_offset;
 			}
 			else { exp.target = warthog::INF32; }
@@ -413,8 +413,8 @@ dimacs_parser::print_undirected_unweighted_metis(
 	for(uint32_t i = 0; i < edges_->size(); i++)
 	{
 		dimacs_parser::edge e = edges_->at(i);
-		uint32_t id1 = e.head_id_;
-		uint32_t id2 = e.tail_id_;
+		uint32_t id1          = e.head_id_;
+		uint32_t id2          = e.tail_id_;
 		bool include_id1 = true, include_id2 = true;
 
 		// filtering stuff for when the DIMACS graph is a CH and we want to

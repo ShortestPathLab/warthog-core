@@ -77,8 +77,8 @@ check_optimality(
     warthog::search::solution& sol, warthog::util::experiment* exp)
 {
 	uint32_t precision = 2;
-	double epsilon = (1.0 / (int)pow(10, precision)) / 2;
-	double delta = fabs(sol.sum_of_edge_costs_ - exp->distance());
+	double epsilon     = (1.0 / (int)pow(10, precision)) / 2;
+	double delta       = fabs(sol.sum_of_edge_costs_ - exp->distance());
 
 	if(fabs(delta - epsilon) > epsilon)
 	{
@@ -278,9 +278,9 @@ main(int argc, char** argv)
 	}
 
 	std::string sfile = cfg.get_param_value("scen");
-	std::string alg = cfg.get_param_value("alg");
+	std::string alg   = cfg.get_param_value("alg");
 	// std::string gen = cfg.get_param_value("gen");
-	std::string mapfile = cfg.get_param_value("map");
+	std::string mapfile  = cfg.get_param_value("map");
 	std::string costfile = cfg.get_param_value("costs");
 
 	// if(gen != "")

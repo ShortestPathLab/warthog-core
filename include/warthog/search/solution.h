@@ -49,7 +49,7 @@ public:
 	void
 	reset()
 	{
-		s_node_ = 0;
+		s_node_            = 0;
 		sum_of_edge_costs_ = warthog::COST_MAX;
 		path_.clear();
 		met_.reset();

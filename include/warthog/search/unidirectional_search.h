@@ -43,8 +43,8 @@ namespace warthog::search
 template<
     class H, class E, class Q = util::pqueue_min, class L = dummy_listener,
     admissibility_criteria AC = admissibility_criteria::any,
-    feasibility_criteria FC = feasibility_criteria::until_exhaustion,
-    reopen_policy RP = reopen_policy::no>
+    feasibility_criteria FC   = feasibility_criteria::until_exhaustion,
+    reopen_policy RP          = reopen_policy::no>
 class unidirectional_search
 {
 public:
@@ -188,7 +188,7 @@ private:
 		bool is_target = n->get_id() == pi->target_;
 		if((is_target || hv.feasible_) && gval < sol->sum_of_edge_costs_)
 		{
-			sol->s_node_ = n;
+			sol->s_node_            = n;
 			sol->sum_of_edge_costs_ = gval;
 		}
 	}
@@ -251,7 +251,7 @@ private:
 			trace(pi->verbose_, "Expanding:", *current);
 
 			// Generate successors of the current node
-			search_node* n = nullptr;
+			search_node* n   = nullptr;
 			cost_t cost_to_n = warthog::COST_MAX;
 			for(uint32_t i = 0; i < expander_->get_num_successors(); i++)
 			{
@@ -308,8 +308,8 @@ private:
 		}
 
 		sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();
-		sol->met_.nodes_surplus_ = open_->size();
-		sol->met_.heap_ops_ = open_->get_heap_ops();
+		sol->met_.nodes_surplus_     = open_->size();
+		sol->met_.heap_ops_          = open_->get_heap_ops();
 
 		DO_ON_DEBUG_IF(pi->verbose_)
 		{
