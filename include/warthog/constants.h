@@ -94,8 +94,8 @@ struct identity_base
 };
 template<class T>
 constexpr bool is_identity_v = std::false_type{};
-template<template<class, class> class T, class Tag, class IdType>
-constexpr bool is_identity_v<T<Tag, IdType>> = std::true_type{};
+template<class Tag, class IdType>
+constexpr bool is_identity_v<identity_base<Tag, IdType>> = std::true_type{};
 template<class T>
 concept Identity = is_identity_v<T>;
 

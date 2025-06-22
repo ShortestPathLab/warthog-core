@@ -9,12 +9,17 @@
 // @created: 2018-11-03
 //
 
+#include <warthog/constants.h>
 #include <bit>
 #include <cassert>
 #include <cstdint>
 
 namespace warthog::grid
 {
+
+// TODO: document
+
+using grid_id = pad32_id;
 
 typedef enum : uint8_t
 {
@@ -28,6 +33,18 @@ typedef enum : uint8_t
 	SOUTHWEST_ID,
 } direction_id;
 
+static_assert(NORTH_ID < 4 && SOUTH_ID < 4 && EAST_ID < 4 && WEST_ID < 4,
+	"cardinals id must be less than 4");
+static_assert(NORTHEAST_ID >= 4 && NORTHWEST_ID >= 4 && SOUTHEAST_ID >= 4 && SOUTHWEST_ID >= 4,
+	"intercardinals id must be at least 4");
+static_assert(NORTHEAST_ID < 8 && NORTHWEST_ID < 8 && SOUTHEAST_ID < 8 && SOUTHWEST_ID < 8,
+	"intercardinals id must be less than 8");
+
+template <direction_id D>
+concept CardinalId = D == NORTH_ID || D == EAST_ID || D == SOUTH_ID || D == WEST_ID;
+template <direction_id D>
+concept InterCardinalId = D == NORTHEAST_ID || D == NORTHWEST_ID || D == SOUTHEAST_ID || D == SOUTHWEST_ID;
+
 typedef enum : uint8_t
 {
 	NONE      = 0,
@@ -39,8 +56,28 @@ typedef enum : uint8_t
 	SOUTHEAST = 1 << SOUTHEAST_ID,
 	SOUTHWEST = 1 << SOUTHWEST_ID,
 	NORTHWEST = 1 << NORTHWEST_ID,
-	ALL       = 255
+	ALL       = 255,
+	CARDINAL  = NORTH | EAST | SOUTH | WEST,
+	INTERCARDINAL = NORTH | EAST | SOUTH | WEST,
 } direction;
+
+template <direction D>
+concept CardinalDir = D == NORTH || D == EAST || D == SOUTH || D == WEST;
+template <direction D>
+concept InterCardinalDir = D == NORTHEAST || D == NORTHWEST || D == SOUTHEAST || D == SOUTHWEST;
+
+constexpr direction
+to_dir(direction_id id) noexcept
+{
+	assert(id < 8);
+	return static_cast<direction>(1 << id);
+}
+constexpr direction_id
+to_dir_id(direction d) noexcept
+{
+	assert(std::popcount(static_cast<uint8_t>(d)) == 1);
+	return static_cast<direction_id>(std::countr_zero(static_cast<uint8_t>(d)));
+}
 
 // rotate direction cw
 constexpr direction_id
@@ -135,6 +172,46 @@ dir_flip(direction d) noexcept
 	    d | 256u)); // |256u to ensure no branch in compiler
 	return static_cast<direction>(sel >> index * 8);
 }
+
+/// @brief TODO
+/// @param d 
+/// @param width 
+/// @return 
+constexpr int32_t dir_id_adj(direction_id d, uint32_t width)
+{
+	int32_t w = static_cast<int32_t>(width);
+	switch (d) {
+	case NORTH_ID:
+		return -w;
+	case SOUTH_ID:
+		return w;
+	case EAST_ID:
+		return 1;
+	case WEST_ID:
+		return -1;
+	case NORTHEAST_ID:
+		return -w + 1;
+	case NORTHWEST_ID:
+		return -w - 1;
+	case SOUTHEAST_ID:
+		return w + 1;
+	case SOUTHWEST_ID:
+		return w - 1;
+	default:
+		assert(false);
+		return 0;
+	}
+}
+constexpr int32_t dir_adj(direction d, uint32_t width)
+{
+	return dir_id_adj(to_dir_id(d), width);
+}
+
+struct alignas(uint32_t) point
+{
+	uint16_t x;
+	uint16_t y;
+};
 
 } // namespace warthog::grid
 
