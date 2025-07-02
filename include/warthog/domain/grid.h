@@ -31,6 +31,14 @@ typedef enum : uint8_t
 	NORTHWEST_ID,
 	SOUTHEAST_ID,
 	SOUTHWEST_ID,
+	NORTH_NORTHEAST_ID = NORTH_ID | (NORTHEAST_ID << 3),
+	EAST_NORTHEAST_ID = EAST_ID | (NORTHEAST_ID << 3),
+	NORTH_NORTHWEST_ID = NORTH_ID | (NORTHWEST_ID << 3),
+	WEST_NORTHWEST_ID = WEST_ID | (NORTHWEST_ID << 3),
+	SOUTH_SOUTHEAST_ID = SOUTH_ID | (SOUTHEAST_ID << 3),
+	EAST_SOUTHEAST_ID = EAST_ID | (SOUTHEAST_ID << 3),
+	SOUTH_SOUTHWEST_ID = SOUTH_ID | (SOUTHWEST_ID << 3),
+	WEST_SOUTHWEST_ID = WEST_ID | (SOUTHWEST_ID << 3),
 } direction_id;
 
 static_assert(NORTH_ID < 4 && SOUTH_ID < 4 && EAST_ID < 4 && WEST_ID < 4,
@@ -44,6 +52,25 @@ template <direction_id D>
 concept CardinalId = D == NORTH_ID || D == EAST_ID || D == SOUTH_ID || D == WEST_ID;
 template <direction_id D>
 concept InterCardinalId = D == NORTHEAST_ID || D == NORTHWEST_ID || D == SOUTHEAST_ID || D == SOUTHWEST_ID;
+/// e.g. NORTH_NORTHEAST_ID
+template <direction_id D>
+concept SecInterCardinalID = static_cast<uint8_t>(D) >= 8;
+
+constexpr inline bool is_cardinal_id(direction_id d) noexcept { return static_cast<uint8_t>(d) < 4; }
+constexpr inline bool is_intercardinal_id(direction_id d) noexcept { return (static_cast<uint8_t>(d) - 4) < 4; }
+constexpr inline bool is_sec_intercardinal_id(direction_id d) noexcept { return static_cast<uint8_t>(d) >= 8; }
+constexpr inline direction_id sec_ic_cardinal(direction_id d) noexcept
+{
+	direction_id c = static_cast<direction_id>(static_cast<uint8_t>(d) & 0b000'111);
+	assert(is_cardinal_id(c));
+	return c;
+}
+constexpr inline direction_id sec_ic_intercardinal(direction_id d) noexcept
+{
+	direction_id c = static_cast<direction_id>(static_cast<uint8_t>(d) >> 3);
+	assert(is_intercardinal_id(c));
+	return c;
+}
 
 typedef enum : uint8_t
 {
