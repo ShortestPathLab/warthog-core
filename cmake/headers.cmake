@@ -10,6 +10,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h
 # use `find include/warthog/*/ -type f -name '*.h' | sort`
 target_sources(warthog_core PUBLIC
 include/warthog/constants.h
+include/warthog/defines.h
 include/warthog/forward.h
 include/warthog/limits.h
 
@@ -54,10 +55,12 @@ include/warthog/util/experiment.h
 include/warthog/util/file_utils.h
 include/warthog/util/gm_parser.h
 include/warthog/util/helpers.h
+include/warthog/util/intrin.h
 include/warthog/util/log.h
 include/warthog/util/macros.h
 include/warthog/util/pqueue.h
 include/warthog/util/scenario_manager.h
+include/warthog/util/template.h
 include/warthog/util/timer.h
 include/warthog/util/vec_io.h
 )
