@@ -15,13 +15,31 @@
 namespace warthog::util
 {
 
-template <typename IS, typename TemplateFunc>
-void for_each_integer_sequence(Func&& tfunc);
-
-template <typename TemplateFunc, typename IST, IST... Values>
-void for_each_integer_sequence<std::integer_sequence<IST, Values...>, TemplateFunc>(Func&& tfunc)
+namespace details
 {
-	(tfunc<Values>(), ...);
+
+template <typename IS>
+struct for_each_integer_sequence;
+
+template <typename IST, IST... Values>
+struct for_each_integer_sequence<std::integer_sequence<IST, Values...>>
+{
+	template <typename TemplateFunc>
+	static constexpr void apply(TemplateFunc&& tfunc)
+	{
+		(tfunc(std::integral_constant<IST, Values>()), ...);
+	}
+};
+
+} // namespace details
+
+// template <typename IS, typename TemplateFunc>
+// void for_each_integer_sequence(TemplateFunc&& tfunc);
+
+template <typename IST, typename TemplateFunc>
+void for_each_integer_sequence(TemplateFunc&& tfunc)
+{
+	details::for_each_integer_sequence<IST>::apply(std::forward<TemplateFunc>(tfunc));
 }
 
 } // namespace warthog::util

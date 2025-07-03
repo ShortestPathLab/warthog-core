@@ -17,7 +17,7 @@
 #if defined(__x86_64__) && __has_include(<immintrin.h>)
 #include <immintrin.h>
 #define WARTHOG_INTRIN
-#define WARTHOG_INTRIN_HAS(inst) defined(__##inst##__)
+#define WARTHOG_INTRIN_HAS(inst) ( defined(WARTHOG_##inst) || (defined(WARTHOG_INTRIN_ALL) && defined(__##inst##__)) )
 #else
 #define WARTHOG_INTRIN_HAS(inst) 0
 #endif

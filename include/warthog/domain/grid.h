@@ -10,6 +10,7 @@
 //
 
 #include <warthog/constants.h>
+#include <warthog/util/intrin.h>
 #include <bit>
 #include <cassert>
 #include <cstdint>
@@ -31,6 +32,7 @@ typedef enum : uint8_t
 	NORTHWEST_ID,
 	SOUTHEAST_ID,
 	SOUTHWEST_ID,
+	// only function with `secic` will consider the following second-intercardinal dirctions
 	NORTH_NORTHEAST_ID = NORTH_ID | (NORTHEAST_ID << 3),
 	EAST_NORTHEAST_ID = EAST_ID | (NORTHEAST_ID << 3),
 	NORTH_NORTHWEST_ID = NORTH_ID | (NORTHWEST_ID << 3),
@@ -59,13 +61,13 @@ concept SecInterCardinalID = static_cast<uint8_t>(D) >= 8;
 constexpr inline bool is_cardinal_id(direction_id d) noexcept { return static_cast<uint8_t>(d) < 4; }
 constexpr inline bool is_intercardinal_id(direction_id d) noexcept { return (static_cast<uint8_t>(d) - 4) < 4; }
 constexpr inline bool is_sec_intercardinal_id(direction_id d) noexcept { return static_cast<uint8_t>(d) >= 8; }
-constexpr inline direction_id sec_ic_cardinal(direction_id d) noexcept
+constexpr inline direction_id secic_cardinal(direction_id d) noexcept
 {
 	direction_id c = static_cast<direction_id>(static_cast<uint8_t>(d) & 0b000'111);
 	assert(is_cardinal_id(c));
 	return c;
 }
-constexpr inline direction_id sec_ic_intercardinal(direction_id d) noexcept
+constexpr inline direction_id secic_intercardinal(direction_id d) noexcept
 {
 	direction_id c = static_cast<direction_id>(static_cast<uint8_t>(d) >> 3);
 	assert(is_intercardinal_id(c));
@@ -204,8 +206,9 @@ dir_flip(direction d) noexcept
 /// @param d 
 /// @param width 
 /// @return 
-constexpr int32_t dir_id_adj(direction_id d, uint32_t width)
+constexpr int32_t dir_id_adj(direction_id d, uint32_t width) noexcept
 {
+	assert(static_cast<uint8_t>(d) < 8);
 	int32_t w = static_cast<int32_t>(width);
 	switch (d) {
 	case NORTH_ID:
@@ -239,6 +242,125 @@ struct alignas(uint32_t) point
 	uint16_t x;
 	uint16_t y;
 };
+
+/// @brief signed point, due to point allowing >2^15 numbers, does not support point - point operations
+struct alignas(uint32_t) spoint
+{
+	int16_t x;
+	int16_t y;
+};
+
+constexpr inline std::pair<int32_t,int32_t> point_signed_diff(point a, point b) noexcept
+{
+	return {
+		static_cast<int32_t>(static_cast<int32_t>(b.x) - static_cast<int32_t>(a.x)),
+		static_cast<int32_t>(static_cast<int32_t>(b.y) - static_cast<int32_t>(a.y))
+	};
+}
+
+constexpr inline point operator+(point a, spoint b) noexcept
+{
+	return point(a.x + static_cast<uint16_t>(b.x), a.y + static_cast<uint16_t>(b.y));
+}
+
+constexpr inline spoint dir_unit_point(direction_id d) noexcept
+{
+	assert(static_cast<uint8_t>(d) < 8);
+	union {
+		uint32_t v;
+		spoint p;
+	} res;
+	// store point in 2 bits (10 = 1, 01 = 0, 00 = -1), then subtract 1 to pad
+	// packed_reldir stores each direction (8) in 4 bits, 0b3210 as 0byyxx
+	constexpr uint32_t packed_reldir =
+		(0b0001 << NORTH_ID*4) |
+		(0b1001 << SOUTH_ID*4) |
+		(0b0110 << EAST_ID*4) |
+		(0b0100 << WEST_ID*4) |
+		(0b0010 << NORTHEAST_ID*4) |
+		(0b0000 << NORTHWEST_ID*4) |
+		(0b1010 << SOUTHEAST_ID*4) |
+		(0b1000 << SOUTHWEST_ID*4);
+#if WARTHOG_INTRIN_HAS(BMI2)
+	res.v = _pdep_u32(packed_reldir >> d*4, 0xC000'C000u);
+#else
+	res.p.x = (packed_reldir >> d*4) & 0b11;
+	res.p.y = (packed_reldir >> (d*4+2)) & 0b11;
+#endif
+	res.p.x -= 1;
+	res.p.y -= 1;
+	return res.p;
+}
+constexpr inline spoint dir_unit_point_secic(direction_id d) noexcept
+{
+	assert(static_cast<uint8_t>(d) < 8);
+	union {
+		uint32_t v;
+		spoint p;
+	} res;
+	// store point in 2 bits (10 = 1, 01 = 0, 00 = -1), then subtract 1 to pad
+	// packed_reldir stores each direction (8) in 4 bits, 0b3210 as 0byyxx
+	constexpr uint32_t packed_reldir =
+		(0b0001 << NORTH_ID*4) |
+		(0b1001 << SOUTH_ID*4) |
+		(0b0110 << EAST_ID*4) |
+		(0b0100 << WEST_ID*4) |
+		(0b0010 << NORTHEAST_ID*4) |
+		(0b0000 << NORTHWEST_ID*4) |
+		(0b1010 << SOUTHEAST_ID*4) |
+		(0b1000 << SOUTHWEST_ID*4);
+	
+	// for second-intercardinal, return the intercardinal
+	d = d < 8 ? d : secic_intercardinal(d);
+#if WARTHOG_INTRIN_HAS(BMI2)
+	res.v = _pdep_u32(packed_reldir >> d*4, 0xC000'C000u);
+#else
+	res.p.x = (packed_reldir >> d*4) & 0b11;
+	res.p.y = (packed_reldir >> (d*4+2)) & 0b11;
+#endif
+	res.p.x -= 1;
+	res.p.y -= 1;
+	return res.p;
+}
+
+
+constexpr inline direction_id
+point_to_direction_id(point p1, point p2) noexcept
+{
+	union {
+		struct {
+			int32_t x;
+			int32_t y;
+		} p;
+		uint64_t xy;
+	} c;
+	c.p.x = static_cast<int32_t>(p2.x) - static_cast<int32_t>(p1.x);
+	c.p.y = static_cast<int32_t>(p2.y) - static_cast<int32_t>(p1.y);
+
+	if (c.p.x == 0) {
+		return c.p.y >= 0 ? NORTH_ID : SOUTH_ID;
+	} else if (c.p.y == 0) {
+		return c.p.x >= 0 ? EAST_ID : WEST_ID;
+	} else {
+		// shift>> to mulitple of 4 (0b100)
+		// (x < 0) = 0b0100
+		// (y < 0) = 0b1000
+		int shift = ( (static_cast<uint32_t>(c.p.x) >> (31-2)) & 0b0100 ) |
+			( (static_cast<uint32_t>(c.p.y) >> (31-3)) & 0b1000 );
+		assert((c.p.x > 0 && c.p.y > 0 && shift == 0)
+			|| (c.p.x < 0 && c.p.y > 0 && shift == 4)
+			|| (c.p.x > 0 && c.p.y < 0 && shift == 8)
+			|| (c.p.x < 0 && c.p.y < 0 && shift == 12));
+		return static_cast<direction_id>(
+			static_cast<uint16_t>(
+				(static_cast<uint16_t>(NORTHEAST_ID) << 0) |
+				(static_cast<uint16_t>(NORTHWEST_ID) << 4) |
+				(static_cast<uint16_t>(SOUTHEAST_ID) << 8) |
+				(static_cast<uint16_t>(SOUTHWEST_ID) << 12)
+			) >> shift
+		);
+	}
+}
 
 } // namespace warthog::grid
 
