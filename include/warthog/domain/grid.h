@@ -232,9 +232,26 @@ constexpr int32_t dir_id_adj(direction_id d, uint32_t width) noexcept
 		return 0;
 	}
 }
-constexpr int32_t dir_adj(direction d, uint32_t width)
+/// @brief TODO
+/// @param d 
+/// @param width 
+/// @return 
+constexpr uint32_t dir_id_adj_inv_intercardinal(direction_id d, int32_t a) noexcept
 {
-	return dir_id_adj(to_dir_id(d), width);
+	assert(static_cast<uint8_t>(d - 4) < 4);
+	switch (d) {
+	case NORTHEAST_ID:
+		return static_cast<uint32_t>(-a + 1);
+	case NORTHWEST_ID:
+		return static_cast<uint32_t>(-a - 1);
+	case SOUTHEAST_ID:
+		return static_cast<uint32_t>(a - 1);
+	case SOUTHWEST_ID:
+		return static_cast<uint32_t>(a + 1);
+	default:
+		assert(false);
+		return 0;
+	}
 }
 
 struct alignas(uint32_t) point
@@ -338,7 +355,7 @@ point_to_direction_id(point p1, point p2) noexcept
 	c.p.y = static_cast<int32_t>(p2.y) - static_cast<int32_t>(p1.y);
 
 	if (c.p.x == 0) {
-		return c.p.y >= 0 ? NORTH_ID : SOUTH_ID;
+		return c.p.y >= 0 ? SOUTH_ID : NORTH_ID;
 	} else if (c.p.y == 0) {
 		return c.p.x >= 0 ? EAST_ID : WEST_ID;
 	} else {
@@ -352,12 +369,14 @@ point_to_direction_id(point p1, point p2) noexcept
 			|| (c.p.x > 0 && c.p.y < 0 && shift == 8)
 			|| (c.p.x < 0 && c.p.y < 0 && shift == 12));
 		return static_cast<direction_id>(
-			static_cast<uint16_t>(
-				(static_cast<uint16_t>(NORTHEAST_ID) << 0) |
-				(static_cast<uint16_t>(NORTHWEST_ID) << 4) |
-				(static_cast<uint16_t>(SOUTHEAST_ID) << 8) |
-				(static_cast<uint16_t>(SOUTHWEST_ID) << 12)
-			) >> shift
+			static_cast<uint8_t>(
+				static_cast<uint16_t>(
+					(static_cast<uint16_t>(SOUTHEAST_ID) << 0) |
+					(static_cast<uint16_t>(SOUTHWEST_ID) << 4) |
+					(static_cast<uint16_t>(NORTHEAST_ID) << 8) |
+					(static_cast<uint16_t>(NORTHWEST_ID) << 12)
+				) >> shift
+			) & 0b1111
 		);
 	}
 }
