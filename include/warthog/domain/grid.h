@@ -253,6 +253,53 @@ constexpr uint32_t dir_id_adj_inv_intercardinal(direction_id d, int32_t a) noexc
 		return 0;
 	}
 }
+/// @brief TODO
+/// @param d 
+/// @param width 
+/// @return 
+constexpr int32_t dir_id_adj_vert(direction_id d, uint32_t width) noexcept
+{
+	assert(static_cast<uint8_t>(d) < 8);
+	int32_t w = static_cast<int32_t>(width);
+	switch (d) {
+	case NORTH_ID:
+		return -w;
+	case SOUTH_ID:
+		return w;
+	case EAST_ID:
+		return 0;
+	case WEST_ID:
+		return 0;
+	case NORTHEAST_ID:
+		return -w;
+	case NORTHWEST_ID:
+		return -w;
+	case SOUTHEAST_ID:
+		return w;
+	case SOUTHWEST_ID:
+		return w;
+	default:
+		assert(false);
+		return 0;
+	}
+}
+/// @brief TODO
+/// @param d 
+/// @param width 
+/// @return 
+constexpr int32_t dir_id_adj_hori(direction_id d) noexcept
+{
+	assert(static_cast<uint8_t>(d) < 8);
+	constexpr uint64_t sel = ((uint64_t)(int8_t{0}) << (NORTH_ID << 3))
+	    | ((uint64_t)(int8_t{0}) << (SOUTH_ID << 3))
+	    | ((uint64_t)(int8_t{1}) << (EAST_ID << 3))
+	    | ((uint64_t)(int8_t{-1}) << (WEST_ID << 3))
+	    | ((uint64_t)(int8_t{1}) << (NORTHEAST_ID << 3))
+	    | ((uint64_t)(int8_t{-1}) << (NORTHWEST_ID << 3))
+	    | ((uint64_t)(int8_t{1}) << (SOUTHEAST_ID << 3))
+	    | ((uint64_t)(int8_t{-1}) << (SOUTHWEST_ID << 3));
+	return static_cast<int32_t>( static_cast<int8_t>(sel >> (d << 3)) );
+}
 
 struct alignas(uint32_t) point
 {
@@ -277,7 +324,15 @@ constexpr inline std::pair<int32_t,int32_t> point_signed_diff(point a, point b) 
 
 constexpr inline point operator+(point a, spoint b) noexcept
 {
-	return point(a.x + static_cast<uint16_t>(b.x), a.y + static_cast<uint16_t>(b.y));
+	return point{static_cast<uint16_t>(a.x + static_cast<uint16_t>(b.x)), static_cast<uint16_t>(a.y + static_cast<uint16_t>(b.y))};
+}
+constexpr inline spoint operator+(spoint a, spoint b) noexcept
+{
+	return spoint{static_cast<int16_t>(a.x + b.x), static_cast<int16_t>(a.y + b.y)};
+}
+constexpr inline spoint operator*(int16_t a, spoint b) noexcept
+{
+	return spoint{static_cast<int16_t>(a * b.x), static_cast<int16_t>(a * b.y)};
 }
 
 constexpr inline spoint dir_unit_point(direction_id d) noexcept
