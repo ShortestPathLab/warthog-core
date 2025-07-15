@@ -60,7 +60,7 @@ template <direction_id D>
 concept SecInterCardinalID = static_cast<uint8_t>(D) >= 8;
 
 constexpr inline bool is_cardinal_id(direction_id d) noexcept { return static_cast<uint8_t>(d) < 4; }
-constexpr inline bool is_intercardinal_id(direction_id d) noexcept { return (static_cast<uint8_t>(d) - 4) < 4; }
+constexpr inline bool is_intercardinal_id(direction_id d) noexcept { return static_cast<uint8_t>(d - 4) < 4; }
 constexpr inline bool is_sec_intercardinal_id(direction_id d) noexcept { return static_cast<uint8_t>(d) >= 8; }
 constexpr inline direction_id secic_cardinal(direction_id d) noexcept
 {
@@ -291,14 +291,15 @@ constexpr int32_t dir_id_adj_vert(direction_id d, uint32_t width) noexcept
 constexpr int32_t dir_id_adj_hori(direction_id d) noexcept
 {
 	assert(static_cast<uint8_t>(d) < 8);
-	constexpr uint64_t sel = ((uint64_t)(int8_t{0}) << (NORTH_ID << 3))
-	    | ((uint64_t)(int8_t{0}) << (SOUTH_ID << 3))
-	    | ((uint64_t)(int8_t{1}) << (EAST_ID << 3))
-	    | ((uint64_t)(int8_t{-1}) << (WEST_ID << 3))
-	    | ((uint64_t)(int8_t{1}) << (NORTHEAST_ID << 3))
-	    | ((uint64_t)(int8_t{-1}) << (NORTHWEST_ID << 3))
-	    | ((uint64_t)(int8_t{1}) << (SOUTHEAST_ID << 3))
-	    | ((uint64_t)(int8_t{-1}) << (SOUTHWEST_ID << 3));
+	constexpr uint64_t sel =
+	      ((uint64_t)uint8_t(0u)  << (NORTH_ID << 3))
+	    | ((uint64_t)uint8_t(0u)  << (SOUTH_ID << 3))
+	    | ((uint64_t)uint8_t(1u)  << (EAST_ID << 3))
+	    | ((uint64_t)uint8_t(-1u) << (WEST_ID << 3))
+	    | ((uint64_t)uint8_t(1u)  << (NORTHEAST_ID << 3))
+	    | ((uint64_t)uint8_t(-1u) << (NORTHWEST_ID << 3))
+	    | ((uint64_t)uint8_t(1u)  << (SOUTHEAST_ID << 3))
+	    | ((uint64_t)uint8_t(-1u) << (SOUTHWEST_ID << 3));
 	return static_cast<int32_t>( static_cast<int8_t>( static_cast<uint8_t>(sel >> (d << 3)) ) );
 }
 
