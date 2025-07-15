@@ -14,6 +14,7 @@
 #include <bit>
 #include <cassert>
 #include <cstdint>
+#include <iostream>
 
 namespace warthog::grid
 {
@@ -298,7 +299,7 @@ constexpr int32_t dir_id_adj_hori(direction_id d) noexcept
 	    | ((uint64_t)(int8_t{-1}) << (NORTHWEST_ID << 3))
 	    | ((uint64_t)(int8_t{1}) << (SOUTHEAST_ID << 3))
 	    | ((uint64_t)(int8_t{-1}) << (SOUTHWEST_ID << 3));
-	return static_cast<int32_t>( static_cast<int8_t>(sel >> (d << 3)) );
+	return static_cast<int32_t>( static_cast<int8_t>( static_cast<uint8_t>(sel >> (d << 3)) ) );
 }
 
 struct alignas(uint32_t) point
