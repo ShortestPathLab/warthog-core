@@ -14,6 +14,13 @@ gridmap_expansion_policy_base::gridmap_expansion_policy_base(
     : expansion_policy(map != nullptr ? (map->height() * map->width()) : 0), map_(map)
 { }
 
+
+void gridmap_expansion_policy_base::set_map(domain::gridmap& map)
+{
+	map_ = &map;
+	set_nodes_pool_size(map.height() * map.width());
+}
+
 search_problem_instance
 gridmap_expansion_policy_base::get_problem_instance(problem_instance* pi)
 {
