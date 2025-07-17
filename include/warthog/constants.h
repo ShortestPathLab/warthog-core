@@ -121,13 +121,12 @@ constexpr uint32_t LOG2_DBWORD_BITS = std::popcount(DBWORD_BITS_MASK);
 // search and sort constants
 constexpr double DBL_ONE = 1.0;
 constexpr double DBL_TWO = 2.0;
-constexpr double DBL_ROOT_TWO
-    = 1.414213562373095048801688724209698078569671875;
+// Truncate to allow for equality testing.
+// Has around ~7 decimal places allowing up to 500k integer value before overflowing (6 hex digits = 24bits).
+constexpr double DBL_ROOT_TWO = 0x1.6a09e6p0;
 constexpr double DBL_ONE_OVER_TWO = 0.5;
-constexpr double DBL_ONE_OVER_ROOT_TWO
-    = 0.70710678118654752440084436210484903928483593768847403658833986;
-constexpr double DBL_ROOT_TWO_OVER_FOUR
-    = 0.35355339059327376220042218105242451964241796884423701829416993;
+constexpr double DBL_ONE_OVER_ROOT_TWO = 0x0.b504f3p0;
+constexpr double DBL_ROOT_TWO_OVER_FOUR = DBL_ONE_OVER_TWO / 4;
 constexpr int32_t ONE = 100000;
 
 constexpr uint32_t INF32
