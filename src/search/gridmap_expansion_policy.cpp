@@ -11,7 +11,7 @@ namespace warthog::search
 
 gridmap_expansion_policy_base::gridmap_expansion_policy_base(
     domain::gridmap* map)
-    : expansion_policy(map->height() * map->width()), map_(map)
+    : expansion_policy(map != nullptr ? (map->height() * map->width()) : 0), map_(map)
 { }
 
 search_problem_instance

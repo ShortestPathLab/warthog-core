@@ -70,7 +70,7 @@ public:
 	mem() override;
 
 protected:
-	domain::gridmap* map_;
+	domain::gridmap* map_ = nullptr;
 };
 
 class gridmap_expansion_policy : public gridmap_expansion_policy_base
