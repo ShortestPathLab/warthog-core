@@ -25,14 +25,14 @@ using grid_id = pad32_id;
 
 typedef enum : uint8_t
 {
-	NORTH_ID,
-	SOUTH_ID,
-	EAST_ID,
-	WEST_ID,
-	NORTHEAST_ID,
-	NORTHWEST_ID,
-	SOUTHEAST_ID,
-	SOUTHWEST_ID,
+	NORTH_ID,     // 0b000
+	SOUTH_ID,     // 0b001
+	EAST_ID,      // 0b010
+	WEST_ID,      // 0b011
+	NORTHEAST_ID, // 0b100
+	NORTHWEST_ID, // 0b101
+	SOUTHEAST_ID, // 0b110
+	SOUTHWEST_ID, // 0b111
 	// only function with `secic` will consider the following second-intercardinal dirctions
 	NORTH_NORTHEAST_ID = NORTH_ID | (NORTHEAST_ID << 3),
 	EAST_NORTHEAST_ID = EAST_ID | (NORTHEAST_ID << 3),
@@ -109,9 +109,49 @@ to_dir_id(direction d) noexcept
 	return static_cast<direction_id>(std::countr_zero(static_cast<uint8_t>(d)));
 }
 
+constexpr direction_id
+get_intercardinal_hori(direction_id d) noexcept
+{
+	assert(is_intercardinal_id(d));
+	if constexpr (NORTHEAST_ID == 4 && NORTHWEST_ID == 5 && SOUTHEAST_ID == 6 && SOUTHWEST_ID == 7) {
+		// precise ordering, use math method
+		if constexpr (WEST_ID == EAST_ID+1) { // EAST_ID = 2, WEST_ID = 3
+			return static_cast<direction_id>(EAST_ID + (d&0b001));
+		} else {
+			return (d&0b001) ? WEST_ID : EAST_ID;
+		}
+	} else {
+		constexpr uint16_t sel = ((uint16_t)(EAST_ID) << (NORTHEAST_ID << 1))
+			| ((uint16_t)(EAST_ID) << (SOUTHEAST_ID << 1))
+			| ((uint16_t)(WEST_ID) << (NORTHWEST_ID << 1))
+			| ((uint16_t)(WEST_ID) << (SOUTHWEST_ID << 1));
+		return static_cast<direction_id>((sel >> d * 2) & 0b11);
+	}
+}
+
+constexpr direction_id
+get_intercardinal_vert(direction_id d) noexcept
+{
+	assert(is_intercardinal_id(d));
+	if constexpr (NORTHEAST_ID == 4 && NORTHWEST_ID == 5 && SOUTHEAST_ID == 6 && SOUTHWEST_ID == 7) {
+		// precise ordering, use math method
+		if constexpr (SOUTH_ID == NORTH_ID+1) { // EAST_ID = 2, WEST_ID = 3
+			return static_cast<direction_id>(NORTH_ID + ((d&0b010)>>1));
+		} else {
+			return (d&0b010) ? SOUTH_ID : NORTH_ID;
+		}
+	} else {
+		constexpr uint16_t sel = ((uint16_t)(NORTH_ID) << (NORTHEAST_ID << 1))
+			| ((uint16_t)(SOUTH_ID) << (SOUTHEAST_ID << 1))
+			| ((uint16_t)(NORTH_ID) << (NORTHWEST_ID << 1))
+			| ((uint16_t)(SOUTH_ID) << (SOUTHWEST_ID << 1));
+		return static_cast<direction_id>((sel >> d * 2) & 0b11);
+	}
+}
+
 // rotate direction cw
 constexpr direction_id
-dir_id_cw(direction_id d) noexcept
+dir_id_cw90(direction_id d) noexcept
 {
 	assert(static_cast<uint8_t>(d) < 8);
 	constexpr uint32_t sel = ((uint32_t)(NORTH_ID) << (WEST_ID << 2))
@@ -125,7 +165,7 @@ dir_id_cw(direction_id d) noexcept
 	return static_cast<direction_id>((sel >> d * 4) & 0b1111);
 }
 constexpr direction
-dir_cw(direction d) noexcept
+dir_cw90(direction d) noexcept
 {
 	assert(std::popcount(static_cast<uint8_t>(d)) == 1);
 	constexpr uint64_t sel = ((uint64_t)(NORTH) << (WEST_ID << 3))
@@ -142,7 +182,39 @@ dir_cw(direction d) noexcept
 }
 
 constexpr direction_id
-dir_id_ccw(direction_id d) noexcept
+dir_id_cw45(direction_id d) noexcept
+{
+	assert(static_cast<uint8_t>(d) < 8);
+	constexpr uint32_t sel = ((uint32_t)(NORTH_ID) << (NORTHWEST_ID << 2))
+	    | ((uint32_t)(EAST_ID) << (NORTHEAST_ID << 2))
+	    | ((uint32_t)(SOUTH_ID) << (SOUTHEAST_ID << 2))
+	    | ((uint32_t)(WEST_ID) << (SOUTHWEST_ID << 2))
+	    | ((uint32_t)(NORTHEAST_ID) << (NORTH_ID << 2))
+	    | ((uint32_t)(SOUTHEAST_ID) << (EAST_ID << 2))
+	    | ((uint32_t)(SOUTHWEST_ID) << (SOUTH_ID << 2))
+	    | ((uint32_t)(NORTHWEST_ID) << (WEST_ID << 2));
+	return static_cast<direction_id>((sel >> d * 4) & 0b1111);
+}
+constexpr direction
+dir_cw45(direction d) noexcept
+{
+	assert(std::popcount(static_cast<uint8_t>(d)) == 1);
+	constexpr uint64_t sel = ((uint64_t)(NORTH) << (NORTHWEST_ID << 3))
+	    | ((uint64_t)(EAST) << (NORTHEAST_ID << 3))
+	    | ((uint64_t)(SOUTH) << (SOUTHEAST_ID << 3))
+	    | ((uint64_t)(WEST) << (SOUTHWEST_ID << 3))
+	    | ((uint64_t)(NORTHEAST) << (NORTH_ID << 3))
+	    | ((uint64_t)(SOUTHEAST) << (EAST_ID << 3))
+	    | ((uint64_t)(SOUTHWEST) << (SOUTH_ID << 3))
+	    | ((uint64_t)(NORTHWEST) << (WEST_ID << 3));
+	int index = std::countr_zero(static_cast<uint16_t>(
+	    d | 256u)); // |256u to ensure no branch in compiler
+	return static_cast<direction>(sel >> index * 8);
+}
+
+// rotate direction ccw
+constexpr direction_id
+dir_id_ccw90(direction_id d) noexcept
 {
 	assert(static_cast<uint8_t>(d) < 8);
 	constexpr uint32_t sel = ((uint32_t)(NORTH_ID) << (EAST_ID << 2))
@@ -156,7 +228,7 @@ dir_id_ccw(direction_id d) noexcept
 	return static_cast<direction_id>((sel >> d * 4) & 0b1111);
 }
 constexpr direction
-dir_ccw(direction d) noexcept
+dir_ccw90(direction d) noexcept
 {
 	assert(std::popcount(static_cast<uint8_t>(d)) == 1);
 	constexpr uint64_t sel = ((uint64_t)(NORTH) << (EAST_ID << 3))
@@ -172,6 +244,38 @@ dir_ccw(direction d) noexcept
 	return static_cast<direction>(sel >> index * 8);
 }
 
+constexpr direction_id
+dir_id_ccw45(direction_id d) noexcept
+{
+	assert(static_cast<uint8_t>(d) < 8);
+	constexpr uint32_t sel = ((uint32_t)(NORTH_ID) << (NORTHEAST_ID << 2))
+	    | ((uint32_t)(EAST_ID) << (SOUTHEAST_ID << 2))
+	    | ((uint32_t)(SOUTH_ID) << (SOUTHWEST_ID << 2))
+	    | ((uint32_t)(WEST_ID) << (NORTHWEST_ID << 2))
+	    | ((uint32_t)(NORTHEAST_ID) << (EAST_ID << 2))
+	    | ((uint32_t)(SOUTHEAST_ID) << (SOUTH_ID << 2))
+	    | ((uint32_t)(SOUTHWEST_ID) << (WEST_ID << 2))
+	    | ((uint32_t)(NORTHWEST_ID) << (NORTH_ID << 2));
+	return static_cast<direction_id>((sel >> d * 4) & 0b1111);
+}
+constexpr direction
+dir_ccw45(direction d) noexcept
+{
+	assert(std::popcount(static_cast<uint8_t>(d)) == 1);
+	constexpr uint64_t sel = ((uint64_t)(NORTH) << (NORTHEAST_ID << 3))
+	    | ((uint64_t)(EAST) << (SOUTHEAST_ID << 3))
+	    | ((uint64_t)(SOUTH) << (SOUTHWEST_ID << 3))
+	    | ((uint64_t)(WEST) << (NORTHWEST_ID << 3))
+	    | ((uint64_t)(NORTHEAST) << (EAST_ID << 3))
+	    | ((uint64_t)(SOUTHEAST) << (SOUTH_ID << 3))
+	    | ((uint64_t)(SOUTHWEST) << (WEST_ID << 3))
+	    | ((uint64_t)(NORTHWEST) << (NORTH_ID << 3));
+	int index = std::countr_zero(static_cast<uint16_t>(
+	    d | 256u)); // |256u to ensure no branch in compiler
+	return static_cast<direction>(sel >> index * 8);
+}
+
+// flip/rotate 180
 constexpr direction_id
 dir_id_flip(direction_id d) noexcept
 {
@@ -207,27 +311,27 @@ dir_flip(direction d) noexcept
 /// @param d 
 /// @param width 
 /// @return 
-constexpr int32_t dir_id_adj(direction_id d, uint32_t width) noexcept
+constexpr uint32_t dir_id_adj(direction_id d, uint32_t width) noexcept
 {
 	assert(static_cast<uint8_t>(d) < 8);
 	int32_t w = static_cast<int32_t>(width);
 	switch (d) {
 	case NORTH_ID:
-		return -w;
+		return static_cast<uint32_t>(-w);
 	case SOUTH_ID:
-		return w;
+		return static_cast<uint32_t>(w);
 	case EAST_ID:
-		return 1;
+		return 1u;
 	case WEST_ID:
-		return -1;
+		return -1u;
 	case NORTHEAST_ID:
-		return -w + 1;
+		return static_cast<uint32_t>(-w + 1);
 	case NORTHWEST_ID:
-		return -w - 1;
+		return static_cast<uint32_t>(-w - 1);
 	case SOUTHEAST_ID:
-		return w + 1;
+		return static_cast<uint32_t>(w + 1);
 	case SOUTHWEST_ID:
-		return w - 1;
+		return static_cast<uint32_t>(w - 1);
 	default:
 		assert(false);
 		return 0;
@@ -237,14 +341,14 @@ constexpr int32_t dir_id_adj(direction_id d, uint32_t width) noexcept
 /// @param d 
 /// @param width 
 /// @return 
-constexpr uint32_t dir_id_adj_inv_intercardinal(direction_id d, int32_t a) noexcept
+constexpr uint32_t dir_id_adj_inv_intercardinal(direction_id d, uint32_t a) noexcept
 {
 	assert(static_cast<uint8_t>(d - 4) < 4);
 	switch (d) {
 	case NORTHEAST_ID:
-		return static_cast<uint32_t>(-a + 1);
+		return static_cast<uint32_t>(-static_cast<int32_t>(a) + 1);
 	case NORTHWEST_ID:
-		return static_cast<uint32_t>(-a - 1);
+		return static_cast<uint32_t>(-static_cast<int32_t>(a) - 1);
 	case SOUTHEAST_ID:
 		return static_cast<uint32_t>(a - 1);
 	case SOUTHWEST_ID:
@@ -258,27 +362,27 @@ constexpr uint32_t dir_id_adj_inv_intercardinal(direction_id d, int32_t a) noexc
 /// @param d 
 /// @param width 
 /// @return 
-constexpr int32_t dir_id_adj_vert(direction_id d, uint32_t width) noexcept
+constexpr uint32_t dir_id_adj_vert(direction_id d, uint32_t width) noexcept
 {
 	assert(static_cast<uint8_t>(d) < 8);
 	int32_t w = static_cast<int32_t>(width);
 	switch (d) {
 	case NORTH_ID:
-		return -w;
+		return static_cast<uint32_t>(-w);
 	case SOUTH_ID:
-		return w;
+		return static_cast<uint32_t>(w);
 	case EAST_ID:
 		return 0;
 	case WEST_ID:
 		return 0;
 	case NORTHEAST_ID:
-		return -w;
+		return static_cast<uint32_t>(-w);
 	case NORTHWEST_ID:
-		return -w;
+		return static_cast<uint32_t>(-w);
 	case SOUTHEAST_ID:
-		return w;
+		return static_cast<uint32_t>(w);
 	case SOUTHWEST_ID:
-		return w;
+		return static_cast<uint32_t>(w);
 	default:
 		assert(false);
 		return 0;
