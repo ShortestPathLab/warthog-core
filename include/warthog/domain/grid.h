@@ -110,7 +110,7 @@ to_dir_id(direction d) noexcept
 }
 
 constexpr direction_id
-get_intercardinal_hori(direction_id d) noexcept
+dir_intercardinal_hori(direction_id d) noexcept
 {
 	assert(is_intercardinal_id(d));
 	if constexpr (NORTHEAST_ID == 4 && NORTHWEST_ID == 5 && SOUTHEAST_ID == 6 && SOUTHWEST_ID == 7) {
@@ -130,7 +130,7 @@ get_intercardinal_hori(direction_id d) noexcept
 }
 
 constexpr direction_id
-get_intercardinal_vert(direction_id d) noexcept
+dir_intercardinal_vert(direction_id d) noexcept
 {
 	assert(is_intercardinal_id(d));
 	if constexpr (NORTHEAST_ID == 4 && NORTHWEST_ID == 5 && SOUTHEAST_ID == 6 && SOUTHWEST_ID == 7) {
@@ -418,6 +418,10 @@ struct alignas(uint32_t) spoint
 {
 	int16_t x;
 	int16_t y;
+	explicit constexpr operator point() const noexcept
+	{
+		return point(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
+	}
 };
 
 constexpr inline std::pair<int32_t,int32_t> point_signed_diff(point a, point b) noexcept

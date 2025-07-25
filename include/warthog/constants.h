@@ -55,6 +55,14 @@ struct identity_base
 		return id == other.id;
 	}
 
+	template<typename Tag2, typename IdType2>
+	    requires(!std::same_as<identity_base, identity_base<Tag2, IdType2>>)
+	constexpr explicit operator identity_base<Tag2, IdType2>() const noexcept
+	{
+		auto alt = identity_base<Tag2, IdType2>(static_cast<IdType2>(id));
+		assert(id == alt.id || (is_none() && alt.is_none()));
+		return alt;
+	}
 	constexpr explicit
 	operator uint64_t() const noexcept
 	{
