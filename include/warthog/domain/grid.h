@@ -380,7 +380,8 @@ dir_flip(direction d) noexcept
 	return static_cast<direction>(sel >> index * 8);
 }
 
-/// @brief gets the relative value to adjust a grid_id value for 1 unit in direction d
+/// @brief gets the relative value to adjust a grid_id value for 1 unit in
+/// direction d
 /// @param width the width of the grid
 /// @return the signed relative value stored unsigned
 constexpr uint32_t
@@ -412,7 +413,8 @@ dir_id_adj(direction_id d, uint32_t width) noexcept
 	}
 }
 /// @brief converts dir_id_adj value into width,
-///        only for intercardinal directions as EAST_ID/WEST_ID do not store the width
+///        only for intercardinal directions as EAST_ID/WEST_ID do not store
+///        the width
 /// @param d should match the value given to dir_id_adj
 /// @return the signed relative value stored unsigned
 constexpr uint32_t
@@ -435,7 +437,8 @@ dir_id_adj_inv_intercardinal(direction_id d, uint32_t a) noexcept
 	}
 }
 
-/// @brief gets the relative value to adjust a grid_id value 1 unit vertical (north/south) of d
+/// @brief gets the relative value to adjust a grid_id value 1 unit vertical
+/// (north/south) of d
 /// @param d direction of unit, uses the vertical component
 /// @param width the width of the grid
 /// @return the signed relative value stored unsigned, or 0 for EAST_ID/WEST_ID
@@ -467,7 +470,8 @@ dir_id_adj_vert(direction_id d, uint32_t width) noexcept
 		return 0;
 	}
 }
-/// @brief gets the relative value to adjust a grid_id value 1 unit horizontally (east/west) of d
+/// @brief gets the relative value to adjust a grid_id value 1 unit
+/// horizontally (east/west) of d
 /// @param d direction of unit, uses the horizontal component
 /// @return the signed relative value stored unsigned, or 0 for EAST_ID/WEST_ID
 constexpr int32_t
@@ -575,7 +579,8 @@ dir_unit_point(direction_id d) noexcept
 	return res.p;
 }
 /// @brief likes dir_unit_point, except direction_id can also be a secic
-/// @param d the direction for unit-point, if a secic will use the intercardinal component
+/// @param d the direction for unit-point, if a secic will use the
+/// intercardinal component
 /// @return the unit spoint
 constexpr inline spoint
 dir_unit_point_secic(direction_id d) noexcept
