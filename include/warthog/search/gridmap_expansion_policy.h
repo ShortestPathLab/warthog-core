@@ -35,6 +35,9 @@ class gridmap_expansion_policy_base : public expansion_policy
 public:
 	gridmap_expansion_policy_base(domain::gridmap* map);
 
+	void
+	set_map(domain::gridmap& map);
+
 	search_problem_instance
 	get_problem_instance(problem_instance* pi) override;
 
@@ -70,7 +73,7 @@ public:
 	mem() override;
 
 protected:
-	domain::gridmap* map_;
+	domain::gridmap* map_ = nullptr;
 };
 
 class gridmap_expansion_policy : public gridmap_expansion_policy_base

@@ -8,6 +8,9 @@ set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 option(WARTHOG_INT128 "Enable support for __int128 on gcc and clang" OFF)
+option(WARTHOG_BMI "Enable support cpu BMI for WARTHOG_INTRIN_HAS(BMI)" OFF)
+option(WARTHOG_BMI2 "Enable support cpu BMI2 for WARTHOG_INTRIN_HAS(BMI2), use for Zen 3+" OFF)
+option(WARTHOG_INTRIN_ALL "Enable march=native and support x86 intrinsics if able (based on system), supersedes all manual instruction sets" OFF)
 
 include(cmake/submodule.cmake)
 

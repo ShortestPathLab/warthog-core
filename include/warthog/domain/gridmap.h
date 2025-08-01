@@ -401,6 +401,22 @@ struct gridmap_slider
 		loc += i;
 	}
 
+	/// @return the unaligned 64b (8B) block from loc in little-endian format
+	uint64_t
+	get_block_64bit_le() const noexcept
+	{
+		uint64_t return_value;
+		std::memcpy(&return_value, loc, sizeof(uint64_t));
+
+		if constexpr(std::endian::native == std::endian::big)
+		{
+			// big endian, perform byte swap
+			return_value = util::byteswap_u64(return_value);
+		}
+
+		return return_value;
+	}
+
 	// returns rows as:
 	// [0] = middle
 	// [1] = above (-y)
