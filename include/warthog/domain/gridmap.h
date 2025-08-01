@@ -401,6 +401,7 @@ struct gridmap_slider
 		loc += i;
 	}
 
+	/// @return the unaligned 64b (8B) block from loc in little-endian format
 	uint64_t
 	get_block_64bit_le() const noexcept
 	{

@@ -58,9 +58,11 @@ static_assert(
         && SOUTHWEST_ID < 8,
     "intercardinals id must be less than 8");
 
+/// direction_id is NORTH_ID/SOUTH_ID/EAST_ID/WEST_ID
 template<direction_id D>
 concept CardinalId
     = D == NORTH_ID || D == EAST_ID || D == SOUTH_ID || D == WEST_ID;
+/// direction_id is NORTHEAST_ID/NORTHWEST_ID/SOUTHEAST_ID/SOUTHWEST_ID
 template<direction_id D>
 concept InterCardinalId = D == NORTHEAST_ID || D == NORTHWEST_ID
     || D == SOUTHEAST_ID || D == SOUTHWEST_ID;
@@ -68,21 +70,25 @@ concept InterCardinalId = D == NORTHEAST_ID || D == NORTHWEST_ID
 template<direction_id D>
 concept SecInterCardinalID = static_cast<uint8_t>(D) >= 8;
 
+/// @return is NORTH_ID/SOUTH_ID/EAST_ID/WEST_ID
 constexpr inline bool
 is_cardinal_id(direction_id d) noexcept
 {
 	return static_cast<uint8_t>(d) < 4;
 }
+/// @return is NORTHEAST_ID/NORTHWEST_ID/SOUTHEAST_ID/SOUTHWEST_ID
 constexpr inline bool
 is_intercardinal_id(direction_id d) noexcept
 {
 	return static_cast<uint8_t>(d - 4) < 4;
 }
+/// @return is a intercardinal+cardinal combined direction
 constexpr inline bool
-is_sec_intercardinal_id(direction_id d) noexcept
+is_secic_id(direction_id d) noexcept
 {
 	return static_cast<uint8_t>(d) >= 8;
 }
+/// @return get the cardinal id from a combined direction
 constexpr inline direction_id
 secic_cardinal(direction_id d) noexcept
 {
@@ -91,6 +97,7 @@ secic_cardinal(direction_id d) noexcept
 	assert(is_cardinal_id(c));
 	return c;
 }
+/// @return get the intercardinal id from a combined direction
 constexpr inline direction_id
 secic_intercardinal(direction_id d) noexcept
 {
@@ -115,8 +122,10 @@ typedef enum : uint8_t
 	INTERCARDINAL = NORTH | EAST | SOUTH | WEST,
 } direction;
 
+/// direction is NORTH/SOUTH/EAST/WEST
 template<direction D>
 concept CardinalDir = D == NORTH || D == EAST || D == SOUTH || D == WEST;
+/// direction is NORTHEAST/NORTHWEST/SOUTHEAST/SOUTHWEST
 template<direction D>
 concept InterCardinalDir
     = D == NORTHEAST || D == NORTHWEST || D == SOUTHEAST || D == SOUTHWEST;
@@ -138,12 +147,14 @@ operator<<(std::ostream& out, direction d)
 	return out;
 }
 
+/// @return convert direction_id to direction
 constexpr direction
 to_dir(direction_id id) noexcept
 {
 	assert(id < 8);
 	return static_cast<direction>(1 << id);
 }
+/// @return convert direction to direction_id
 constexpr direction_id
 to_dir_id(direction d) noexcept
 {
@@ -152,6 +163,7 @@ to_dir_id(direction d) noexcept
 	    std::countr_zero(static_cast<uint8_t>(d)));
 }
 
+/// @return EAST_ID/WEST_ID component from intercardinal id
 constexpr direction_id
 dir_intercardinal_hori(direction_id d) noexcept
 {
@@ -177,6 +189,7 @@ dir_intercardinal_hori(direction_id d) noexcept
 	}
 }
 
+/// @return NORTH_ID/SOUTH_ID component from intercardinal id
 constexpr direction_id
 dir_intercardinal_vert(direction_id d) noexcept
 {
@@ -202,7 +215,7 @@ dir_intercardinal_vert(direction_id d) noexcept
 	}
 }
 
-// rotate direction cw
+/// @returns rotated 90 cw
 constexpr direction_id
 dir_id_cw90(direction_id d) noexcept
 {
@@ -217,6 +230,7 @@ dir_id_cw90(direction_id d) noexcept
 	    | ((uint32_t)(NORTHWEST_ID) << (SOUTHWEST_ID << 2));
 	return static_cast<direction_id>((sel >> d * 4) & 0b1111);
 }
+/// @returns rotated 90 cw
 constexpr direction
 dir_cw90(direction d) noexcept
 {
@@ -234,6 +248,7 @@ dir_cw90(direction d) noexcept
 	return static_cast<direction>(sel >> index * 8);
 }
 
+/// @returns rotated 45 cw
 constexpr direction_id
 dir_id_cw45(direction_id d) noexcept
 {
@@ -248,6 +263,7 @@ dir_id_cw45(direction_id d) noexcept
 	    | ((uint32_t)(NORTHWEST_ID) << (WEST_ID << 2));
 	return static_cast<direction_id>((sel >> d * 4) & 0b1111);
 }
+/// @returns rotated 45 cw
 constexpr direction
 dir_cw45(direction d) noexcept
 {
@@ -265,7 +281,7 @@ dir_cw45(direction d) noexcept
 	return static_cast<direction>(sel >> index * 8);
 }
 
-// rotate direction ccw
+/// @returns rotated 90 ccw
 constexpr direction_id
 dir_id_ccw90(direction_id d) noexcept
 {
@@ -280,6 +296,7 @@ dir_id_ccw90(direction_id d) noexcept
 	    | ((uint32_t)(NORTHWEST_ID) << (NORTHEAST_ID << 2));
 	return static_cast<direction_id>((sel >> d * 4) & 0b1111);
 }
+/// @returns rotated 90 ccw
 constexpr direction
 dir_ccw90(direction d) noexcept
 {
@@ -297,6 +314,7 @@ dir_ccw90(direction d) noexcept
 	return static_cast<direction>(sel >> index * 8);
 }
 
+/// @returns rotated 45 ccw
 constexpr direction_id
 dir_id_ccw45(direction_id d) noexcept
 {
@@ -311,6 +329,7 @@ dir_id_ccw45(direction_id d) noexcept
 	    | ((uint32_t)(NORTHWEST_ID) << (NORTH_ID << 2));
 	return static_cast<direction_id>((sel >> d * 4) & 0b1111);
 }
+/// @returns rotated 45 ccw
 constexpr direction
 dir_ccw45(direction d) noexcept
 {
@@ -328,7 +347,7 @@ dir_ccw45(direction d) noexcept
 	return static_cast<direction>(sel >> index * 8);
 }
 
-// flip/rotate 180
+/// @return flip/rotated 180
 constexpr direction_id
 dir_id_flip(direction_id d) noexcept
 {
@@ -343,6 +362,7 @@ dir_id_flip(direction_id d) noexcept
 	    | ((uint32_t)(NORTHWEST_ID) << (SOUTHEAST_ID << 2));
 	return static_cast<direction_id>((sel >> d * 4) & 0b1111);
 }
+/// @return flip/rotated 180
 constexpr direction
 dir_flip(direction d) noexcept
 {
@@ -360,10 +380,9 @@ dir_flip(direction d) noexcept
 	return static_cast<direction>(sel >> index * 8);
 }
 
-/// @brief TODO
-/// @param d
-/// @param width
-/// @return
+/// @brief gets the relative value to adjust a grid_id value for 1 unit in direction d
+/// @param width the width of the grid
+/// @return the signed relative value stored unsigned
 constexpr uint32_t
 dir_id_adj(direction_id d, uint32_t width) noexcept
 {
@@ -392,10 +411,10 @@ dir_id_adj(direction_id d, uint32_t width) noexcept
 		return 0;
 	}
 }
-/// @brief TODO
-/// @param d
-/// @param width
-/// @return
+/// @brief converts dir_id_adj value into width,
+///        only for intercardinal directions as EAST_ID/WEST_ID do not store the width
+/// @param d should match the value given to dir_id_adj
+/// @return the signed relative value stored unsigned
 constexpr uint32_t
 dir_id_adj_inv_intercardinal(direction_id d, uint32_t a) noexcept
 {
@@ -415,10 +434,11 @@ dir_id_adj_inv_intercardinal(direction_id d, uint32_t a) noexcept
 		return 0;
 	}
 }
-/// @brief TODO
-/// @param d
-/// @param width
-/// @return
+
+/// @brief gets the relative value to adjust a grid_id value 1 unit vertical (north/south) of d
+/// @param d direction of unit, uses the vertical component
+/// @param width the width of the grid
+/// @return the signed relative value stored unsigned, or 0 for EAST_ID/WEST_ID
 constexpr uint32_t
 dir_id_adj_vert(direction_id d, uint32_t width) noexcept
 {
@@ -447,10 +467,9 @@ dir_id_adj_vert(direction_id d, uint32_t width) noexcept
 		return 0;
 	}
 }
-/// @brief TODO
-/// @param d
-/// @param width
-/// @return
+/// @brief gets the relative value to adjust a grid_id value 1 unit horizontally (east/west) of d
+/// @param d direction of unit, uses the horizontal component
+/// @return the signed relative value stored unsigned, or 0 for EAST_ID/WEST_ID
 constexpr int32_t
 dir_id_adj_hori(direction_id d) noexcept
 {
@@ -526,6 +545,9 @@ operator*(int16_t a, spoint b) noexcept
 	    static_cast<int16_t>(a * b.x), static_cast<int16_t>(a * b.y)};
 }
 
+/// @brief gets a unit signed-point in direction
+/// @param d the direction for the unit-distance
+/// @return the unit spoint
 constexpr inline spoint
 dir_unit_point(direction_id d) noexcept
 {
@@ -552,6 +574,9 @@ dir_unit_point(direction_id d) noexcept
 	res.p.y -= 1;
 	return res.p;
 }
+/// @brief likes dir_unit_point, except direction_id can also be a secic
+/// @param d the direction for unit-point, if a secic will use the intercardinal component
+/// @return the unit spoint
 constexpr inline spoint
 dir_unit_point_secic(direction_id d) noexcept
 {
@@ -582,6 +607,7 @@ dir_unit_point_secic(direction_id d) noexcept
 	return res.p;
 }
 
+/// @return the direction from p1 to p2, intercardinal first then cardinal
 constexpr inline direction_id
 point_to_direction_id(point p1, point p2) noexcept
 {

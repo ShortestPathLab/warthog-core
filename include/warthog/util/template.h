@@ -1,10 +1,9 @@
 #ifndef WARTHOG_UTIL_TEMPLATE_H
 #define WARTHOG_UTIL_TEMPLATE_H
 
-// cast.h
+// template.h
 //
-// Utility file for memory value conversion.
-// Include support for byte swapping over different compilers.
+// Utility file for template metaprogramming.
 //
 // @author: Ryan Hechenberger
 // @created: 2025-06-27
@@ -68,6 +67,9 @@ struct for_each_integer_sequence<std::integer_sequence<IST, Values...>>
 // template <typename IS, typename TemplateFunc>
 // void for_each_integer_sequence(TemplateFunc&& tfunc);
 
+/// @brief takes an std::integer_sequence and pass each value to tfunc as a std::integral_constant
+/// @tparam IST loop over this std::integer_sequence
+/// @param tfunc a function that takes an std::integral_constant of value from IST
 template<typename IST, typename TemplateFunc>
 void
 for_each_integer_sequence(TemplateFunc&& tfunc)
@@ -76,6 +78,10 @@ for_each_integer_sequence(TemplateFunc&& tfunc)
 	    std::forward<TemplateFunc>(tfunc));
 }
 
+/// @brief takes an std::integer_sequence and pass tfunc a std::integral_constant that matches value
+/// @tparam IST loop over this std::integer_sequence
+/// @param value a value in IST to call tfunc on
+/// @param tfunc a function that takes an std::integral_constant of value
 template<typename IST, typename TemplateFunc>
 void
 choose_integer_sequence(auto value, TemplateFunc&& tfunc)
@@ -83,11 +89,16 @@ choose_integer_sequence(auto value, TemplateFunc&& tfunc)
 	details::for_each_integer_sequence<IST>::template apply_if<void>(
 	    value, std::forward<TemplateFunc>(tfunc));
 }
+/// @brief takes an std::integer_sequence and pass tfunc a std::integral_constant and returns
+/// @tparam IST loop over this std::integer_sequence
+/// @param value a value in IST to call tfunc on
+/// @param tfunc a function that takes an std::integral_constant of value
+/// @return returns value from tfunc call, or Ret{} if value does not match any IST
 template<typename Ret, typename IST, typename TemplateFunc>
-void
+Ret
 choose_integer_sequence(auto value, TemplateFunc&& tfunc)
 {
-	details::for_each_integer_sequence<IST>::template apply_if<Ret>(
+	return details::for_each_integer_sequence<IST>::template apply_if<Ret>(
 	    value, std::forward<TemplateFunc>(tfunc));
 }
 
