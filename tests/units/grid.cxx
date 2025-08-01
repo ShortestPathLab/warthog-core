@@ -36,23 +36,35 @@ TEST_CASE( "grid utility tests", "[unit][grid]" ) {
 	SECTION( "directions rotate" ) {
 		// rotate directions correctly
 		for (int i = 0; i < 4; ++i) {
-			// CW
-			CHECK(dir_id_cw(CardinalID[i]) == CardinalID[(i+1)%4]);
-			CHECK(dir_id_cw(ICardinalID[i]) == ICardinalID[(i+1)%4]);
-			CHECK(dir_cw(Cardinal[i]) == Cardinal[(i+1)%4]);
-			CHECK(dir_cw(ICardinal[i]) == ICardinal[(i+1)%4]);
+			// CW 90
+			CHECK(dir_id_cw90(CardinalID[i]) == CardinalID[(i+1)%4]);
+			CHECK(dir_id_cw90(ICardinalID[i]) == ICardinalID[(i+1)%4]);
+			CHECK(dir_cw90(Cardinal[i]) == Cardinal[(i+1)%4]);
+			CHECK(dir_cw90(ICardinal[i]) == ICardinal[(i+1)%4]);
 
-			// CCW
-			CHECK(dir_id_ccw(CardinalID[i]) == CardinalID[(i+3)%4]);
-			CHECK(dir_id_ccw(ICardinalID[i]) == ICardinalID[(i+3)%4]);
-			CHECK(dir_ccw(Cardinal[i]) == Cardinal[(i+3)%4]);
-			CHECK(dir_ccw(ICardinal[i]) == ICardinal[(i+3)%4]);
+			// CCW 90
+			CHECK(dir_id_ccw90(CardinalID[i]) == CardinalID[(i+3)%4]);
+			CHECK(dir_id_ccw90(ICardinalID[i]) == ICardinalID[(i+3)%4]);
+			CHECK(dir_ccw90(Cardinal[i]) == Cardinal[(i+3)%4]);
+			CHECK(dir_ccw90(ICardinal[i]) == ICardinal[(i+3)%4]);
 
 			// flip/180
 			CHECK(dir_id_flip(CardinalID[i]) == CardinalID[(i+2)%4]);
 			CHECK(dir_id_flip(ICardinalID[i]) == ICardinalID[(i+2)%4]);
 			CHECK(dir_flip(Cardinal[i]) == Cardinal[(i+2)%4]);
 			CHECK(dir_flip(ICardinal[i]) == ICardinal[(i+2)%4]);
+			
+			// CW 45
+			CHECK(dir_id_cw45(CardinalID[i]) == ICardinalID[i]);
+			CHECK(dir_id_cw45(ICardinalID[i]) == CardinalID[(i+1)%4]);
+			CHECK(dir_cw45(Cardinal[i]) == ICardinal[i]);
+			CHECK(dir_cw45(ICardinal[i]) == Cardinal[(i+1)%4]);
+			
+			// CCW 45
+			CHECK(dir_id_ccw45(CardinalID[i]) == ICardinalID[(i+3)%4]);
+			CHECK(dir_id_ccw45(ICardinalID[i]) == CardinalID[i]);
+			CHECK(dir_ccw45(Cardinal[i]) == ICardinal[(i+3)%4]);
+			CHECK(dir_ccw45(ICardinal[i]) == Cardinal[i]);
 		}
 	}
 	
@@ -99,6 +111,59 @@ TEST_CASE( "grid utility tests", "[unit][grid]" ) {
 		}
 		for (auto d : ICardinalID) {
 			CHECK(dir_id_adj_vert(d, WART_DG_WIDTH) + dir_id_adj_hori(d) == dir_id_adj(d, WART_DG_WIDTH));
+		}
+	}
+
+	SECTION( "directions to points" ) {
+		CHECK(dir_unit_point(NORTH_ID) == spoint(0,-1));
+		CHECK(dir_unit_point(EAST_ID) == spoint(1,0));
+		CHECK(dir_unit_point(SOUTH_ID) == spoint(0,1));
+		CHECK(dir_unit_point(WEST_ID) == spoint(-1,0));
+		CHECK(dir_unit_point(NORTHEAST_ID) == spoint(1,-1));
+		CHECK(dir_unit_point(SOUTHEAST_ID) == spoint(1,1));
+		CHECK(dir_unit_point(SOUTHWEST_ID) == spoint(-1,1));
+		CHECK(dir_unit_point(NORTHWEST_ID) == spoint(-1,-1));
+	}
+
+	SECTION( "points to direction" ) {
+		auto i = GENERATE(take(100, random(uint32_t(0), uint32_t(10'000))));
+		auto j = GENERATE(take(100, random(uint32_t(0), uint32_t(10'000))));
+		point a(static_cast<uint16_t>(i % 100), static_cast<uint16_t>(i / 100));
+		point b(static_cast<uint16_t>(j % 100), static_cast<uint16_t>(j / 100));
+		
+		auto [dx,dy] = point_signed_diff(a, b);
+		REQUIRE(dx == static_cast<int32_t>(b.x) - static_cast<int32_t>(a.x));
+		REQUIRE(dy == static_cast<int32_t>(b.y) - static_cast<int32_t>(a.y));
+		direction_id res = point_to_direction_id(a, b);
+		REQUIRE(static_cast<uint32_t>(res) < 8);
+		if (dx == 0) {
+			// NORTH/SOUTH
+			if (dy < 0)
+				CHECK(res == NORTH_ID);
+			else if (dy > 0)
+				CHECK(res == SOUTH_ID);
+			else
+				CHECK(a == b);
+		} else if (dy == 0) {
+			// EAST/WEST
+			if (dx < 0)
+				CHECK(res == WEST_ID);
+			else if (dx > 0)
+				CHECK(res == EAST_ID);
+			else
+				CHECK(a == b); // should never reach
+		} else if (dy < 0) {
+			// NE/NW
+			if (dx < 0)
+				CHECK(res == NORTHWEST_ID);
+			else
+				CHECK(res == NORTHEAST_ID);
+		} else { // dy < 0
+			// SE/SW
+			if (dx < 0)
+				CHECK(res == SOUTHWEST_ID);
+			else
+				CHECK(res == SOUTHEAST_ID);
 		}
 	}
 }

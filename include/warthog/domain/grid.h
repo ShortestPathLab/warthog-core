@@ -11,6 +11,7 @@
 
 #include <warthog/constants.h>
 #include <warthog/util/intrin.h>
+#include <bitset>
 #include <bit>
 #include <cassert>
 #include <cstdint>
@@ -95,6 +96,28 @@ template <direction D>
 concept CardinalDir = D == NORTH || D == EAST || D == SOUTH || D == WEST;
 template <direction D>
 concept InterCardinalDir = D == NORTHEAST || D == NORTHWEST || D == SOUTHEAST || D == SOUTHWEST;
+
+
+
+inline std::ostream& operator<<(std::ostream& out, direction_id d)
+{
+	constexpr const char* OUTCHAR[8] = {
+		"N", "S", "E", "W",
+		"NE", "NW", "SE", "SW"
+	};
+	if (d < 8) {
+		out << OUTCHAR[d];
+	} else {
+		out << static_cast<uint32_t>(d);
+	}
+	return out;
+}
+
+inline std::ostream& operator<<(std::ostream& out, direction d)
+{
+	out << std::bitset<8>(d);
+	return out;
+}
 
 constexpr direction
 to_dir(direction_id id) noexcept
@@ -412,6 +435,10 @@ struct alignas(uint32_t) point
 	uint16_t x;
 	uint16_t y;
 };
+inline bool operator==(point a, point b)
+{
+	return std::bit_cast<uint32_t>(a) == std::bit_cast<uint32_t>(b);
+}
 
 /// @brief signed point, due to point allowing >2^15 numbers, does not support point - point operations
 struct alignas(uint32_t) spoint
@@ -423,6 +450,10 @@ struct alignas(uint32_t) spoint
 		return point(static_cast<uint16_t>(x), static_cast<uint16_t>(y));
 	}
 };
+inline bool operator==(spoint a, spoint b)
+{
+	return std::bit_cast<uint32_t>(a) == std::bit_cast<uint32_t>(b);
+}
 
 constexpr inline std::pair<int32_t,int32_t> point_signed_diff(point a, point b) noexcept
 {
