@@ -376,38 +376,38 @@ public:
 	constexpr void
 	set(id_type id, value_type value) noexcept
 	{
-		assert(static_cast<size_t>(id) < size());
+		assert(size() == 0 || static_cast<size_t>(id) < size());
 		bittable::bitarray::set(id, value);
 	}
 	constexpr void
 	bit_and(id_type id, value_type value) noexcept
 	{
-		assert(static_cast<size_t>(id) < size());
+		assert(size() == 0 || static_cast<size_t>(id) < size());
 		bittable::bitarray::bit_and(id, value);
 	}
 	constexpr void
 	bit_or(id_type id, value_type value) noexcept
 	{
-		assert(static_cast<size_t>(id) < size());
+		assert(size() == 0 || static_cast<size_t>(id) < size());
 		bittable::bitarray::bit_or(id, value);
 	}
 	constexpr void
 	bit_xor(id_type id, value_type value) noexcept
 	{
-		assert(static_cast<size_t>(id) < size());
+		assert(size() == 0 || static_cast<size_t>(id) < size());
 		bittable::bitarray::bit_xor(id, value);
 	}
 	constexpr void
 	bit_neg(id_type id) noexcept
 	{
-		assert(static_cast<size_t>(id) < size());
+		assert(size() == 0 || static_cast<size_t>(id) < size());
 		bittable::bitarray::bit_neg(id);
 	}
 
 	constexpr value_type
 	get(id_type id) const noexcept
 	{
-		assert(static_cast<size_t>(id) < size());
+		assert(size() == 0 || static_cast<size_t>(id) < size());
 		return bittable::bitarray::get(id);
 	}
 
@@ -416,7 +416,7 @@ public:
 	constexpr std::pair<uint32_t, uint32_t>
 	id_split(id_type id) const noexcept
 	{
-		assert(static_cast<size_t>(id) < size());
+		assert(size() == 0 || static_cast<size_t>(id) < size());
 		return bittable::bitarray::id_split(id);
 	}
 

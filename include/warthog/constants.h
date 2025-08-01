@@ -55,6 +55,15 @@ struct identity_base
 		return id == other.id;
 	}
 
+	template<typename Tag2, typename IdType2>
+	    requires(!std::same_as<identity_base, identity_base<Tag2, IdType2>>)
+	constexpr explicit
+	operator identity_base<Tag2, IdType2>() const noexcept
+	{
+		auto alt = identity_base<Tag2, IdType2>(static_cast<IdType2>(id));
+		assert(id == alt.id || (is_none() && alt.is_none()));
+		return alt;
+	}
 	constexpr explicit
 	operator uint64_t() const noexcept
 	{
@@ -94,8 +103,8 @@ struct identity_base
 };
 template<class T>
 constexpr bool is_identity_v = std::false_type{};
-template<template<class, class> class T, class Tag, class IdType>
-constexpr bool is_identity_v<T<Tag, IdType>> = std::true_type{};
+template<class Tag, class IdType>
+constexpr bool is_identity_v<identity_base<Tag, IdType>> = std::true_type{};
 template<class T>
 concept Identity = is_identity_v<T>;
 
@@ -121,14 +130,14 @@ constexpr uint32_t LOG2_DBWORD_BITS = std::popcount(DBWORD_BITS_MASK);
 // search and sort constants
 constexpr double DBL_ONE = 1.0;
 constexpr double DBL_TWO = 2.0;
-constexpr double DBL_ROOT_TWO
-    = 1.414213562373095048801688724209698078569671875;
-constexpr double DBL_ONE_OVER_TWO = 0.5;
-constexpr double DBL_ONE_OVER_ROOT_TWO
-    = 0.70710678118654752440084436210484903928483593768847403658833986;
-constexpr double DBL_ROOT_TWO_OVER_FOUR
-    = 0.35355339059327376220042218105242451964241796884423701829416993;
-constexpr int32_t ONE = 100000;
+// Truncate to allow for equality testing.
+// Has around ~7 decimal places allowing up to 500k integer value before
+// overflowing (6 hex digits = 24bits).
+constexpr double DBL_ROOT_TWO           = 0x1.6a09e6p0;
+constexpr double DBL_ONE_OVER_TWO       = 0.5;
+constexpr double DBL_ONE_OVER_ROOT_TWO  = 0x0.b504f3p0;
+constexpr double DBL_ROOT_TWO_OVER_FOUR = DBL_ONE_OVER_TWO / 4;
+constexpr int32_t ONE                   = 100000;
 
 constexpr uint32_t INF32
     = std::numeric_limits<uint32_t>::max(); // indicates uninitialised or
