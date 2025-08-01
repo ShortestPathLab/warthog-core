@@ -57,7 +57,8 @@ struct identity_base
 
 	template<typename Tag2, typename IdType2>
 	    requires(!std::same_as<identity_base, identity_base<Tag2, IdType2>>)
-	constexpr explicit operator identity_base<Tag2, IdType2>() const noexcept
+	constexpr explicit
+	operator identity_base<Tag2, IdType2>() const noexcept
 	{
 		auto alt = identity_base<Tag2, IdType2>(static_cast<IdType2>(id));
 		assert(id == alt.id || (is_none() && alt.is_none()));
@@ -130,12 +131,13 @@ constexpr uint32_t LOG2_DBWORD_BITS = std::popcount(DBWORD_BITS_MASK);
 constexpr double DBL_ONE = 1.0;
 constexpr double DBL_TWO = 2.0;
 // Truncate to allow for equality testing.
-// Has around ~7 decimal places allowing up to 500k integer value before overflowing (6 hex digits = 24bits).
-constexpr double DBL_ROOT_TWO = 0x1.6a09e6p0;
-constexpr double DBL_ONE_OVER_TWO = 0.5;
-constexpr double DBL_ONE_OVER_ROOT_TWO = 0x0.b504f3p0;
+// Has around ~7 decimal places allowing up to 500k integer value before
+// overflowing (6 hex digits = 24bits).
+constexpr double DBL_ROOT_TWO           = 0x1.6a09e6p0;
+constexpr double DBL_ONE_OVER_TWO       = 0.5;
+constexpr double DBL_ONE_OVER_ROOT_TWO  = 0x0.b504f3p0;
 constexpr double DBL_ROOT_TWO_OVER_FOUR = DBL_ONE_OVER_TWO / 4;
-constexpr int32_t ONE = 100000;
+constexpr int32_t ONE                   = 100000;
 
 constexpr uint32_t INF32
     = std::numeric_limits<uint32_t>::max(); // indicates uninitialised or

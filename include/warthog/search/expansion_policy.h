@@ -33,13 +33,15 @@ public:
 	{
 		return nodes_pool_size_;
 	}
-	void set_nodes_pool_size(size_t nodes_pool_size)
+	void
+	set_nodes_pool_size(size_t nodes_pool_size)
 	{
 		free();
-		if (nodes_pool_size != 0) {
+		if(nodes_pool_size != 0)
+		{
 			nodes_pool_size_ = nodes_pool_size;
 			nodepool_        = new memory::node_pool(nodes_pool_size);
-			neis_ = new memory::arraylist<neighbour_record>(32);
+			neis_            = new memory::arraylist<neighbour_record>(32);
 		}
 	}
 
@@ -54,20 +56,20 @@ public:
 	reset()
 	{
 		current_ = 0;
-		if (neis_)
-			neis_->clear();
+		if(neis_) neis_->clear();
 	}
 
 	inline void
 	free()
 	{
 		reset();
-		if (neis_) {
+		if(neis_)
+		{
 			assert(nodepool_ != nullptr);
 			delete neis_;
 			delete nodepool_;
-			neis_ = nullptr;
-			nodepool_ = nullptr;
+			neis_            = nullptr;
+			nodepool_        = nullptr;
 			nodes_pool_size_ = 0;
 		}
 	}
@@ -245,8 +247,8 @@ private:
 	memory::node_pool* nodepool_ = nullptr;
 	// std::vector<neighbour_record>* neis_;
 	memory::arraylist<neighbour_record>* neis_ = nullptr;
-	uint32_t current_ = 0;
-	size_t nodes_pool_size_ = 0;
+	uint32_t current_                          = 0;
+	size_t nodes_pool_size_                    = 0;
 };
 
 } // namespace warthog::search

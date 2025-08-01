@@ -11,11 +11,12 @@ namespace warthog::search
 
 gridmap_expansion_policy_base::gridmap_expansion_policy_base(
     domain::gridmap* map)
-    : expansion_policy(map != nullptr ? (map->height() * map->width()) : 0), map_(map)
+    : expansion_policy(map != nullptr ? (map->height() * map->width()) : 0),
+      map_(map)
 { }
 
-
-void gridmap_expansion_policy_base::set_map(domain::gridmap& map)
+void
+gridmap_expansion_policy_base::set_map(domain::gridmap& map)
 {
 	map_ = &map;
 	set_nodes_pool_size(map.height() * map.width());
