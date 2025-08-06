@@ -38,7 +38,7 @@ public:
 	void stream(std::ostream& stream);
 	void stream_share(const shared_stream_t& stream);
 	void stream_share(const stream_listener& stream);
-	void stream_stdin();
+	void stream_stdout();
 	void stream_stderr();
 	void clear_stream();
 

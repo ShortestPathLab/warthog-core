@@ -10,12 +10,12 @@
 // @created: 2021-10-13
 //
 
-#include "dummy_listener.h"
 #include "problem_instance.h"
 #include "search.h"
 #include "search_parameters.h"
 #include "solution.h"
 #include "uds_traits.h"
+#include <warthog/io/listener.h>
 #include <warthog/constants.h>
 #include <warthog/heuristic/heuristic_value.h>
 #include <warthog/memory/cpool.h>
@@ -41,7 +41,7 @@ namespace warthog::search
 // used determine if a search should continue or terminate.
 // (default: search for any solution, until OPEN is exhausted)
 template<
-    class H, class E, class Q = util::pqueue_min, class L = dummy_listener,
+    typename H, typename E, typename Q = util::pqueue_min, typename L = std::tuple<>,
     admissibility_criteria AC = admissibility_criteria::any,
     feasibility_criteria FC   = feasibility_criteria::until_exhaustion,
     reopen_policy RP          = reopen_policy::no>
@@ -49,9 +49,8 @@ class unidirectional_search
 {
 public:
 	unidirectional_search(
-	    H* heuristic, E* expander, Q* queue, L* listener = nullptr)
-	    : heuristic_(heuristic), expander_(expander), open_(queue),
-	      listener_(listener)
+	    H* heuristic, E* expander, Q* queue, L listeners = L{})
+	    : heuristic_(heuristic), expander_(expander), open_(queue), listeners_(listeners)
 	{ }
 
 	~unidirectional_search() { }
@@ -113,10 +112,10 @@ public:
 		}
 	}
 
-	void
-	set_listener(L* listener)
+	L&
+	get_listeners() noexcept
 	{
-		listener_ = listener;
+		return listeners_;
 	}
 
 	E*
@@ -151,7 +150,7 @@ private:
 	H* heuristic_;
 	E* expander_;
 	Q* open_;
-	L* listener_;
+	[[no_unique_address]] L listeners_;
 
 	// no copy ctor
 	unidirectional_search(const unidirectional_search& other) { }
@@ -223,7 +222,7 @@ private:
 
 			initialise_node_(start, pad_id::max(), 0, pi, par, sol);
 			open_->push(start);
-			listener_->generate_node(0, start, 0, UINT32_MAX);
+			io::listener_generate_node(listeners_, nullptr, start, nullptr, UINT32_MAX);
 			user(pi->verbose_, pi);
 			trace(pi->verbose_, "Start node:", *start);
 			update_ub(start, sol, pi);
@@ -247,7 +246,7 @@ private:
 			current->set_expanded(true); // NB: set before generating succ
 			sol->met_.nodes_expanded_++;
 			sol->met_.lb_ = current->get_f();
-			listener_->expand_node(current);
+			io::listener_expand_node(listeners_, current);
 			trace(pi->verbose_, "Expanding:", *current);
 
 			// Generate successors of the current node
@@ -258,7 +257,7 @@ private:
 				expander_->get_successor(i, n, cost_to_n);
 				sol->met_.nodes_generated_++;
 				cost_t gval = current->get_g() + cost_to_n;
-				listener_->generate_node(current, n, gval, i);
+				io::listener_generate_node(listeners_, current, n, gval, i);
 
 				// Generate new search nodes, provided they're not
 				// dominated by the current upperbound
@@ -282,7 +281,7 @@ private:
 					   < sol->sum_of_edge_costs_)
 					{
 						n->relax(gval, current->get_id());
-						listener_->relax_node(n);
+						io::listener_relax_node(listeners_, n);
 
 						if(open_->contains(n))
 						{
@@ -327,10 +326,10 @@ private:
 };
 
 template<
-    class H, class E, class Q = util::pqueue_min, class L = dummy_listener>
+    typename H, typename E, typename Q = util::pqueue_min, typename L = std::tuple<>>
 unidirectional_search(
     H* heuristic, E* expander, Q* queue,
-    L* listener = nullptr) -> unidirectional_search<H, E, Q, L>;
+    L listeners = L{}) -> unidirectional_search<H, E, Q, L>;
 
 } // namespace warthog::search
 
