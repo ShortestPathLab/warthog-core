@@ -44,8 +44,8 @@ public:
 
 	operator bool() const noexcept { return stream_ != nullptr; }
 
-	std::ostream& stream() noexcept { assert(stream_ != nullptr); return *stream_; }
-	const shared_stream_t& shared_stream() noexcept { return shared_stream_; }
+	std::ostream& stream() const noexcept { assert(stream_ != nullptr); return *stream_; }
+	const shared_stream_t& shared_stream() const noexcept { return shared_stream_; }
 
 private:
 	std::ostream* stream_ = nullptr;

@@ -8,6 +8,7 @@ geometry/geom.cpp
 
 io/grid.cpp
 io/listeners.cpp
+io/traces.cpp
 
 memory/node_pool.cpp
 

@@ -1,4 +1,5 @@
 #include <warthog/io/stream_listener.h>
+#include <warthog/io/posthoc_listener.h>
 #include <exception>
 #include <fstream>
 #include <iostream>
@@ -56,6 +57,15 @@ void stream_listener::clear_stream()
 {
 	shared_stream_ = nullptr;
 	stream_ = nullptr;
+}
+
+void posthoc_listener::print_posthoc_header()
+{
+	if (*this) {
+		stream() << R"posthoc(version: 1.4.0
+events:
+)posthoc";
+	}
 }
 
 } // namespace warthog::io
