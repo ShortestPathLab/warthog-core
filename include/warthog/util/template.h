@@ -36,7 +36,8 @@ struct for_each_integer_sequence<std::integer_sequence<IST, Values...>>
 	{
 		if constexpr(std::is_void_v<Ret>)
 		{
-			apply_if_aux_<void, Values...>(std::forward<TemplateFunc>(tfunc));
+			apply_if_aux_<Ret, Values...>(
+			    value, std::forward<TemplateFunc>(tfunc));
 		}
 	}
 	template<typename Ret, IST Arg0, IST... Args, typename TemplateFunc>
@@ -50,15 +51,15 @@ struct for_each_integer_sequence<std::integer_sequence<IST, Values...>>
 		}
 		else
 		{
-			return apply_if_aux_<void, Values...>(
-			    std::forward<TemplateFunc>(tfunc));
+			return apply_if_aux_<Ret, Args...>(
+			    value, std::forward<TemplateFunc>(tfunc));
 		}
 	}
 	template<typename Ret, typename TemplateFunc>
 	static constexpr Ret
 	apply_if_aux_(IST value, TemplateFunc&& tfunc)
 	{
-		return Ret{};
+		return Ret();
 	}
 };
 

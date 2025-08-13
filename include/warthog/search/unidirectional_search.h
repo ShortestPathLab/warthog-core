@@ -304,7 +304,7 @@ private:
 				}
 				trace(pi->verbose_, "Dominated;", *n);
 			}
-			sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();
+			// sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();
 		}
 
 		sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();
