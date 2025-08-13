@@ -36,7 +36,8 @@ struct for_each_integer_sequence<std::integer_sequence<IST, Values...>>
 	{
 		if constexpr(std::is_void_v<Ret>)
 		{
-			apply_if_aux_<Ret, Values...>(value, std::forward<TemplateFunc>(tfunc));
+			apply_if_aux_<Ret, Values...>(
+			    value, std::forward<TemplateFunc>(tfunc));
 		}
 	}
 	template<typename Ret, IST Arg0, IST... Args, typename TemplateFunc>
@@ -50,8 +51,8 @@ struct for_each_integer_sequence<std::integer_sequence<IST, Values...>>
 		}
 		else
 		{
-			return apply_if_aux_<Ret, Args...>( value,
-			    std::forward<TemplateFunc>(tfunc));
+			return apply_if_aux_<Ret, Args...>(
+			    value, std::forward<TemplateFunc>(tfunc));
 		}
 	}
 	template<typename Ret, typename TemplateFunc>
@@ -67,9 +68,11 @@ struct for_each_integer_sequence<std::integer_sequence<IST, Values...>>
 // template <typename IS, typename TemplateFunc>
 // void for_each_integer_sequence(TemplateFunc&& tfunc);
 
-/// @brief takes an std::integer_sequence and pass each value to tfunc as a std::integral_constant
+/// @brief takes an std::integer_sequence and pass each value to tfunc as a
+/// std::integral_constant
 /// @tparam IST loop over this std::integer_sequence
-/// @param tfunc a function that takes an std::integral_constant of value from IST
+/// @param tfunc a function that takes an std::integral_constant of value from
+/// IST
 template<typename IST, typename TemplateFunc>
 void
 for_each_integer_sequence(TemplateFunc&& tfunc)
@@ -78,7 +81,8 @@ for_each_integer_sequence(TemplateFunc&& tfunc)
 	    std::forward<TemplateFunc>(tfunc));
 }
 
-/// @brief takes an std::integer_sequence and pass tfunc a std::integral_constant that matches value
+/// @brief takes an std::integer_sequence and pass tfunc a
+/// std::integral_constant that matches value
 /// @tparam IST loop over this std::integer_sequence
 /// @param value a value in IST to call tfunc on
 /// @param tfunc a function that takes an std::integral_constant of value
@@ -89,11 +93,13 @@ choose_integer_sequence(auto value, TemplateFunc&& tfunc)
 	details::for_each_integer_sequence<IST>::template apply_if<void>(
 	    value, std::forward<TemplateFunc>(tfunc));
 }
-/// @brief takes an std::integer_sequence and pass tfunc a std::integral_constant and returns
+/// @brief takes an std::integer_sequence and pass tfunc a
+/// std::integral_constant and returns
 /// @tparam IST loop over this std::integer_sequence
 /// @param value a value in IST to call tfunc on
 /// @param tfunc a function that takes an std::integral_constant of value
-/// @return returns value from tfunc call, or Ret{} if value does not match any IST
+/// @return returns value from tfunc call, or Ret{} if value does not match any
+/// IST
 template<typename Ret, typename IST, typename TemplateFunc>
 Ret
 choose_integer_sequence(auto value, TemplateFunc&& tfunc)
