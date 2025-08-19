@@ -612,7 +612,7 @@ dir_unit_point_secic(direction_id d) noexcept
 	return res.p;
 }
 
-/// @return the direction from p1 to p2, intercardinal first then cardinal
+/// @return the direction from p1 to p2.  If diff x or diff y is zero, will be cardinal, otherwise is intercardinal direction.
 constexpr inline direction_id
 point_to_direction_id(point p1, point p2) noexcept
 {
@@ -635,6 +635,8 @@ point_to_direction_id(point p1, point p2) noexcept
 		// shift>> to mulitple of 4 (0b100)
 		// (x < 0) = 0b0100
 		// (y < 0) = 0b1000
+		// position sign bit as index
+		// equiv to ( (x < 0) | ((y < 0) << 1) ) * 4
 		int shift = ((static_cast<uint32_t>(c.p.x) >> (31 - 2)) & 0b0100)
 		    | ((static_cast<uint32_t>(c.p.y) >> (31 - 3)) & 0b1000);
 		assert(
@@ -642,15 +644,15 @@ point_to_direction_id(point p1, point p2) noexcept
 		    || (c.p.x < 0 && c.p.y > 0 && shift == 4)
 		    || (c.p.x > 0 && c.p.y < 0 && shift == 8)
 		    || (c.p.x < 0 && c.p.y < 0 && shift == 12));
-		return static_cast<direction_id>(
-		    static_cast<uint8_t>(
-		        static_cast<uint16_t>(
-		            (static_cast<uint16_t>(SOUTHEAST_ID) << 0)
+		// 4 bits to store direction_id
+		constexpr uint16_t intcard_dir = (static_cast<uint16_t>(SOUTHEAST_ID) << 0)
 		            | (static_cast<uint16_t>(SOUTHWEST_ID) << 4)
 		            | (static_cast<uint16_t>(NORTHEAST_ID) << 8)
-		            | (static_cast<uint16_t>(NORTHWEST_ID) << 12))
-		        >> shift)
-		    & 0b1111);
+		            | (static_cast<uint16_t>(NORTHWEST_ID) << 12);
+		return static_cast<direction_id>(
+		    static_cast<uint8_t>(
+		        (intcard_dir >> shift)
+		    & 0b1111));
 	}
 }
 
