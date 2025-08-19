@@ -304,7 +304,8 @@ private:
 				}
 				trace(pi->verbose_, "Dominated;", *n);
 			}
-			if constexpr (FC == feasibility_criteria::until_exhaustion) {
+			if constexpr(FC == feasibility_criteria::until_exhaustion)
+			{
 				// patched until AC FC RP reworked
 				sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();
 			}

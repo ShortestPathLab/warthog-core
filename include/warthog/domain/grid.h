@@ -612,7 +612,8 @@ dir_unit_point_secic(direction_id d) noexcept
 	return res.p;
 }
 
-/// @return the direction from p1 to p2.  If diff x or diff y is zero, will be cardinal, otherwise is intercardinal direction.
+/// @return the direction from p1 to p2.  If diff x or diff y is zero, will be
+/// cardinal, otherwise is intercardinal direction.
 constexpr inline direction_id
 point_to_direction_id(point p1, point p2) noexcept
 {
@@ -645,14 +646,13 @@ point_to_direction_id(point p1, point p2) noexcept
 		    || (c.p.x > 0 && c.p.y < 0 && shift == 8)
 		    || (c.p.x < 0 && c.p.y < 0 && shift == 12));
 		// 4 bits to store direction_id
-		constexpr uint16_t intcard_dir = (static_cast<uint16_t>(SOUTHEAST_ID) << 0)
-		            | (static_cast<uint16_t>(SOUTHWEST_ID) << 4)
-		            | (static_cast<uint16_t>(NORTHEAST_ID) << 8)
-		            | (static_cast<uint16_t>(NORTHWEST_ID) << 12);
+		constexpr uint16_t intcard_dir
+		    = (static_cast<uint16_t>(SOUTHEAST_ID) << 0)
+		    | (static_cast<uint16_t>(SOUTHWEST_ID) << 4)
+		    | (static_cast<uint16_t>(NORTHEAST_ID) << 8)
+		    | (static_cast<uint16_t>(NORTHWEST_ID) << 12);
 		return static_cast<direction_id>(
-		    static_cast<uint8_t>(
-		        (intcard_dir >> shift)
-		    & 0b1111));
+		    static_cast<uint8_t>((intcard_dir >> shift) & 0b1111));
 	}
 }
 
