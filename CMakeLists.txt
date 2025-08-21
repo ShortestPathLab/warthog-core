@@ -12,7 +12,7 @@ option(WARTHOG_BMI "Enable support cpu BMI for WARTHOG_INTRIN_HAS(BMI)" OFF)
 option(WARTHOG_BMI2 "Enable support cpu BMI2 for WARTHOG_INTRIN_HAS(BMI2), use for Zen 3+" OFF)
 option(WARTHOG_INTRIN_ALL "Enable march=native and support x86 intrinsics if able (based on system), supersedes all manual instruction sets" OFF)
 
-include(cmake/submodule.cmake)
+include(cmake/warthog.cmake)
 
 add_library(warthog_compile INTERFACE)
 add_library(warthog::compile ALIAS warthog_compile)
