@@ -65,12 +65,12 @@ function(warthog_module_declare module)
 if(NOT DEFINED warthog_https_${module})
 	return()
 endif()
-if((${ARGC} GREATER 1) AND (${ARGV1}))
+if((${ARGC} GREATER 1))
 	set(git_tag ${ARGV1})
 else()
 	set(git_tag "main")
 endif()
 FetchContent_Declare(${module}
-	GIT_REPOSITORY warthog_https_${module}
+	GIT_REPOSITORY ${warthog_https_${module}}
 	GIT_TAG ${git_tag})
 endfunction()
