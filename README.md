@@ -75,7 +75,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 # warthog modules
 include(cmake/warthog.cmake)
 
-warthog_module_declare(warthog-core v0.5) # is optional, remove for default of main
+warthog_module_declare(warthog-core v0.5.0) # is optional, remove for default of main
 warthog_module(warthog-core)
 
 add_executable(app main.cpp)
