@@ -25,32 +25,6 @@ Requires `warthog-core` as a dependency.
 It is recommended to use warthog not as a fork, but included in an external repo.
 This setup support FetchContent, git submodule and git subtree.
 
-File `/cmake/warthog.cmake` from warthog core should be copied to user repo and `include` in CMake.
-Calling `warthog_submodule(warthog-core)` will then add `warthog-core` to your CMake in the following order:
-1. `add_subdirectory(/extern/warthog-core)` if `/extern/warthog-core/CMakeLists.txt` exists (submodule/subtree)
-2. `FetchContent_Declare` then `FetchContent_MakeAvailable(warthog-core)` otherwise
-3. Error if cannot find `warthog-core` content
-
-The `warthog_module` call only adds a module once, the following calls will be ignored.
-The submodule/subtree version only works if called in the top level project by default;
-if this method is preferred, then it should be added to the top level `/extern/`, can be overridden
-with code `warthog_module(warthog-core ON)`.
-
-Declare of warthog-core can be done using the following code:
-```
-warthog_module_declare(warthog-core [main|branch|tag|commit])
-```
-or:
-```
-FetchContent_Declare(warthog-core
-	GIT_REPOSITORY https://github.com/ShortestPathLab/warthog-core.git
-	GIT_TAG [main|branch|tag|commit])
-```
-This will declare what warthog-core version to fetched.
-The `warthog_module_declare` version makes it simple, although it only supports known warthog libraries.
-The optional second parameter sets the version to pull, by default is `main` branch.
-This system only support warthog 0.5 or greater.
-
 ## CMake
 
 Setup a basic project using the following the commands:
@@ -118,6 +92,34 @@ The update commands:
 
     git subtree -P extern/warthog-core pull https://github.com/ShortestPathLab/warthog-core.git main|branch|commit --squash
     git subtree -P extern/warthog-jps pull https://github.com/ShortestPathLab/warthog-jps.git main|branch|commit --squash
+
+## Advance Module Details
+
+File `/cmake/warthog.cmake` from warthog core should be copied to user repo and `include` in CMake.
+Calling `warthog_submodule(warthog-core)` will then add `warthog-core` to your CMake in the following order:
+1. `add_subdirectory(/extern/warthog-core)` if `/extern/warthog-core/CMakeLists.txt` exists (submodule/subtree)
+2. `FetchContent_Declare` then `FetchContent_MakeAvailable(warthog-core)` otherwise
+3. Error if cannot find `warthog-core` content
+
+The `warthog_module` call only adds a module once, the following calls will be ignored.
+The submodule/subtree version only works if called in the top level project by default;
+if this method is preferred, then it should be added to the top level `/extern/`, can be overridden
+with code `warthog_module(warthog-core ON)`.
+
+Declare of warthog-core can be done using the following code:
+```
+warthog_module_declare(warthog-core [main|branch|tag|commit])
+```
+or:
+```
+FetchContent_Declare(warthog-core
+	GIT_REPOSITORY https://github.com/ShortestPathLab/warthog-core.git
+	GIT_TAG [main|branch|tag|commit])
+```
+This will declare what warthog-core version to fetched.
+The `warthog_module_declare` version makes it simple, although it only supports known warthog libraries.
+The optional second parameter sets the version to pull, by default is `main` branch.
+This system only support warthog 0.5 or greater.
 
 # Resources
 
