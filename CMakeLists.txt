@@ -4,7 +4,7 @@ project(Warthog
 	VERSION 0.5.0
 	LANGUAGES CXX C)
 
-set_property(GLOBAL PROPERTY WARTHOG_${module} ON)
+set_property(GLOBAL PROPERTY WARTHOG_warthog-core ON)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
