@@ -28,22 +28,28 @@ This setup support FetchContent, git submodule and git subtree.
 File `/cmake/warthog.cmake` from warthog core should be copied to user repo and `include` in CMake.
 Calling `warthog_submodule(warthog-core)` will then add `warthog-core` to your CMake in the following order:
 1. `add_subdirectory(/extern/warthog-core)` if `/extern/warthog-core/CMakeLists.txt` exists (submodule/subtree)
-2. `FetchContent_MakeAvailable(warthog-core)` otherwise
-3. Error if user did not declare `warthog-core` content
+2. `FetchContent_Declare` then `FetchContent_MakeAvailable(warthog-core)` otherwise
+3. Error if cannot find `warthog-core` content
 
-The `warthog_submodule` call only adds a module once, the following calls will be ignored.
+The `warthog_module` call only adds a module once, the following calls will be ignored.
 The submodule/subtree version only works if called in the top level project by default;
 if this method is preferred, then it should be added to the top level `/extern/`, can be overridden
-with code `warthog_submodule(warthog-core ON)`.
+with code `warthog_module(warthog-core ON)`.
 
 Declare of warthog-core can be done using the following code:
 ```
+warthog_module_declare(warthog-core [main|branch|tag|commit])
+```
+or:
+```
 FetchContent_Declare(warthog-core
 	GIT_REPOSITORY https://github.com/ShortestPathLab/warthog-core.git
-	GIT_TAG main)
+	GIT_TAG [main|branch|tag|commit])
 ```
-This will fetch the most up-to-date release of warthog-core.
-Change GIT_TAG to a tag/commit to select use a specific version of warthog-core.
+This will declare what warthog-core version to fetched.
+The `warthog_module_declare` version makes it simple, although it only supports known warthog libraries.
+The optional second parameter sets the version to pull, by default is `main` branch.
+This system only support warthog 0.5 or greater.
 
 ## CMake
 
@@ -69,10 +75,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 # warthog modules
 include(cmake/warthog.cmake)
 
-FetchContent_Declare(warthog-core
-	GIT_REPOSITORY https://github.com/ShortestPathLab/warthog-core.git
-	GIT_TAG main)
-warthog_submodule(warthog-core)
+warthog_module_declare(warthog-core v0.5) # is optional, remove for default of main
+warthog_module(warthog-core)
 
 add_executable(app main.cpp)
 target_link_libraries(app PUBLIC warthog::core)
@@ -80,7 +84,7 @@ target_link_libraries(app PUBLIC warthog::core)
 
 ## Submodule
 
-Commands for adding submodules for each repo are found below:
+Commands for adding a module as a submodules for each repo are found below:
 
     git submodule add https://github.com/ShortestPathLab/warthog-core.git extern/warthog-core
     git submodule add https://github.com/ShortestPathLab/warthog-jps.git extern/warthog-jps

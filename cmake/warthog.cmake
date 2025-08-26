@@ -2,13 +2,17 @@ cmake_minimum_required(VERSION 3.13)
 
 # include this file to check submodule include
 
-if(COMMAND warthog_submodule)
+# set here as only
+set(warthog_https_warthog-core "https://github.com/ShortestPathLab/warthog-core.git" CACHE INTERNAL "")
+set(warthog_https_warthog-jps "https://github.com/ShortestPathLab/warthog-jps.git" CACHE INTERNAL "")
+
+if(COMMAND warthog_module)
 	return() # do not redefine
 endif()
 
 include(FetchContent)
 
-set(WARTHOG_SUBMODULE_ROOT_ONLY ON CACHE BOOL "add submodule if present only allowed for root project")
+set(WARTHOG_MODULE_ROOT_ONLY ON CACHE BOOL "add submodule if present only allowed for root project")
 
 function(warthog_top_level)
 set(_is_top OFF)
@@ -24,17 +28,17 @@ endif()
 set(_warthog_is_top ${_is_top} PARENT_SCOPE)
 endfunction()
 
-# warthog_submodule submodule [override_top]
-# adds a submodule to warthog
-# has checks to insure submodule is only added once
+# warthog_module module [override_top]
+# adds a module to warthog
+# has checks to insure module is only added once
 # if called from the top level project (or optional variable override_top is true)
-# then if extern/${submodule}/CMakeLists.txt exists, adds that version instead
-#    intended for use with git submodule/subtree.
-# otherwise, fetchcontent ${submodule} is made available
+# then if extern/${module}/CMakeLists.txt exists, adds that version instead
+#    intended for use with git module/subtree.
+# otherwise, fetchcontent ${module} is made available
 # user must add FetchContent_Declare
-function(warthog_submodule submodule)
-get_property(_submodule_added GLOBAL PROPERTY WARTHOG_${submodule} SET)
-if(${_submodule_added}) # submodule already added
+function(warthog_module module)
+get_property(_module_added GLOBAL PROPERTY WARTHOG_${module} SET)
+if(${_module_added}) # module already added
 	return()
 endif()
 if((${ARGC} GREATER 1) AND (${ARGV1}))
@@ -44,14 +48,29 @@ else()
 	set(is_top_level ${_warthog_is_top})
 endif()
 if(${is_top_level})
-	if(EXISTS "${PROJECT_SOURCE_DIR}/extern/${submodule}/CMakeLists.txt")
-		# submodule or subtree, include and exit
-		add_subdirectory("${PROJECT_SOURCE_DIR}/extern/${submodule}")
-		set_property(GLOBAL PROPERTY WARTHOG_${submodule} 1)
+	if(EXISTS "${PROJECT_SOURCE_DIR}/extern/${module}/CMakeLists.txt")
+		# module or subtree, include and exit
+		add_subdirectory("${PROJECT_SOURCE_DIR}/extern/${module}")
+		set_property(GLOBAL PROPERTY WARTHOG_${module} ON)
 		return()
 	endif()
 endif()
-# failed to add submodule, fetch if able
-FetchContent_MakeAvailable(${submodule})
-set_property(GLOBAL PROPERTY WARTHOG_${submodule} 1)
+# failed to add module, fetch if able
+warthog_module_declare(${module})
+FetchContent_MakeAvailable(${module})
+set_property(GLOBAL PROPERTY WARTHOG_${module} ON)
+endfunction()
+
+function(warthog_module_declare module)
+if(NOT DEFINED warthog_https_${module})
+	return()
+endif()
+if((${ARGC} GREATER 1) AND (${ARGV1}))
+	set(git_tag ${ARGV1})
+else()
+	set(git_tag "main")
+endif()
+FetchContent_Declare(${module}
+	GIT_REPOSITORY warthog_https_${module}
+	GIT_TAG ${git_tag})
 endfunction()
