@@ -44,8 +44,6 @@ else()
 	set(is_top_level ${_warthog_is_top})
 endif()
 if(${is_top_level})
-	message("hello")
-	message("${PROJECT_SOURCE_DIR}/extern/${submodule}/CMakeLists.txt")
 	if(EXISTS "${PROJECT_SOURCE_DIR}/extern/${submodule}/CMakeLists.txt")
 		# submodule or subtree, include and exit
 		add_subdirectory("${PROJECT_SOURCE_DIR}/extern/${submodule}")
