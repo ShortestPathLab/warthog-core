@@ -1,34 +1,43 @@
-#ifndef WARTHOG_IO_POSTHOC_LISTENER_H
-#define WARTHOG_IO_POSTHOC_LISTENER_H
+#ifndef WARTHOG_IO_POSTHOC_TRACE_H
+#define WARTHOG_IO_POSTHOC_TRACE_H
 
-// listener/posthoc_listener.h
+// io/posthoc_trace.h
+//
+// stream_observer that outputs a trace for use with posthoc visuliser.
+// See https://posthoc-app.pathfinding.ai/
 //
 // @author: Ryan Hechenberger
 // @created: 2025-08-07
 //
 
-#include "stream_listener.h"
+#include "stream_observer.h"
 
 namespace warthog::io
 {
 
-/// @brief base posthoc listener class.  
-class posthoc_listener : public stream_listener
+/// @brief base posthoc observer class.
+///
+/// event begin_search and end_search will setup the trace to print only a specified.
+/// Inherit to create new trace format by overriding print_posthoc_header for custom header.
+/// Add own events to print posthoc event to stream() if (*this) holds true,
+/// (*this) holds true iff id is on search_id between begin_search and end_search the first time only.
+class posthoc_trace : public stream_observer
 {
 public:
-	using stream_listener::stream_listener;
+	using stream_observer::stream_observer;
 
-	// will print the header if not already printed
-	void event(const char*);
-
+	// override print the header if not already printed
 	virtual void print_posthoc_header();
+
+	int search_id() const noexcept { return search_id_; }
+	void search_id(int sid) noexcept { search_id_ = sid; }
 
 	template <typename... Args>
 	void begin_search(int id, Args&&...)
 	{
 		do_trace_ = false;
 		if (done_trace_) return; // do not repeat a trace
-		if (stream_listener::operator bool() && id == search_id_) {
+		if (stream_observer::operator bool() && id == search_id_) {
 			do_trace_ = true;
 			done_trace_ = true;
 			print_posthoc_header();
@@ -53,4 +62,4 @@ protected:
 
 } // namespace warthog::io
 
-#endif // WARTHOG_IO_POSTHOC_LISTENER_H
+#endif // WARTHOG_IO_POSTHOC_TRACE_H

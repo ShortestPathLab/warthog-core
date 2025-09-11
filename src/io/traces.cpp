@@ -47,7 +47,7 @@ events:
 
 void grid_trace::begin_search(int id, const search::search_problem_instance& pi)
 {
-	posthoc_listener::begin_search(id);
+	posthoc_trace::begin_search(id);
 	if (*this) {
 		assert(grid_ != nullptr);
 		uint32_t x, y;

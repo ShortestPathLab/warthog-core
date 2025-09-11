@@ -15,7 +15,7 @@
 #include "search_parameters.h"
 #include "solution.h"
 #include "uds_traits.h"
-#include <warthog/io/listener.h>
+#include <warthog/io/observer.h>
 #include <warthog/constants.h>
 #include <warthog/heuristic/heuristic_value.h>
 #include <warthog/memory/cpool.h>
@@ -211,7 +211,7 @@ private:
 		mytimer.start();
 		open_->clear();
 
-		io::listener_begin_search(listeners_, static_cast<int>(pi->instance_id_), *pi);
+		io::observer_begin_search(listeners_, static_cast<int>(pi->instance_id_), *pi);
 
 		// initialise the start node and push to OPEN
 		{
@@ -224,7 +224,7 @@ private:
 
 			initialise_node_(start, pad_id::max(), 0, pi, par, sol);
 			open_->push(start);
-			io::listener_generate_node(listeners_, nullptr, *start, 0, UINT32_MAX);
+			io::observer_generate_node(listeners_, nullptr, *start, 0, UINT32_MAX);
 			user(pi->verbose_, pi);
 			trace(pi->verbose_, "Start node:", *start);
 			update_ub(start, sol, pi);
@@ -248,7 +248,7 @@ private:
 			current->set_expanded(true); // NB: set before generating succ
 			sol->met_.nodes_expanded_++;
 			sol->met_.lb_ = current->get_f();
-			io::listener_expand_node(listeners_, *current);
+			io::observer_expand_node(listeners_, *current);
 			trace(pi->verbose_, "Expanding:", *current);
 
 			// Generate successors of the current node
@@ -270,7 +270,7 @@ private:
 						open_->push(n);
 						trace(pi->verbose_, "Generate:", *n);
 						update_ub(current, sol, pi);
-						io::listener_generate_node(listeners_, current, *n, gval, i);
+						io::observer_generate_node(listeners_, current, *n, gval, i);
 						continue;
 					}
 				}
@@ -283,7 +283,7 @@ private:
 					   < sol->sum_of_edge_costs_)
 					{
 						n->relax(gval, current->get_id());
-						io::listener_relax_node(listeners_, *n);
+						io::observer_relax_node(listeners_, *n);
 
 						if(open_->contains(n))
 						{
@@ -310,7 +310,7 @@ private:
 				// patched until AC FC RP reworked
 				sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();
 			}
-			io::listener_close_node(listeners_, *current);
+			io::observer_close_node(listeners_, *current);
 		}
 
 		sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();

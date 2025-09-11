@@ -7,7 +7,8 @@ geometry/geography.cpp
 geometry/geom.cpp
 
 io/grid.cpp
-io/listeners.cpp
+io/log.cpp
+io/observer.cpp
 io/traces.cpp
 
 memory/node_pool.cpp
@@ -28,5 +29,4 @@ util/gm_parser.cpp
 util/helpers.cpp
 util/scenario_manager.cpp
 util/timer.cpp
-
 )

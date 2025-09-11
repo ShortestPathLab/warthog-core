@@ -7,7 +7,7 @@
 // @created: 2025-08-07
 //
 
-#include "posthoc_listener.h"
+#include "posthoc_trace.h"
 #include <warthog/search/search_node.h>
 #include <warthog/search/problem_instance.h>
 #include <warthog/domain/gridmap.h>
@@ -17,11 +17,11 @@ namespace warthog::io
 {
 
 /// @brief class that produces a posthoc trace for the gridmap domain  
-class grid_trace : public posthoc_listener
+class grid_trace : public posthoc_trace
 {
 public:
 	using node = search::search_node;
-	using posthoc_listener::posthoc_listener;
+	using posthoc_trace::posthoc_trace;
 
 	void set_grid(domain::gridmap* grid) noexcept
 	{

@@ -1,5 +1,5 @@
-#ifndef WARTHOG_IO_STREAM_LISTENER_H
-#define WARTHOG_IO_STREAM_LISTENER_H
+#ifndef WARTHOG_IO_STEAM_OBSERVER_H
+#define WARTHOG_IO_STEAM_OBSERVER_H
 
 // listener/stream_listener.h
 //
@@ -24,20 +24,20 @@
 namespace warthog::io
 {
 
-class stream_listener
+class stream_observer
 {
 public:
 	using shared_stream_t = std::shared_ptr<std::ostream>;
-	stream_listener() = default;
-	stream_listener(const std::filesystem::path& filename, std::ios_base::openmode mode = std::ios_base::out);
-	stream_listener(std::ostream& stream);
-	stream_listener(const shared_stream_t& stream);
-	~stream_listener();
+	stream_observer() = default;
+	stream_observer(const std::filesystem::path& filename, std::ios_base::openmode mode = std::ios_base::out);
+	stream_observer(std::ostream& stream);
+	stream_observer(const shared_stream_t& stream);
+	~stream_observer();
 
 	void stream_open(const std::filesystem::path& filename, std::ios_base::openmode mode = std::ios_base::out);
 	void stream(std::ostream& stream);
 	void stream_share(const shared_stream_t& stream);
-	void stream_share(const stream_listener& stream);
+	void stream_share(const stream_observer& stream);
 	void stream_stdout();
 	void stream_stderr();
 	void clear_stream();
@@ -52,8 +52,8 @@ private:
 	shared_stream_t shared_stream_;
 };
 
-using void_listener = stream_listener;
+using void_listener = stream_observer;
 
 } // namespace warthog::io
 
-#endif // WARTHOG_IO_STREAM_LISTENER_H
+#endif // WARTHOG_IO_STEAM_OBSERVER_H

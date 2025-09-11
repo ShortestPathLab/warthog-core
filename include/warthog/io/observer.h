@@ -1,11 +1,17 @@
-#ifndef WARTHOG_IO_LISTENER_H
-#define WARTHOG_IO_LISTENER_H
+#ifndef WARTHOG_IO_OBSERVER_H
+#define WARTHOG_IO_OBSERVER_H
 
-// listener/stream_listener.h
+// io/observer.h
 //
-// The lister base class, has many invoker functions for set listen events
+// The observer pattern defines methods to tightly-bind user provided observers to certain event patterns.
+// Provide a tuple of observers, where some event is triggered will notifiy all observers with function of event name that is callable.
 //
-//  This class implements dummy listener with empty event handlers.
+// These function names must be registered before use, common ones registered here.
+//
+// To register a new function name, use WARTHOG_OBSERVER_DEFINE([function]).
+// Invoke event with observer_[function](listeners, args...) where listeners are tuple of observer.
+// This will run through each element in tuple (i) and call i.[function](args...) if able.
+// If i.event([function],args...) is a valid callable, calls this function first, also tries i.event([function]).
 //
 // @author: Ryan Hechenberger
 // @created: 2025-08-06
@@ -13,48 +19,45 @@
 
 #include <warthog/constants.h>
 
-#define WARTHOG_LISTENER_HAS_FN(func_name) \
+#define WARTHOG_OBSERVER_DEFINE_HAS(func_name) \
 template <typename Listener, typename... Args> \
-concept listener_has_##func_name = requires(Listener L, Args&&... args) \
+concept observer_has_##func_name = requires(Listener L, Args&&... args) \
 { \
 	{ L.func_name(std::forward<Args>(args)...) }; \
 };
-#define WARTHOG_LISTENER_FN(func_name) \
+#define WARTHOG_OBSERVER_DEFINE_CALL(func_name) \
 template <size_t I = 0, typename Listeners, typename... Args> \
-void listener_##func_name(Listeners& L, Args&&... args) \
+void observer_##func_name(Listeners& L, Args&&... args) \
 { \
 	if constexpr (I < std::tuple_size_v<Listeners>) { \
 		using T = std::tuple_element_t<I, Listeners>; \
-		if constexpr (listener_has_##func_name <T, Args...>) { \
-			/* call event first if present */ \
-			if constexpr (listener_has_event <T, const char*>) std::get<I>(L).event(#func_name); \
+		constexpr bool has_event = observer_has_##func_name <T, Args...>; \
+		if constexpr (observer_has_event<T, const char*, Args...>) { std::get<I>(L).event( #func_name , std::forward<Args>(args)... ); } \
+		else if constexpr (observer_has_event<T, const char*>) { std::get<I>(L).event( #func_name ); } \
+		if constexpr (has_event) { \
 			std::get<I>(L).func_name(std::forward<Args>(args)...); \
-		} else { \
-			if constexpr (listener_has_missing_event <T, const char*>) \
-				std::get<I>(L).missing_event(#func_name); \
 		} \
 		listener_##func_name <I+1>(L, std::forward<Args>(args)...); \
 	} \
 }
 
-#define WARTHOG_LISTENER_DEFINE(func_name) \
-	WARTHOG_LISTENER_HAS_FN(func_name) \
-	WARTHOG_LISTENER_FN(func_name)
+#define WARTHOG_OBSERVER_DEFINE(func_name) \
+	WARTHOG_OBSERVER_DEFINE_HAS(func_name) \
+	WARTHOG_OBSERVER_DEFINE_CALL(func_name)
 
 namespace warthog::io
 {
 
 // functions used by WARTHOG_LISTENER_FN
-WARTHOG_LISTENER_HAS_FN(event)
-WARTHOG_LISTENER_HAS_FN(missing_event)
+WARTHOG_OBSERVER_DEFINE_HAS(event)
 
-WARTHOG_LISTENER_DEFINE(begin_search)
-WARTHOG_LISTENER_DEFINE(end_search)
-WARTHOG_LISTENER_DEFINE(generate_node)
-WARTHOG_LISTENER_DEFINE(expand_node)
-WARTHOG_LISTENER_DEFINE(relax_node)
-WARTHOG_LISTENER_DEFINE(close_node)
+WARTHOG_OBSERVER_DEFINE(begin_search)
+WARTHOG_OBSERVER_DEFINE(end_search)
+WARTHOG_OBSERVER_DEFINE(generate_node)
+WARTHOG_OBSERVER_DEFINE(expand_node)
+WARTHOG_OBSERVER_DEFINE(relax_node)
+WARTHOG_OBSERVER_DEFINE(close_node)
 
 } // namespace warthog::io
 
-#endif // WARTHOG_IO_LISTENER_H
+#endif // WARTHOG_IO_OBSERVER_H
