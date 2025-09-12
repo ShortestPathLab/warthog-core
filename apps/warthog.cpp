@@ -20,6 +20,7 @@
 #include <warthog/util/pqueue.h>
 #include <warthog/util/scenario_manager.h>
 #include <warthog/util/timer.h>
+#include <warthog/io/log.h>
 
 #include "cfg.h"
 #include <getopt.h>
@@ -111,6 +112,8 @@ run_experiments(
     warthog::util::scenario_manager& scenmgr, bool verbose, bool checkopt,
     std::ostream& out)
 {
+	WARTHOG_DEBUG(warthog::io::glog(), alg_name);
+	WARTHOG_WARNING_FMT(warthog::io::glog(), "Search with {} verbose {} and ceckopt {}", alg_name, verbose, checkopt);
 	warthog::search::search_parameters par;
 	warthog::search::solution sol;
 	auto* expander = algo.get_expander();
