@@ -68,12 +68,12 @@ struct log_sink
 /// sink to cout|cerr
 /// Is thread safe as long as std::ios_base::sync_with_stdio(false) for cout and cerr.
 /// User provided file stream is not thread safe.
-struct log_std_sink : log_sink
+struct log_sink_std : log_sink
 {
 	// cerr = true will sink to cerr, false to cout
-	log_std_sink();
-	log_std_sink(bool cerr = true);
-	log_std_sink(std::ostream* stream);
+	log_sink_std();
+	log_sink_std(bool cerr = true);
+	log_sink_std(std::ostream* stream);
 	static void write_trace(void*, std::string_view msg);
 	static void write_debug(void*, std::string_view msg);
 	static void write_information(void*, std::string_view msg);
@@ -90,13 +90,13 @@ concept LogSink = requires (Sink S, log_level level, std::string_view msg)
 	{ std::as_const(S).sink() } -> std::convertible_to<log_sink>;
 };
 
-class log_stream_sink : public log_sink
+class log_sink_stream : public log_sink
 {
 public:
-	log_stream_sink();
-	log_stream_sink(const std::filesystem::path& filename, std::ios_base::openmode mode = std::ios_base::out | std::ios_base::app);
-	log_stream_sink(std::ostream* stream);
-	~log_stream_sink() = default;
+	log_sink_stream();
+	log_sink_stream(const std::filesystem::path& filename, std::ios_base::openmode mode = std::ios_base::out | std::ios_base::app);
+	log_sink_stream(std::ostream* stream);
+	~log_sink_stream() = default;
 
 	void open(const std::filesystem::path& filename, std::ios_base::openmode mode = std::ios_base::out | std::ios_base::app);
 	void open(std::ostream& stream);
@@ -118,7 +118,7 @@ protected:
 	std::unique_ptr<std::ofstream> owned_file_;
 	std::mutex lock_;
 };
-static_assert(LogSink<log_stream_sink>, "log_stream_sink must be a log_sink.");
+static_assert(LogSink<log_sink_stream>, "log_stream_sink must be a log_sink.");
 
 template <log_level MinLevel = static_cast<log_level>(WARTHOG_DEFAULT_LOG_LEVEL)>
 struct logger : log_sink
@@ -171,44 +171,104 @@ concept LoggerLevel = Logger<Log> && requires {
 
 #define WARTHOG_LOG(lg,level,msg) lg.log(msg)
 
-#define WARTHOG_LOG_LEVEL_(lg,level,msg) \
+#define WARTHOG_LOG_LEVEL_(cond,lg,level,msg) \
 {if constexpr (::warthog::io::Logger<decltype(lg)>) { \
 	if constexpr (::warthog::io::LoggerLevel<decltype(lg), level>) { \
+		if (cond) \
+			lg.log(level, msg); \
+	} \
+} else { \
+	if (cond) \
 		lg.log(level, msg); \
-	} \
-} else { \
-	lg.log(level, msg); \
 }}
 
-#define WARTHOG_TRACE(lg,msg) WARTHOG_LOG_LEVEL_(lg,::warthog::io::log_level::TRACE,msg)
-#define WARTHOG_DEBUG(lg,msg) WARTHOG_LOG_LEVEL_(lg,::warthog::io::log_level::DEBUG,msg)
-#define WARTHOG_INFORMATION(lg,msg) WARTHOG_LOG_LEVEL_(lg,::warthog::io::log_level::INFORMATION,msg)
-#define WARTHOG_WARNING(lg,msg) WARTHOG_LOG_LEVEL_(lg,::warthog::io::log_level::WARNING,msg)
-#define WARTHOG_ERROR(lg,msg) WARTHOG_LOG_LEVEL_(lg,::warthog::io::log_level::ERROR,msg)
-#define WARTHOG_CRITICAL(lg,msg) WARTHOG_LOG_LEVEL_(lg,::warthog::io::log_level::CRITICAL,msg)
+#define WARTHOG_TRACE(lg,msg) WARTHOG_LOG_LEVEL_(true,lg,::warthog::io::log_level::TRACE,msg)
+#define WARTHOG_DEBUG(lg,msg) WARTHOG_LOG_LEVEL_(true,lg,::warthog::io::log_level::DEBUG,msg)
+#define WARTHOG_INFO(lg,msg) WARTHOG_LOG_LEVEL_(true,lg,::warthog::io::log_level::INFORMATION,msg)
+#define WARTHOG_WARN(lg,msg) WARTHOG_LOG_LEVEL_(true,lg,::warthog::io::log_level::WARNING,msg)
+#define WARTHOG_ERROR(lg,msg) WARTHOG_LOG_LEVEL_(true,lg,::warthog::io::log_level::ERROR,msg)
+#define WARTHOG_CRIT(lg,msg) WARTHOG_LOG_LEVEL_(true,lg,::warthog::io::log_level::CRITICAL,msg)
 
-#define WARTHOG_LOG_LEVEL_FMT_(lg,level,...) \
+#define WARTHOG_TRACE_IF(cond,lg,msg) WARTHOG_LOG_LEVEL_(cond,lg,::warthog::io::log_level::TRACE,msg)
+#define WARTHOG_DEBUG_IF(cond,lg,msg) WARTHOG_LOG_LEVEL_(cond,lg,::warthog::io::log_level::DEBUG,msg)
+#define WARTHOG_INFO_IF(cond,lg,msg) WARTHOG_LOG_LEVEL_(cond,lg,::warthog::io::log_level::INFORMATION,msg)
+#define WARTHOG_WARN_IF(cond,lg,msg) WARTHOG_LOG_LEVEL_(cond,lg,::warthog::io::log_level::WARNING,msg)
+#define WARTHOG_ERROR_IF(cond,lg,msg) WARTHOG_LOG_LEVEL_(cond,lg,::warthog::io::log_level::ERROR,msg)
+#define WARTHOG_CRIT_IF(cond,lg,msg) WARTHOG_LOG_LEVEL_(cond,lg,::warthog::io::log_level::CRITICAL,msg)
+
+#define WARTHOG_LOG_LEVEL_FMT_(cond,lg,level,...) \
 {if constexpr (::warthog::io::Logger<decltype(lg)>) { \
 	if constexpr (::warthog::io::LoggerLevel<decltype(lg), level>) { \
-		lg.log(level, std::format(__VA_ARGS__)); \
+		if (cond) \
+			lg.log(level, std::format(__VA_ARGS__)); \
 	} \
 } else { \
-	lg.log(level, std::format(__VA_ARGS__)); \
+	if (cond) \
+		lg.log(level, std::format(__VA_ARGS__)); \
 }}
 
-#define WARTHOG_TRACE_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(lg,::warthog::io::log_level::TRACE,__VA_ARGS__)
-#define WARTHOG_DEBUG_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(lg,::warthog::io::log_level::DEBUG,__VA_ARGS__)
-#define WARTHOG_INFORMATION_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(lg,::warthog::io::log_level::INFORMATION,__VA_ARGS__)
-#define WARTHOG_WARNING_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(lg,::warthog::io::log_level::WARNING,__VA_ARGS__)
-#define WARTHOG_ERROR_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(lg,::warthog::io::log_level::ERROR,__VA_ARGS__)
-#define WARTHOG_CRITICAL_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(lg,::warthog::io::log_level::CRITICAL,__VA_ARGS__)
+#define WARTHOG_TRACE_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(true,lg,::warthog::io::log_level::TRACE,__VA_ARGS__)
+#define WARTHOG_DEBUG_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(true,lg,::warthog::io::log_level::DEBUG,__VA_ARGS__)
+#define WARTHOG_INFO_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(true,lg,::warthog::io::log_level::INFORMATION,__VA_ARGS__)
+#define WARTHOG_WARN_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(true,lg,::warthog::io::log_level::WARNING,__VA_ARGS__)
+#define WARTHOG_ERROR_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(true,lg,::warthog::io::log_level::ERROR,__VA_ARGS__)
+#define WARTHOG_CRIT_FMT(lg,...) WARTHOG_LOG_LEVEL_FMT_(true,lg,::warthog::io::log_level::CRITICAL,__VA_ARGS__)
+
+#define WARTHOG_TRACE_FMT_IF(cond,lg,...) WARTHOG_LOG_LEVEL_FMT_(cond,lg,::warthog::io::log_level::TRACE,__VA_ARGS__)
+#define WARTHOG_DEBUG_FMT_IF(cond,lg,...) WARTHOG_LOG_LEVEL_FMT_(cond,lg,::warthog::io::log_level::DEBUG,__VA_ARGS__)
+#define WARTHOG_INFO_FMT_IF(cond,lg,...) WARTHOG_LOG_LEVEL_FMT_(cond,lg,::warthog::io::log_level::INFORMATION,__VA_ARGS__)
+#define WARTHOG_WARN_FMT_IF(cond,lg,...) WARTHOG_LOG_LEVEL_FMT_(cond,lg,::warthog::io::log_level::WARNING,__VA_ARGS__)
+#define WARTHOG_ERROR_FMT_IF(cond,lg,...) WARTHOG_LOG_LEVEL_FMT_(cond,lg,::warthog::io::log_level::ERROR,__VA_ARGS__)
+#define WARTHOG_CRIT_FMT_IF(cond,lg,...) WARTHOG_LOG_LEVEL_FMT_(cond,lg,::warthog::io::log_level::CRITICAL,__VA_ARGS__)
 
 // global logger
 
-using global_logger = logger<>;
-global_logger& glog();
+using global_logger_type = logger<>;
+global_logger_type& glog();
 const log_sink& glogs();
 void set_glog(log_sink log);
+
+template <log_level MinLevel = log_level::DEBUG>
+struct global_logger : logger<MinLevel>
+{
+	using logger = typename global_logger::logger;
+	constexpr global_logger() : logger(glog().sink())
+	{ }
+	
+	constexpr global_logger& operator=(const global_logger&) noexcept = default;
+
+	void resync_global()
+	{
+		static_cast<logger&>(*this) = glog().sink();
+	}
+};
+
+// defines to the global logger
+
+#define WARTHOG_GTRACE(msg) WARTHOG_TRACE(::warthog::io::glog(),msg)
+#define WARTHOG_GDEBUG(msg) WARTHOG_DEBUG(::warthog::io::glog(),msg)
+#define WARTHOG_GINFO(msg) WARTHOG_INFO(::warthog::io::glog(),msg)
+#define WARTHOG_GWARN(msg) WARTHOG_WARN(::warthog::io::glog(),msg)
+#define WARTHOG_GERROR(msg) WARTHOG_ERROR(::warthog::io::glog(),msg)
+#define WARTHOG_GCRIT(msg) WARTHOG_CRIT(::warthog::io::glog(),msg)
+#define WARTHOG_GTRACE_IF(cond,msg) WARTHOG_TRACE_IF(::warthog::io::glog(),msg)
+#define WARTHOG_GDEBUG_IF(cond,msg) WARTHOG_DEBUG_IF(::warthog::io::glog(),msg)
+#define WARTHOG_GINFO_IF(cond,msg) WARTHOG_INFO_IF(::warthog::io::glog(),msg)
+#define WARTHOG_GWARN_IF(cond,msg) WARTHOG_WARN_IF(::warthog::io::glog(),msg)
+#define WARTHOG_GERROR_IF(cond,msg) WARTHOG_ERROR_IF(::warthog::io::glog(),msg)
+#define WARTHOG_GCRIT_IF(cond,msg) WARTHOG_CRIT_IF(::warthog::io::glog(),msg)
+#define WARTHOG_GTRACE_FMT(...) WARTHOG_TRACE_FMT(::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GDEBUG_FMT(...) WARTHOG_DEBUG_FMT(::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GINFO_FMT(...) WARTHOG_INFO_FMT(::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GWARN_FMT(...) WARTHOG_WARN_FMT(::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GERROR_FMT(...) WARTHOG_ERROR_FMT(::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GCRIT_FMT(...) WARTHOG_CRIT_FMT(::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GTRACE_FMT_IF(cond,...) WARTHOG_TRACE_FMT_IF(cond,::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GDEBUG_FMT_IF(cond,...) WARTHOG_DEBUG_FMT_IF(cond,::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GINFO_FMT_IF(cond,...) WARTHOG_INFO_FMT_IF(cond,::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GWARN_FMT_IF(cond,...) WARTHOG_WARN_FMT_IF(cond,::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GERROR_FMT_IF(cond,...) WARTHOG_ERROR_FMT_IF(cond,::warthog::io::glog(),__VA_ARGS__)
+#define WARTHOG_GCRIT_FMT_IF(cond,...) WARTHOG_CRIT_FMT_IF(cond,::warthog::io::glog(),__VA_ARGS__)
 
 } // namespace warthog::io
 

@@ -226,7 +226,7 @@ private:
 			open_->push(start);
 			io::observer_generate_node(listeners_, nullptr, *start, 0, UINT32_MAX);
 			user(pi->verbose_, pi);
-			trace(pi->verbose_, "Start node:", *start);
+			WARTHOG_GINFO_FMT_IF(pi->verbose_, "Start node: {}", *start);
 			update_ub(start, sol, pi);
 		}
 
@@ -249,7 +249,7 @@ private:
 			sol->met_.nodes_expanded_++;
 			sol->met_.lb_ = current->get_f();
 			io::observer_expand_node(listeners_, *current);
-			trace(pi->verbose_, "Expanding:", *current);
+			WARTHOG_GINFO_FMT_IF(pi->verbose_, "Expanding: {}", *current);
 
 			// Generate successors of the current node
 			search_node* n   = nullptr;
@@ -268,7 +268,7 @@ private:
 					if(n->get_f() <= sol->sum_of_edge_costs_)
 					{
 						open_->push(n);
-						trace(pi->verbose_, "Generate:", *n);
+						WARTHOG_GINFO_FMT_IF(pi->verbose_, "Generate: {}", *n);
 						update_ub(current, sol, pi);
 						io::observer_generate_node(listeners_, current, *n, gval, i);
 						continue;
@@ -288,7 +288,7 @@ private:
 						if(open_->contains(n))
 						{
 							open_->decrease_key(n);
-							trace(pi->verbose_, "Updating;", *n);
+							WARTHOG_GINFO_FMT_IF(pi->verbose_, "Updating: {}", *n);
 							update_ub(current, sol, pi);
 							continue;
 						}
@@ -296,14 +296,14 @@ private:
 						if(reopen<RP>())
 						{
 							open_->push(n);
-							trace(pi->verbose_, "Reopen;", *n);
+							WARTHOG_GINFO_FMT_IF(pi->verbose_, "Reopen: {}", *n);
 							update_ub(current, sol, pi);
 							sol->met_.nodes_reopen_++;
 							continue;
 						}
 					}
 				}
-				trace(pi->verbose_, "Dominated;", *n);
+				WARTHOG_GINFO_FMT_IF(pi->verbose_, "Dominated: {}", *n);
 			}
 			if constexpr(FC == feasibility_criteria::until_cutoff)
 			{
