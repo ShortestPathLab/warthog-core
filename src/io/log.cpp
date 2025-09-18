@@ -60,37 +60,37 @@ void log_sink_std::write_trace(void* logger, std::string_view msg)
 {
 	std::ostream* stream = static_cast<std::ostream*>(logger);
 	assert(stream != nullptr);
-	*stream << std::format("[{:" WARTHOG_TIME_FORMAT "} TRACE] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*stream << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "} TRACE] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 void log_sink_std::write_debug(void* logger, std::string_view msg)
 {
 	std::ostream* stream = static_cast<std::ostream*>(logger);
 	assert(stream != nullptr);
-	*stream << std::format("[{:" WARTHOG_TIME_FORMAT "} DEBUG] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*stream << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "} DEBUG] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 void log_sink_std::write_information(void* logger, std::string_view msg)
 {
 	std::ostream* stream = static_cast<std::ostream*>(logger);
 	assert(stream != nullptr);
-	*stream << std::format("[{:" WARTHOG_TIME_FORMAT "}  INFO] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*stream << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "}  INFO] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 void log_sink_std::write_warning(void* logger, std::string_view msg)
 {
 	std::ostream* stream = static_cast<std::ostream*>(logger);
 	assert(stream != nullptr);
-	*stream << std::format("[{:" WARTHOG_TIME_FORMAT "}  WARN] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*stream << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "}  WARN] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 void log_sink_std::write_error(void* logger, std::string_view msg)
 {
 	std::ostream* stream = static_cast<std::ostream*>(logger);
 	assert(stream != nullptr);
-	*stream << std::format("[{:" WARTHOG_TIME_FORMAT "} ERROR] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*stream << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "} ERROR] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 void log_sink_std::write_critical(void* logger, std::string_view msg)
 {
 	std::ostream* stream = static_cast<std::ostream*>(logger);
 	assert(stream != nullptr);
-	*stream << std::format("[{:" WARTHOG_TIME_FORMAT "}  CRIT] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*stream << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "}  CRIT] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 
 void log_sink_stream::write_trace(void* logger, std::string_view msg)
@@ -98,42 +98,42 @@ void log_sink_stream::write_trace(void* logger, std::string_view msg)
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
 	assert(log_stream != nullptr && log_stream->log_stream_);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_TIME_FORMAT "} TRACE] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "} TRACE] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 void log_sink_stream::write_debug(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
 	assert(log_stream != nullptr && log_stream->log_stream_);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_TIME_FORMAT "} DEBUG] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "} DEBUG] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 void log_sink_stream::write_information(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
 	assert(log_stream != nullptr && log_stream->log_stream_);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_TIME_FORMAT "}  INFO] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "}  INFO] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 void log_sink_stream::write_warning(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
 	assert(log_stream != nullptr && log_stream->log_stream_);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_TIME_FORMAT "}  WARN] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "}  WARN] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 void log_sink_stream::write_error(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
 	assert(log_stream != nullptr && log_stream->log_stream_);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_TIME_FORMAT "} ERROR] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "} ERROR] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 void log_sink_stream::write_critical(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
 	assert(log_stream != nullptr && log_stream->log_stream_);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_TIME_FORMAT "}  CRIT] {}\n", std::chrono::floor<std::chrono::seconds>(std::chrono::utc_clock::now()), msg);
+	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "}  CRIT] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
 }
 
 global_logger_type global_logger_(log_sink_std(true).sink());

@@ -28,7 +28,8 @@
 #define WARTHOG_DEFAULT_LOG_LEVEL 2
 #endif
 
-#define WARTHOG_TIME_FORMAT "%FT%TZ"
+#define WARTHOG_LOG_TIME_FORMAT "%F %T"
+#define WARTHOG_LOG_NOW (std::chrono::current_zone()->to_local(std::chrono::system_clock::now()))
 
 namespace warthog::io
 {
