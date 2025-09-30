@@ -12,13 +12,13 @@ log_sink_stream::log_sink_stream() : log_sink{nullptr,
 	&log_sink_stream::write_error,&log_sink_stream::write_critical}}}
 { }
 
-log_sink_stream::log_sink_stream(const std::filesystem::path& filename, std::ios_base::openmode mode)
+log_sink_stream::log_sink_stream(const std::filesystem::path& filename, std::ios_base::openmode mode) : log_sink_stream()
 {
 	data = this;
 	owned_file_ = std::make_unique<std::ofstream>(filename, mode);
 	log_stream_ = owned_file_.get();
 }
-log_sink_stream::log_sink_stream(std::ostream* stream)
+log_sink_stream::log_sink_stream(std::ostream* stream) : log_sink_stream()
 {
 	data = this;
 	log_stream_ = stream;
