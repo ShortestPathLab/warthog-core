@@ -1,5 +1,7 @@
 #include <warthog/search/search_metrics.h>
 
+namespace warthog::search {
+
 std::ostream&
 operator<<(std::ostream& str, const warthog::search::search_metrics& met)
 {
@@ -10,4 +12,6 @@ operator<<(std::ostream& str, const warthog::search::search_metrics& met)
 	    << " surplus=" << met.nodes_surplus_ << " heap-ops=" << met.heap_ops_
 	    << " lb=" << met.lb_ << " ub=" << met.ub_;
 	return str;
+}
+
 }

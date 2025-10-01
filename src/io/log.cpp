@@ -45,12 +45,14 @@ void log_sink_stream::open_stderr()
 
 // log_sink_stream
 
-log_sink_std::log_sink_std() : log_sink_std(nullptr)
+log_sink_std::log_sink_std() : log_sink{
+	nullptr,
+	{{&log_sink_std::write_trace,&log_sink_std::write_debug,
+	&log_sink_std::write_information,&log_sink_std::write_warning,
+	&log_sink_std::write_error,&log_sink_std::write_critical}}}
 { }
-log_sink_std::log_sink_std(bool cerr) : log_sink_std(cerr ? &std::cerr : &std::cout)
-{ }
-log_sink_std::log_sink_std(std::ostream* stream) : log_sink{
-	stream,
+log_sink_std::log_sink_std(bool cerr) : log_sink{
+	cerr ? &std::cerr : &std::cout,
 	{{&log_sink_std::write_trace,&log_sink_std::write_debug,
 	&log_sink_std::write_information,&log_sink_std::write_warning,
 	&log_sink_std::write_error,&log_sink_std::write_critical}}}
@@ -96,47 +98,49 @@ void log_sink_std::write_critical(void* logger, std::string_view msg)
 void log_sink_stream::write_trace(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
-	assert(log_stream != nullptr && log_stream->log_stream_);
+	assert(log_stream != nullptr);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "} TRACE] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
+	log_sink_std::write_trace(log_stream->log_stream_, msg);
 }
 void log_sink_stream::write_debug(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
-	assert(log_stream != nullptr && log_stream->log_stream_);
+	assert(log_stream != nullptr);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "} DEBUG] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
+	log_sink_std::write_debug(log_stream->log_stream_, msg);
 }
 void log_sink_stream::write_information(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
-	assert(log_stream != nullptr && log_stream->log_stream_);
+	assert(log_stream != nullptr);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "}  INFO] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
+	log_sink_std::write_information(log_stream->log_stream_, msg);
 }
 void log_sink_stream::write_warning(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
-	assert(log_stream != nullptr && log_stream->log_stream_);
+	assert(log_stream != nullptr);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "}  WARN] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
+	log_sink_std::write_warning(log_stream->log_stream_, msg);
 }
 void log_sink_stream::write_error(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
-	assert(log_stream != nullptr && log_stream->log_stream_);
+	assert(log_stream != nullptr);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "} ERROR] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
+	log_sink_std::write_error(log_stream->log_stream_, msg);
 }
 void log_sink_stream::write_critical(void* logger, std::string_view msg)
 {
 	log_sink_stream* log_stream = static_cast<log_sink_stream*>(logger);
-	assert(log_stream != nullptr && log_stream->log_stream_);
+	assert(log_stream != nullptr);
 	std::lock_guard lock(log_stream->lock_);
-	*log_stream->log_stream_ << std::format("[{:" WARTHOG_LOG_TIME_FORMAT "}  CRIT] {}\n", std::chrono::floor<std::chrono::seconds>(WARTHOG_LOG_NOW), msg);
+	log_sink_std::write_critical(log_stream->log_stream_, msg);
 }
 
+namespace {
 global_logger_type global_logger_(log_sink_std(true).sink());
+}
 global_logger_type& glog()
 {
 	return global_logger_;

@@ -19,7 +19,6 @@
 #include <warthog/constants.h>
 #include <warthog/heuristic/heuristic_value.h>
 #include <warthog/memory/cpool.h>
-#include <warthog/util/log.h>
 #include <warthog/util/pqueue.h>
 #include <warthog/util/timer.h>
 #include <warthog/util/vec_io.h>
@@ -94,21 +93,6 @@ public:
 			heuristic::heuristic_value hv(
 			    sol->s_node_->get_id(), spi->target_, &sol->path_);
 			heuristic_->h(&hv);
-		}
-
-		DO_ON_DEBUG_IF(spi->verbose_)
-		{
-			for(auto& node_id : sol->path_)
-			{
-				int32_t x, y;
-				expander_->get_xy(node_id, x, y);
-				std::cerr << "final path: (" << x << ", " << y << ")...";
-				search_node* n
-				    = expander_->generate(expander_->unget_state(node_id));
-				assert(n->get_search_number() == spi->instance_id_);
-				n->print(std::cerr);
-				std::cerr << std::endl;
-			}
 		}
 	}
 
@@ -198,9 +182,7 @@ private:
 		if(n->get_ub() < sol->met_.ub_)
 		{
 			sol->met_.ub_ = n->get_ub();
-			debug(
-			    pi->verbose_, "NEW UB:", "Incumbent Cost",
-			    sol->sum_of_edge_costs_);
+			WARTHOG_GDEBUG_FMT_IF(pi->verbose_, "NEW UB: Incumbent Cost {}", sol->sum_of_edge_costs_);
 		}
 	}
 
@@ -225,7 +207,7 @@ private:
 			initialise_node_(start, pad_id::max(), 0, pi, par, sol);
 			open_->push(start);
 			io::observer_generate_node(listeners_, nullptr, *start, 0, UINT32_MAX);
-			user(pi->verbose_, pi);
+			WARTHOG_GINFO_FMT_IF(pi->verbose_, "{}", *pi);
 			WARTHOG_GINFO_FMT_IF(pi->verbose_, "Start node: {}", *start);
 			update_ub(start, sol, pi);
 		}
@@ -317,14 +299,7 @@ private:
 		sol->met_.nodes_surplus_     = open_->size();
 		sol->met_.heap_ops_          = open_->get_heap_ops();
 
-		DO_ON_DEBUG_IF(pi->verbose_)
-		{
-			if(sol->sum_of_edge_costs_ == warthog::COST_MAX)
-			{
-				warning(pi->verbose_, "Search failed; no solution exists.");
-			}
-			else { user(pi->verbose_, "Solution found", *sol->s_node_); }
-		}
+		WARTHOG_GINFO_IF(pi->verbose_ && sol->sum_of_edge_costs_ == warthog::COST_MAX, "Search failed; no solution exists.");
 	}
 };
 

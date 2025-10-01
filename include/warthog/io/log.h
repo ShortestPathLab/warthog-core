@@ -66,6 +66,14 @@ struct log_sink
 	constexpr const log_sink& sink() const noexcept { return *this; }
 };
 
+template <typename Sink>
+concept LogSink = requires (Sink S, log_level level, std::string_view msg)
+{
+	S.log(level, msg);
+	{ S.can_log(level) } -> std::same_as<bool>;
+	{ std::as_const(S).sink() } -> std::convertible_to<log_sink>;
+};
+
 /// sink to cout|cerr
 /// Is thread safe as long as std::ios_base::sync_with_stdio(false) for cout and cerr.
 /// User provided file stream is not thread safe.
@@ -74,21 +82,12 @@ struct log_sink_std : log_sink
 	// cerr = true will sink to cerr, false to cout
 	log_sink_std();
 	log_sink_std(bool cerr = true);
-	log_sink_std(std::ostream* stream);
 	static void write_trace(void*, std::string_view msg);
 	static void write_debug(void*, std::string_view msg);
 	static void write_information(void*, std::string_view msg);
 	static void write_warning(void*, std::string_view msg);
 	static void write_error(void*, std::string_view msg);
 	static void write_critical(void*, std::string_view msg);
-};
-
-template <typename Sink>
-concept LogSink = requires (Sink S, log_level level, std::string_view msg)
-{
-	S.log(level, msg);
-	{ S.can_log(level) } -> std::same_as<bool>;
-	{ std::as_const(S).sink() } -> std::convertible_to<log_sink>;
 };
 
 class log_sink_stream : public log_sink
@@ -252,12 +251,12 @@ struct global_logger : logger<MinLevel>
 #define WARTHOG_GWARN(msg) WARTHOG_WARN(::warthog::io::glog(),msg)
 #define WARTHOG_GERROR(msg) WARTHOG_ERROR(::warthog::io::glog(),msg)
 #define WARTHOG_GCRIT(msg) WARTHOG_CRIT(::warthog::io::glog(),msg)
-#define WARTHOG_GTRACE_IF(cond,msg) WARTHOG_TRACE_IF(::warthog::io::glog(),msg)
-#define WARTHOG_GDEBUG_IF(cond,msg) WARTHOG_DEBUG_IF(::warthog::io::glog(),msg)
-#define WARTHOG_GINFO_IF(cond,msg) WARTHOG_INFO_IF(::warthog::io::glog(),msg)
-#define WARTHOG_GWARN_IF(cond,msg) WARTHOG_WARN_IF(::warthog::io::glog(),msg)
-#define WARTHOG_GERROR_IF(cond,msg) WARTHOG_ERROR_IF(::warthog::io::glog(),msg)
-#define WARTHOG_GCRIT_IF(cond,msg) WARTHOG_CRIT_IF(::warthog::io::glog(),msg)
+#define WARTHOG_GTRACE_IF(cond,msg) WARTHOG_TRACE_IF(cond,::warthog::io::glog(),msg)
+#define WARTHOG_GDEBUG_IF(cond,msg) WARTHOG_DEBUG_IF(cond,::warthog::io::glog(),msg)
+#define WARTHOG_GINFO_IF(cond,msg) WARTHOG_INFO_IF(cond,::warthog::io::glog(),msg)
+#define WARTHOG_GWARN_IF(cond,msg) WARTHOG_WARN_IF(cond,::warthog::io::glog(),msg)
+#define WARTHOG_GERROR_IF(cond,msg) WARTHOG_ERROR_IF(cond,::warthog::io::glog(),msg)
+#define WARTHOG_GCRIT_IF(cond,msg) WARTHOG_CRIT_IF(cond,::warthog::io::glog(),msg)
 #define WARTHOG_GTRACE_FMT(...) WARTHOG_TRACE_FMT(::warthog::io::glog(),__VA_ARGS__)
 #define WARTHOG_GDEBUG_FMT(...) WARTHOG_DEBUG_FMT(::warthog::io::glog(),__VA_ARGS__)
 #define WARTHOG_GINFO_FMT(...) WARTHOG_INFO_FMT(::warthog::io::glog(),__VA_ARGS__)
