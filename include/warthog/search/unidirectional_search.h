@@ -293,6 +293,7 @@ private:
 				sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();
 			}
 			io::observer_close_node(listeners_, *current);
+			WARTHOG_GINFO_FMT_IF(pi->verbose_, "Expanded: {}", *current);
 		}
 
 		sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();
