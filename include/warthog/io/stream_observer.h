@@ -1,15 +1,14 @@
 #ifndef WARTHOG_IO_STEAM_OBSERVER_H
 #define WARTHOG_IO_STEAM_OBSERVER_H
 
-// listener/stream_listener.h
+// io/stream_observer.h
 //
-// A search listener is a callback class that executes specialised
-// code for partiular search events, such as when:
-//  - a node is generated
-//  - a node is expanded
-//  - a node is relaxed
+// The stream observer is a base class for observers that can open and own a filestream,
+// or pass another filestream.
 //
-//  This class implements dummy listener with empty event handlers.
+// Is designed to be used with observer tuples.
+// Inherited class will call stream() to get the current stream for output.
+// Using the observer methodology, event functions will be given that will write to output in certain ways.
 //
 // @author: Ryan Hechenberger
 // @created: 2025-08-01
@@ -24,6 +23,10 @@
 namespace warthog::io
 {
 
+/// @brief A base-stream observer.
+///
+/// Inherit and give event functions for observers to call.
+/// shared_stream_t is a shared_ptr to an std::ostream, and can be passed around to other stream_observer.
 class stream_observer
 {
 public:
@@ -34,16 +37,24 @@ public:
 	stream_observer(const shared_stream_t& stream);
 	~stream_observer();
 
+	/// @brief open a file stream, store in a shared_stream_t
 	void stream_open(const std::filesystem::path& filename, std::ios_base::openmode mode = std::ios_base::out);
+	/// @brief pass an existing stream, must remain in
 	void stream(std::ostream& stream);
+	/// @brief pass a shared stream
 	void stream_share(const shared_stream_t& stream);
+	/// @brief copy stream from another stream_observer
 	void stream_share(const stream_observer& stream);
+	/// @brief sets to std::cout
 	void stream_stdout();
+	/// @brief sets to std::cerr
 	void stream_stderr();
+	/// @brief unsets the stream
 	void clear_stream();
 
 	operator bool() const noexcept { return stream_ != nullptr; }
 
+	/// @brief undefined behaviour if no stream is open (asserts on debug)
 	std::ostream& stream() const noexcept { assert(stream_ != nullptr); return *stream_; }
 	const shared_stream_t& shared_stream() const noexcept { return shared_stream_; }
 
@@ -51,8 +62,6 @@ private:
 	std::ostream* stream_ = nullptr;
 	shared_stream_t shared_stream_;
 };
-
-using void_listener = stream_observer;
 
 } // namespace warthog::io
 

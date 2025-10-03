@@ -1,7 +1,9 @@
 #ifndef WARTHOG_IO_GRID_TRACE_H
 #define WARTHOG_IO_GRID_TRACE_H
 
-// listener/grid_trace.h
+// io/grid_trace.h
+//
+// Basic posthoc_trace for use with gridmap.
 //
 // @author: Ryan Hechenberger
 // @created: 2025-08-07
@@ -16,7 +18,7 @@
 namespace warthog::io
 {
 
-/// @brief class that produces a posthoc trace for the gridmap domain  
+/// @brief class that produces a posthoc trace for the gridmap domain, grid must be set.
 class grid_trace : public posthoc_trace
 {
 public:
@@ -29,14 +31,6 @@ public:
 	}
 
 	void print_posthoc_header() override;
-
-	/// @brief Checks that grid_ != nullptr
-	void event(const char* name) const
-	{
-		if (grid_ == nullptr) {
-			throw std::logic_error("grid_trace::grid_ is null");
-		}
-	}
 
 	void begin_search(int id, const search::search_problem_instance& pi);
 

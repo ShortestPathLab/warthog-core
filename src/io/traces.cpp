@@ -30,8 +30,16 @@ views:
       clear: false
     - $: cell
       $if: ${{ $.type == 'expand' }}
+      fill: cyan
+      clear: false
+    - $: cell
+      $if: ${{ $.type == 'expand' }}
       fill: blue
       clear: close
+    - $: cell
+      $if: ${{ $.type == 'generate' }}
+      fill: purple
+      clear: false
     - $: cell
       $if: ${{ $.type == 'generate' }}
       fill: orange
@@ -49,7 +57,9 @@ void grid_trace::begin_search(int id, const search::search_problem_instance& pi)
 {
 	posthoc_trace::begin_search(id);
 	if (*this) {
-		assert(grid_ != nullptr);
+		if (grid_ == nullptr) {
+			throw std::logic_error("grid_trace::grid_ is null");
+		}
 		uint32_t x, y;
 		grid_->to_unpadded_xy(pi.start_, x, y);
 		stream() << std::format("  - {{ type: source, id: {}, x: {}, y: {} }}\n",
@@ -67,10 +77,14 @@ grid_trace::expand_node(const node& current) const
 {
 	if (*this) {
 		assert(grid_ != nullptr);
+		std::string pid;
+		if (auto cpid = current.get_parent(); !cpid.is_none()) {
+			pid = std::format(", pId: {}", cpid.id);
+		}
 		uint32_t x, y;
 		grid_->to_unpadded_xy(current.get_id(), x, y);
-		stream() << std::format("  - {{ type: expand, id: {}, x: {}, y: {}, f: {}, g: {} }}\n",
-			current.get_id().id, x, y, current.get_f(), current.get_g()
+		stream() << std::format("  - {{ type: expand, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
+			current.get_id().id, pid, x, y, current.get_f(), current.get_g()
 		);
 	}
 }
@@ -80,10 +94,14 @@ grid_trace::relax_node(const node& current) const
 {
 	if (*this) {
 		assert(grid_ != nullptr);
+		std::string pid;
+		if (auto cpid = current.get_parent(); !cpid.is_none()) {
+			pid = std::format(", pId: {}", cpid.id);
+		}
 		uint32_t x, y;
 		grid_->to_unpadded_xy(current.get_id(), x, y);
-		stream() << std::format("  - {{ type: expand, id: {}, x: {}, y: {}, f: {}, g: {} }}\n",
-			current.get_id().id, x, y, current.get_f(), current.get_g()
+		stream() << std::format("  - {{ type: relax, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
+			current.get_id().id, pid, x, y, current.get_f(), current.get_g()
 		);
 	}
 }
@@ -94,10 +112,14 @@ grid_trace::close_node(const node& current) const
 {
 	if (*this) {
 		assert(grid_ != nullptr);
+		std::string pid;
+		if (auto cpid = current.get_parent(); !cpid.is_none()) {
+			pid = std::format(", pId: {}", cpid.id);
+		}
 		uint32_t x, y;
 		grid_->to_unpadded_xy(current.get_id(), x, y);
-		stream() << std::format("  - {{ type: close, id: {}, x: {}, y: {}, f: {}, g: {} }}\n",
-			current.get_id().id, x, y, current.get_f(), current.get_g()
+		stream() << std::format("  - {{ type: close, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
+			current.get_id().id, pid, x, y, current.get_f(), current.get_g()
 		);
 	}
 }

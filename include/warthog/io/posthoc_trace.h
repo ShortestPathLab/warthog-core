@@ -17,10 +17,11 @@ namespace warthog::io
 
 /// @brief base posthoc observer class.
 ///
+/// Set the search_id to set which search the trace is printed for, by default will not trace.
 /// event begin_search and end_search will setup the trace to print only a specified.
 /// Inherit to create new trace format by overriding print_posthoc_header for custom header.
 /// Add own events to print posthoc event to stream() if (*this) holds true,
-/// (*this) holds true iff id is on search_id between begin_search and end_search the first time only.
+/// (*this) holds true iff id == search_id for event begin_search once, and ends at end_search.
 class posthoc_trace : public stream_observer
 {
 public:
@@ -32,6 +33,9 @@ public:
 	int search_id() const noexcept { return search_id_; }
 	void search_id(int sid) noexcept { search_id_ = sid; }
 
+	/// @brief begin_search event, if overridden then must still be called first (only id argument is needed),
+	///        then checked if can write to stream.
+	/// @param id the search id, (*this) will become true if id == search_id_ && done_trace_ == false
 	template <typename... Args>
 	void begin_search(int id, Args&&...)
 	{
@@ -43,19 +47,21 @@ public:
 			print_posthoc_header();
 		}
 	}
+	/// @brief end_search event, if overridden then must still be called first (no args needed).
 	template <typename... Args>
 	void end_search(Args&&...)
 	{
 		do_trace_ = false;
 	}
 
+	/// @brief returns true if trace can be outputted, false otherwise.
 	operator bool() const noexcept
 	{
 		return do_trace_;
 	}
 
 protected:
-	int search_id_ = 0;
+	int search_id_ = -1;
 	bool do_trace_ = false;
 	bool done_trace_ = false;
 };
