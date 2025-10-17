@@ -10,29 +10,33 @@
 //
 
 #include "posthoc_trace.h"
-#include <warthog/search/search_node.h>
-#include <warthog/search/problem_instance.h>
-#include <warthog/domain/gridmap.h>
 #include <exception>
+#include <warthog/domain/gridmap.h>
+#include <warthog/search/problem_instance.h>
+#include <warthog/search/search_node.h>
 
 namespace warthog::io
 {
 
-/// @brief class that produces a posthoc trace for the gridmap domain, grid must be set.
+/// @brief class that produces a posthoc trace for the gridmap domain, grid
+/// must be set.
 class grid_trace : public posthoc_trace
 {
 public:
 	using node = search::search_node;
 	using posthoc_trace::posthoc_trace;
 
-	void set_grid(domain::gridmap* grid) noexcept
+	void
+	set_grid(domain::gridmap* grid) noexcept
 	{
 		grid_ = grid;
 	}
 
-	void print_posthoc_header() override;
+	void
+	print_posthoc_header() override;
 
-	void begin_search(int id, const search::search_problem_instance& pi);
+	void
+	begin_search(int id, const search::search_problem_instance& pi);
 
 	void
 	expand_node(const node& current) const;

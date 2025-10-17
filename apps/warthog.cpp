@@ -79,9 +79,10 @@ help(std::ostream& out)
 	       "values in the scen file)\n"
 	    << "\t--verbose (optional; prints debugging info when compiled "
 	       "with debug symbols)\n"
-		<< "\t--filter [id] (optional; run only query [id])\n"
+	    << "\t--filter [id] (optional; run only query [id])\n"
 #ifdef WARTHOG_POSTHOC
-		<< "\t--trace [.trace.yaml file] (optional; write posthoc trace for first query to [file])\n"
+	    << "\t--trace [.trace.yaml file] (optional; write posthoc trace for "
+	       "first query to [file])\n"
 #endif
 	    << "Invoking the program this way solves all instances in [scen "
 	       "file] with algorithm [alg]\n"
@@ -135,8 +136,12 @@ run_experiments(
 	if(expander == nullptr) return 1;
 
 #ifdef WARTHOG_POSTHOC
-	if constexpr (std::same_as<listener_type, std::remove_cvref_t<decltype(algo.get_listeners())>>) {
-		if (!trace_file.empty()) {
+	if constexpr(std::same_as<
+	                 listener_type,
+	                 std::remove_cvref_t<decltype(algo.get_listeners())>>)
+	{
+		if(!trace_file.empty())
+		{
 			listener_grid& l = std::get<listener_grid>(algo.get_listeners());
 			l.stream_open(trace_file);
 			l.search_id(0);
@@ -147,9 +152,11 @@ run_experiments(
 
 	out << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
 	    << "\tnanos\tplen\tpcost\tscost\tmap\n";
-	for(uint32_t i = filter_id >= 0 ? static_cast<uint32_t>(filter_id) : 0,
-		ie = filter_id >= 0 ? i+1 : static_cast<uint32_t>(scenmgr.num_experiments());
-		i < ie; i++)
+	for(uint32_t i  = filter_id >= 0 ? static_cast<uint32_t>(filter_id) : 0,
+	             ie = filter_id >= 0
+	        ? i + 1
+	        : static_cast<uint32_t>(scenmgr.num_experiments());
+	    i < ie; i++)
 	{
 		warthog::util::experiment* exp = scenmgr.get_experiment(i);
 
@@ -173,14 +180,16 @@ run_experiments(
 
 		if(checkopt)
 		{
-			if(!check_optimality(sol, exp)) {
+			if(!check_optimality(sol, exp))
+			{
 				WARTHOG_GCRIT("search error: failed suboptimal 4");
 				return 4;
 			}
 		}
 	}
 
-	WARTHOG_GINFO_FMT("search complete; total memory: {}", algo.mem() + scenmgr.mem());
+	WARTHOG_GINFO_FMT(
+	    "search complete; total memory: {}", algo.mem() + scenmgr.mem());
 	return 0;
 }
 
@@ -194,7 +203,8 @@ run_astar(
 	warthog::heuristic::octile_heuristic heuristic(map.width(), map.height());
 	warthog::util::pqueue_min open;
 
-	warthog::search::unidirectional_search astar(&heuristic, &expander, &open, listener_type());
+	warthog::search::unidirectional_search astar(
+	    &heuristic, &expander, &open, listener_type());
 
 	int ret = run_experiments(
 	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
@@ -212,7 +222,8 @@ run_astar4c(
 	    map.width(), map.height());
 	warthog::util::pqueue_min open;
 
-	warthog::search::unidirectional_search astar(&heuristic, &expander, &open, listener_type());
+	warthog::search::unidirectional_search astar(
+	    &heuristic, &expander, &open, listener_type());
 
 	int ret = run_experiments(
 	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
@@ -229,7 +240,8 @@ run_dijkstra(
 	warthog::heuristic::zero_heuristic heuristic;
 	warthog::util::pqueue_min open;
 
-	warthog::search::unidirectional_search astar(&heuristic, &expander, &open, listener_type());
+	warthog::search::unidirectional_search astar(
+	    &heuristic, &expander, &open, listener_type());
 
 	int ret = run_experiments(
 	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
@@ -299,7 +311,8 @@ main(int argc, char** argv)
 	std::string mapfile  = cfg.get_param_value("map");
 	std::string costfile = cfg.get_param_value("costs");
 
-	if (filter_id == 1) {
+	if(filter_id == 1)
+	{
 		filter_id = std::stoi(cfg.get_param_value("filter"));
 	}
 #ifdef WARTHOG_POSTHOC

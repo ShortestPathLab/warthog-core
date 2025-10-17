@@ -88,25 +88,30 @@ convert_problem_instance_to_search(const problem_instance& pi, Domain& d)
 std::ostream&
 operator<<(std::ostream& str, const problem_instance& pi);
 std::ostream&
-operator<<(
-    std::ostream& str, const search_problem_instance& pi);
+operator<<(std::ostream& str, const search_problem_instance& pi);
 
 } // namespace warthog::search
 
 template<::warthog::Identity STATE>
 struct std::formatter<::warthog::search::problem_instance_base<STATE>, char>
 {
-	template <typename ParseContext>
-	constexpr auto parse(ParseContext& ctx) const
+	template<typename ParseContext>
+	constexpr auto
+	parse(ParseContext& ctx) const
 	{
 		return ctx.begin();
 	}
 
 	template<class FmtContext>
-	FmtContext::iterator format(const ::warthog::search::problem_instance_base<STATE>& pi, FmtContext& ctx) const
+	FmtContext::iterator
+	format(
+	    const ::warthog::search::problem_instance_base<STATE>& pi,
+	    FmtContext& ctx) const
 	{
-		return std::format_to(ctx.out(), "problem instance[{}]; start:{} target:{} search_id:{}",
-			typeid(typename STATE::tag).name(), pi.start_.id, pi.target_.id, pi.instance_id_);
+		return std::format_to(
+		    ctx.out(), "problem instance[{}]; start:{} target:{} search_id:{}",
+		    typeid(typename STATE::tag).name(), pi.start_.id, pi.target_.id,
+		    pi.instance_id_);
 	}
 };
 

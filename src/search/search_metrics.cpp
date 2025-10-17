@@ -1,6 +1,7 @@
 #include <warthog/search/search_metrics.h>
 
-namespace warthog::search {
+namespace warthog::search
+{
 
 std::ostream&
 operator<<(std::ostream& str, const warthog::search::search_metrics& met)

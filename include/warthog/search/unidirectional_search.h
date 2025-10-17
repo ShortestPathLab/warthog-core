@@ -15,9 +15,9 @@
 #include "search_parameters.h"
 #include "solution.h"
 #include "uds_traits.h"
-#include <warthog/io/observer.h>
 #include <warthog/constants.h>
 #include <warthog/heuristic/heuristic_value.h>
+#include <warthog/io/observer.h>
 #include <warthog/memory/cpool.h>
 #include <warthog/util/pqueue.h>
 #include <warthog/util/timer.h>
@@ -40,7 +40,8 @@ namespace warthog::search
 // used determine if a search should continue or terminate.
 // (default: search for any solution, until OPEN is exhausted)
 template<
-    typename H, typename E, typename Q = util::pqueue_min, typename L = std::tuple<>,
+    typename H, typename E, typename Q = util::pqueue_min,
+    typename L                = std::tuple<>,
     admissibility_criteria AC = admissibility_criteria::any,
     feasibility_criteria FC   = feasibility_criteria::until_exhaustion,
     reopen_policy RP          = reopen_policy::no>
@@ -49,7 +50,8 @@ class unidirectional_search
 public:
 	unidirectional_search(
 	    H* heuristic, E* expander, Q* queue, L listeners = L{})
-	    : heuristic_(heuristic), expander_(expander), open_(queue), listeners_(listeners)
+	    : heuristic_(heuristic), expander_(expander), open_(queue),
+	      listeners_(listeners)
 	{ }
 
 	~unidirectional_search() { }
@@ -182,7 +184,9 @@ private:
 		if(n->get_ub() < sol->met_.ub_)
 		{
 			sol->met_.ub_ = n->get_ub();
-			WARTHOG_GDEBUG_FMT_IF(pi->verbose_, "NEW UB: Incumbent Cost {}", sol->sum_of_edge_costs_);
+			WARTHOG_GDEBUG_FMT_IF(
+			    pi->verbose_, "NEW UB: Incumbent Cost {}",
+			    sol->sum_of_edge_costs_);
 		}
 	}
 
@@ -193,7 +197,8 @@ private:
 		mytimer.start();
 		open_->clear();
 
-		io::observer_begin_search(listeners_, static_cast<int>(pi->instance_id_), *pi);
+		io::observer_begin_search(
+		    listeners_, static_cast<int>(pi->instance_id_), *pi);
 
 		// initialise the start node and push to OPEN
 		{
@@ -206,7 +211,8 @@ private:
 
 			initialise_node_(start, pad_id::max(), 0, pi, par, sol);
 			open_->push(start);
-			io::observer_generate_node(listeners_, nullptr, *start, 0, UINT32_MAX);
+			io::observer_generate_node(
+			    listeners_, nullptr, *start, 0, UINT32_MAX);
 			WARTHOG_GINFO_FMT_IF(pi->verbose_, "{}", *pi);
 			WARTHOG_GINFO_FMT_IF(pi->verbose_, "Start node: {}", *start);
 			update_ub(start, sol, pi);
@@ -252,7 +258,8 @@ private:
 						open_->push(n);
 						WARTHOG_GINFO_FMT_IF(pi->verbose_, "Generate: {}", *n);
 						update_ub(current, sol, pi);
-						io::observer_generate_node(listeners_, current, *n, gval, i);
+						io::observer_generate_node(
+						    listeners_, current, *n, gval, i);
 						continue;
 					}
 				}
@@ -270,7 +277,8 @@ private:
 						if(open_->contains(n))
 						{
 							open_->decrease_key(n);
-							WARTHOG_GINFO_FMT_IF(pi->verbose_, "Updating: {}", *n);
+							WARTHOG_GINFO_FMT_IF(
+							    pi->verbose_, "Updating: {}", *n);
 							update_ub(current, sol, pi);
 							continue;
 						}
@@ -278,7 +286,8 @@ private:
 						if(reopen<RP>())
 						{
 							open_->push(n);
-							WARTHOG_GINFO_FMT_IF(pi->verbose_, "Reopen: {}", *n);
+							WARTHOG_GINFO_FMT_IF(
+							    pi->verbose_, "Reopen: {}", *n);
 							update_ub(current, sol, pi);
 							sol->met_.nodes_reopen_++;
 							continue;
@@ -300,15 +309,17 @@ private:
 		sol->met_.nodes_surplus_     = open_->size();
 		sol->met_.heap_ops_          = open_->get_heap_ops();
 
-		WARTHOG_GINFO_IF(pi->verbose_ && sol->sum_of_edge_costs_ == warthog::COST_MAX, "Search failed; no solution exists.");
+		WARTHOG_GINFO_IF(
+		    pi->verbose_ && sol->sum_of_edge_costs_ == warthog::COST_MAX,
+		    "Search failed; no solution exists.");
 	}
 };
 
 template<
-    typename H, typename E, typename Q = util::pqueue_min, typename L = std::tuple<>>
-unidirectional_search(
-    H* heuristic, E* expander, Q* queue,
-    L listeners = L{}) -> unidirectional_search<H, E, Q, L>;
+    typename H, typename E, typename Q = util::pqueue_min,
+    typename L = std::tuple<>>
+unidirectional_search(H* heuristic, E* expander, Q* queue, L listeners = L{})
+    -> unidirectional_search<H, E, Q, L>;
 
 } // namespace warthog::search
 

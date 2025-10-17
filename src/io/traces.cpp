@@ -1,14 +1,15 @@
-#include <warthog/io/grid_trace.h>
 #include <exception>
 #include <format>
+#include <warthog/io/grid_trace.h>
 
 namespace warthog::io
 {
 
-
-void grid_trace::print_posthoc_header()
+void
+grid_trace::print_posthoc_header()
 {
-	if (*this) {
+	if(*this)
+	{
 		stream() << R"posthoc(version: 1.4.0
 views:
   cell:
@@ -53,92 +54,102 @@ events:
 	}
 }
 
-void grid_trace::begin_search(int id, const search::search_problem_instance& pi)
+void
+grid_trace::begin_search(int id, const search::search_problem_instance& pi)
 {
 	posthoc_trace::begin_search(id);
-	if (*this) {
-		if (grid_ == nullptr) {
+	if(*this)
+	{
+		if(grid_ == nullptr)
+		{
 			throw std::logic_error("grid_trace::grid_ is null");
 		}
 		uint32_t x, y;
 		grid_->to_unpadded_xy(pi.start_, x, y);
-		stream() << std::format("  - {{ type: source, id: {}, x: {}, y: {} }}\n",
-			pi.start_.id, x, y
-		);
+		stream() << std::format(
+		    "  - {{ type: source, id: {}, x: {}, y: {} }}\n", pi.start_.id, x,
+		    y);
 		grid_->to_unpadded_xy(pi.target_, x, y);
-		stream() << std::format("  - {{ type: destination, id: {}, x: {}, y: {} }}\n",
-			pi.target_.id, x, y
-		);
+		stream() << std::format(
+		    "  - {{ type: destination, id: {}, x: {}, y: {} }}\n",
+		    pi.target_.id, x, y);
 	}
 }
 
 void
 grid_trace::expand_node(const node& current) const
 {
-	if (*this) {
+	if(*this)
+	{
 		assert(grid_ != nullptr);
 		std::string pid;
-		if (auto cpid = current.get_parent(); !cpid.is_none()) {
+		if(auto cpid = current.get_parent(); !cpid.is_none())
+		{
 			pid = std::format(", pId: {}", cpid.id);
 		}
 		uint32_t x, y;
 		grid_->to_unpadded_xy(current.get_id(), x, y);
-		stream() << std::format("  - {{ type: expand, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
-			current.get_id().id, pid, x, y, current.get_f(), current.get_g()
-		);
+		stream() << std::format(
+		    "  - {{ type: expand, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
+		    current.get_id().id, pid, x, y, current.get_f(), current.get_g());
 	}
 }
 
 void
 grid_trace::relax_node(const node& current) const
 {
-	if (*this) {
+	if(*this)
+	{
 		assert(grid_ != nullptr);
 		std::string pid;
-		if (auto cpid = current.get_parent(); !cpid.is_none()) {
+		if(auto cpid = current.get_parent(); !cpid.is_none())
+		{
 			pid = std::format(", pId: {}", cpid.id);
 		}
 		uint32_t x, y;
 		grid_->to_unpadded_xy(current.get_id(), x, y);
-		stream() << std::format("  - {{ type: relax, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
-			current.get_id().id, pid, x, y, current.get_f(), current.get_g()
-		);
+		stream() << std::format(
+		    "  - {{ type: relax, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
+		    current.get_id().id, pid, x, y, current.get_f(), current.get_g());
 	}
 }
-
 
 void
 grid_trace::close_node(const node& current) const
 {
-	if (*this) {
+	if(*this)
+	{
 		assert(grid_ != nullptr);
 		std::string pid;
-		if (auto cpid = current.get_parent(); !cpid.is_none()) {
+		if(auto cpid = current.get_parent(); !cpid.is_none())
+		{
 			pid = std::format(", pId: {}", cpid.id);
 		}
 		uint32_t x, y;
 		grid_->to_unpadded_xy(current.get_id(), x, y);
-		stream() << std::format("  - {{ type: close, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
-			current.get_id().id, pid, x, y, current.get_f(), current.get_g()
-		);
+		stream() << std::format(
+		    "  - {{ type: close, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
+		    current.get_id().id, pid, x, y, current.get_f(), current.get_g());
 	}
 }
 
-
 void
-grid_trace::generate_node(const node* parent, const node& child, cost_t, uint32_t) const
+grid_trace::generate_node(
+    const node* parent, const node& child, cost_t, uint32_t) const
 {
-	if (*this) {
+	if(*this)
+	{
 		assert(grid_ != nullptr);
 		std::string pid;
-		if (parent != nullptr) {
+		if(parent != nullptr)
+		{
 			pid = std::format(", pId: {}", parent->get_id().id);
 		}
 		uint32_t x, y;
 		grid_->to_unpadded_xy(child.get_id(), x, y);
-		stream() << std::format("  - {{ type: generate, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
-			child.get_id().id, pid, x, y, child.get_f(), child.get_g()
-		);
+		stream() << std::format(
+		    "  - {{ type: generate, id: {}{}, x: {}, y: {}, f: {}, g: {} }}\n",
+		    child.get_id().id, pid, x, y, child.get_f(), child.get_g());
 	}
 }
 

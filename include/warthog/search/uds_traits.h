@@ -99,19 +99,25 @@ feasible<feasibility_criteria::until_cutoff>(
 
 	if(next->get_f() > par->get_max_cost_cutoff())
 	{
-		WARTHOG_GINFO_FMT_IF(par->verbose_, "cost cutoff {} > {}", next->get_f(), par->get_max_cost_cutoff());
+		WARTHOG_GINFO_FMT_IF(
+		    par->verbose_, "cost cutoff {} > {}", next->get_f(),
+		    par->get_max_cost_cutoff());
 		return false;
 	}
 
 	if(met->nodes_expanded_ >= par->get_max_expansions_cutoff())
 	{
-		WARTHOG_GINFO_FMT_IF(par->verbose_, "expansions cutoff {} > {}", met->nodes_expanded_, par->get_max_expansions_cutoff());
+		WARTHOG_GINFO_FMT_IF(
+		    par->verbose_, "expansions cutoff {} > {}", met->nodes_expanded_,
+		    par->get_max_expansions_cutoff());
 		return false;
 	}
 
 	if(met->time_elapsed_nano_ > par->get_max_time_cutoff())
 	{
-		WARTHOG_GINFO_FMT_IF(par->verbose_, "time cutoff {} > {}", met->time_elapsed_nano_, par->get_max_time_cutoff());
+		WARTHOG_GINFO_FMT_IF(
+		    par->verbose_, "time cutoff {} > {}", met->time_elapsed_nano_,
+		    par->get_max_time_cutoff());
 		return false;
 	}
 
