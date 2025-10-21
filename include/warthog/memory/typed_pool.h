@@ -1,20 +1,68 @@
-#include <warthog/memory/node_pool.h>
-#include <warthog/search/search_node.h>
-#include <warthog/util/helpers.h>
+#ifndef WARTHOG_MEMORY_TYPED_POOL_H
+#define WARTHOG_MEMORY_TYPED_POOL_H
+
+// memory/typed_pool.h
+//
+// A memory pool for nodes of a templated type.
+//
+// This in intended as a temperary pool before an allocation
+// framework is added.
+//
+// @author: Ryan Hechenberger
+// @created: 2025-10-25
+//
+
+#include "node_pool.h"
 
 namespace warthog::memory
 {
 
-node_pool::node_pool(size_t num_nodes) : blocks_(0)
+template <typename T>
+class typed_pool
+{
+public:
+	using value_type = T;
+
+	typed_pool(size_t num_nodes);
+	~typed_pool();
+
+	// return a warthog::search_node object corresponding to the given id.
+	// if the node has already been generated, return a pointer to the
+	// previous instance; otherwise allocate memory for a new object.
+	value_type*
+	generate(pad_id node_id);
+
+	// return a pre-allocated pointer. if the corresponding node has not
+	// been allocated yet, return null
+	value_type*
+	get_ptr(pad_id node_id);
+
+	size_t
+	mem();
+
+private:
+	void
+	init(size_t nblocks);
+
+	size_t num_blocks_ = 0;
+	std::unique_ptr<value_type*[]> blocks_;
+	std::unique_ptr<cpool> blockspool_;
+	//        uint64_t* node_init_;
+	//        uint64_t node_init_sz_;
+};
+
+template <typename T>
+typed_pool<T>::typed_pool(size_t num_nodes)
 {
 	init(num_nodes);
 }
 
+template <typename T>
 void
-node_pool::init(size_t num_nodes)
+typed_pool<T>::init(size_t num_nodes)
 {
 	num_blocks_ = ((num_nodes) >> node_pool_ns::LOG2_NBS) + 1;
-	blocks_     = std::make_unique<search::search_node*[]>(num_blocks_);
+	blocks_     = std::make_unique<value_type*[]>(num_blocks_);
 	for(size_t i = 0; i < num_blocks_; i++)
 	{
 		blocks_[i] = 0;
@@ -25,15 +73,17 @@ node_pool::init(size_t num_nodes)
 	// DEFAULT_CHUNK_SIZE and assign addresses
 	// from that pool in order to generate blocks of nodes. when the pool is
 	// full, cpool pre-allocates more, one chunk at a time.
-	size_t block_sz = node_pool_ns::NBS * sizeof(search::search_node);
+	size_t block_sz = node_pool_ns::NBS * sizeof(value_type);
 	blockspool_     = std::make_unique<cpool>(block_sz, 1);
 }
 
-node_pool::~node_pool()
+template <typename T>
+typed_pool<T>::~typed_pool()
 {
 	// delete [] node_init_;
 
 	blockspool_->reclaim();
+	delete blockspool_;
 
 	for(size_t i = 0; i < num_blocks_; i++)
 	{
@@ -43,10 +93,12 @@ node_pool::~node_pool()
 			blocks_[i] = 0;
 		}
 	}
+	delete[] blocks_;
 }
 
-search::search_node*
-node_pool::generate(pad_id node_id)
+template <typename T>
+value_type*
+typed_pool<T>::generate(pad_id node_id)
 {
 	sn_id_t block_id = sn_id_t{node_id} >> node_pool_ns::LOG2_NBS;
 	sn_id_t list_id  = sn_id_t{node_id} & node_pool_ns::NBS_MASK;
@@ -59,28 +111,28 @@ node_pool::generate(pad_id node_id)
 	{
 		// std::cerr << "generating block: "<<block_id<<std::endl;
 		blocks_[block_id] = new(blockspool_->allocate())
-		    search::search_node[node_pool_ns::NBS];
+		    value_type[node_pool_ns::NBS];
 
 		// initialise memory
 		sn_id_t current_id = sn_id_t{node_id} - list_id;
 		for(uint32_t i = 0; i < node_pool_ns::NBS; i += 8)
 		{
 			new(&blocks_[block_id][i])
-			    search::search_node(pad_id{current_id++});
+			    value_type(pad_id{current_id++});
 			new(&blocks_[block_id][i + 1])
-			    search::search_node(pad_id{current_id++});
+			    value_type(pad_id{current_id++});
 			new(&blocks_[block_id][i + 2])
-			    search::search_node(pad_id{current_id++});
+			    value_type(pad_id{current_id++});
 			new(&blocks_[block_id][i + 3])
-			    search::search_node(pad_id{current_id++});
+			    value_type(pad_id{current_id++});
 			new(&blocks_[block_id][i + 4])
-			    search::search_node(pad_id{current_id++});
+			    value_type(pad_id{current_id++});
 			new(&blocks_[block_id][i + 5])
-			    search::search_node(pad_id{current_id++});
+			    value_type(pad_id{current_id++});
 			new(&blocks_[block_id][i + 6])
-			    search::search_node(pad_id{current_id++});
+			    value_type(pad_id{current_id++});
 			new(&blocks_[block_id][i + 7])
-			    search::search_node(pad_id{current_id++});
+			    value_type(pad_id{current_id++});
 		}
 	}
 
@@ -88,8 +140,9 @@ node_pool::generate(pad_id node_id)
 	return &(blocks_[block_id][list_id]);
 }
 
-search::search_node*
-node_pool::get_ptr(pad_id node_id)
+template <typename T>
+value_type*
+typed_pool<T>::get_ptr(pad_id node_id)
 {
 	sn_id_t block_id = sn_id_t{node_id} >> node_pool_ns::LOG2_NBS;
 	sn_id_t list_id  = sn_id_t{node_id} & node_pool_ns::NBS_MASK;
@@ -101,8 +154,9 @@ node_pool::get_ptr(pad_id node_id)
 	return &(blocks_[block_id][list_id]);
 }
 
+template <typename T>
 size_t
-node_pool::mem()
+typed_pool<T>::mem()
 {
 	size_t bytes
 	    = sizeof(*this) + blockspool_->mem() + num_blocks_ * sizeof(void*);
@@ -111,3 +165,5 @@ node_pool::mem()
 }
 
 } // namespace warthog::memory
+
+#endif // WARTHOG_MEMORY_NODE_POOL_H

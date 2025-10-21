@@ -25,8 +25,8 @@
 
 #include "cpool.h"
 #include <warthog/search/search_node.h>
-
-#include <stdint.h>
+#include <memory>
+#include <cstdint>
 
 namespace warthog::memory
 {
@@ -63,8 +63,8 @@ private:
 	init(size_t nblocks);
 
 	size_t num_blocks_;
-	search::search_node** blocks_;
-	cpool* blockspool_;
+	std::unique_ptr<search::search_node*[]> blocks_;
+	std::unique_ptr<cpool> blockspool_;
 	//        uint64_t* node_init_;
 	//        uint64_t node_init_sz_;
 };
