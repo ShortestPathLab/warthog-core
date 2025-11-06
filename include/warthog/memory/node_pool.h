@@ -50,6 +50,7 @@ public:
 	template <std::derived_from<search::search_node> T = search::search_node>
 	void set_type() noexcept
 	{
+		block_type_sizes_ = sizeof(search::search_node);
 		size_t block_sz = node_pool_ns::NBS * sizeof(T);
 		blockspool_     = std::make_unique<cpool>(block_sz, 1);
 		create_block_ = [](void* block_p, sn_id_t block_id) noexcept
@@ -61,14 +62,6 @@ public:
 			{
 				std::construct_at(block + i, current_id);
 			}
-		};
-		get_ptr_ = [](void** blocks, pad_id node_id) noexcept -> search::search_node*
-		{
-			sn_id_t block_id = static_cast<sn_id_t>(node_id) >> node_pool_ns::LOG2_NBS;
-			sn_id_t list_id  = static_cast<sn_id_t>(node_id) & node_pool_ns::NBS_MASK;
-			assert(blocks[block_id] != nullptr);
-			T* block = reinterpret_cast<T*>(blocks[block_id]);
-			return static_cast<search::search_node*>(block + list_id);
 		};
 	}
 
@@ -92,10 +85,10 @@ private:
 	void release();
 
 	size_t num_blocks_ = 0;
-	std::unique_ptr<void*[]> blocks_;
+	std::unique_ptr<std::byte*[]> blocks_;
+	size_t block_type_sizes_ = 0;
 	std::unique_ptr<cpool> blockspool_;
 	void (*create_block_)(void* block, sn_id_t bock_id) noexcept = nullptr;
-	search::search_node* (*get_ptr_)(void** blocks, pad_id start_id) noexcept = nullptr;
 	//        uint64_t* node_init_;
 	//        uint64_t node_init_sz_;
 };

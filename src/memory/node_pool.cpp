@@ -17,7 +17,7 @@ void
 node_pool::init(size_t num_nodes)
 {
 	num_blocks_ = ((num_nodes) >> node_pool_ns::LOG2_NBS) + 1;
-	blocks_     = std::make_unique<void*[]>(num_blocks_);
+	blocks_     = std::make_unique<std::byte*[]>(num_blocks_);
 	for(size_t i = 0; i < num_blocks_; i++)
 	{
 		blocks_[i] = 0;
@@ -43,12 +43,12 @@ node_pool::generate(pad_id node_id)
 	if(!blocks_[block_id])
 	{
 		// std::cerr << "generating block: "<<block_id<<std::endl;
-		blocks_[block_id] = blockspool_->allocate();
+		blocks_[block_id] = reinterpret_cast<std::byte*>(blockspool_->allocate());
 		create_block_(blocks_[block_id], block_id);
 	}
 
 	// return the node from its position in the assocated block
-	return get_ptr_(blocks_.get(), node_id);
+	return reinterpret_cast<search::search_node*>(blocks_[block_id] + list_id * block_type_sizes_);
 }
 
 void node_pool::release()
@@ -57,14 +57,17 @@ void node_pool::release()
 	blocks_ = nullptr;
 	blockspool_ = nullptr;
 	create_block_ = nullptr;
-	get_ptr_ = nullptr;
 }
 
 search::search_node*
 node_pool::get_ptr(pad_id node_id)
 {
 	assert((sn_id_t{node_id} >> node_pool_ns::LOG2_NBS) < num_blocks_);
-	return get_ptr_(blocks_.get(), node_id);
+	sn_id_t block_id = static_cast<sn_id_t>(node_id) >> node_pool_ns::LOG2_NBS;
+	sn_id_t list_id  = static_cast<sn_id_t>(node_id) & node_pool_ns::NBS_MASK;
+	assert(block_id < num_blocks_);
+	assert(blocks_[block_id] != nullptr);
+	return reinterpret_cast<search::search_node*>(blocks_[block_id] + list_id * block_type_sizes_);
 }
 
 size_t
