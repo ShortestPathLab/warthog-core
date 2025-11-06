@@ -27,22 +27,50 @@
 #include <warthog/search/search_node.h>
 #include <memory>
 #include <cstdint>
+#include <concepts>
 
 namespace warthog::memory
 {
 
 namespace node_pool_ns
 {
-static const uint64_t NBS      = 8; // node block size; set this >= 8
-static const uint64_t LOG2_NBS = 3;
-static const uint64_t NBS_MASK = 7;
+constexpr uint64_t LOG2_NBS = 6; // node block size = 2^n, n >= 3
+constexpr uint64_t NBS      = 1 << LOG2_NBS; 
+constexpr uint64_t NBS_MASK = NBS - 1;
+static_assert(LOG2_NBS >= 3, "must be at least 3 for size of 8");
 }
 
 class node_pool
 {
 public:
+	node_pool();
 	node_pool(size_t num_nodes);
 	~node_pool();
+
+	template <std::derived_from<search::search_node> T = search::search_node>
+	void set_type() noexcept
+	{
+		size_t block_sz = node_pool_ns::NBS * sizeof(T);
+		blockspool_     = std::make_unique<cpool>(block_sz, 1);
+		create_block_ = [](void* block_p, sn_id_t block_id) noexcept
+		{
+			assert(block_p != nullptr);
+			T* block = reinterpret_cast<T*>(block_p);
+			pad_id current_id = pad_id{block_id << node_pool_ns::LOG2_NBS};
+			for(uint32_t i = 0; i < node_pool_ns::NBS; ++i, ++current_id.id)
+			{
+				std::construct_at(block + i, current_id);
+			}
+		};
+		get_ptr_ = [](void** blocks, pad_id node_id) noexcept -> search::search_node*
+		{
+			sn_id_t block_id = static_cast<sn_id_t>(node_id) >> node_pool_ns::LOG2_NBS;
+			sn_id_t list_id  = static_cast<sn_id_t>(node_id) & node_pool_ns::NBS_MASK;
+			assert(blocks[block_id] != nullptr);
+			T* block = reinterpret_cast<T*>(blocks[block_id]);
+			return static_cast<search::search_node*>(block + list_id);
+		};
+	}
 
 	// return a warthog::search_node object corresponding to the given id.
 	// if the node has already been generated, return a pointer to the
@@ -61,10 +89,13 @@ public:
 private:
 	void
 	init(size_t nblocks);
+	void release();
 
-	size_t num_blocks_;
-	std::unique_ptr<search::search_node*[]> blocks_;
+	size_t num_blocks_ = 0;
+	std::unique_ptr<void*[]> blocks_;
 	std::unique_ptr<cpool> blockspool_;
+	void (*create_block_)(void* block, sn_id_t bock_id) noexcept = nullptr;
+	search::search_node* (*get_ptr_)(void** blocks, pad_id start_id) noexcept = nullptr;
 	//        uint64_t* node_init_;
 	//        uint64_t node_init_sz_;
 };

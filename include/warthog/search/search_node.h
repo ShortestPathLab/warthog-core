@@ -16,13 +16,10 @@
 namespace warthog::search
 {
 
-class search_node
+struct search_node
 {
-public:
 	search_node(pad_id id = pad_id::max())
-	    : id_(id), parent_id_(warthog::SN_ID_MAX), g_(warthog::COST_MAX),
-	      f_(warthog::COST_MAX), ub_(warthog::COST_MAX), status_(0),
-	      priority_(warthog::INF32), search_number_(UINT32_MAX)
+	    : id_(id)
 	{
 		refcount_++;
 	}
@@ -32,12 +29,12 @@ public:
 	inline void
 	init(
 	    uint32_t search_number, pad_id parent_id, cost_t g, cost_t f,
-	    cost_t ub = warthog::COST_MAX)
+	    cost_t h = warthog::COST_MAX)
 	{
 		parent_id_     = parent_id;
 		f_             = f;
 		g_             = g;
-		ub_            = ub;
+		h_             = h;
 		search_number_ = search_number;
 		status_        = false;
 	}
@@ -129,13 +126,13 @@ public:
 	inline cost_t
 	get_ub() const
 	{
-		return ub_;
+		return h_;
 	}
 
 	inline void
 	set_ub(cost_t ub)
 	{
-		ub_ = ub;
+		h_ = ub;
 	}
 
 	inline void
@@ -144,7 +141,7 @@ public:
 		assert(g < g_);
 		f_ = (f_ - g_) + g;
 		g_ = g;
-		if(ub_ < warthog::COST_MAX) { ub_ = (ub_ - g_) + g; }
+		if(h_ < warthog::COST_MAX) { h_ = (h_ - g_) + g; }
 		parent_id_ = parent_id;
 	}
 
@@ -209,7 +206,7 @@ public:
 		out << "search_node id:" << get_id().id;
 		out << " p_id: ";
 		out << parent_id_.id;
-		out << " g: " << g_ << " f: " << this->get_f() << " ub: " << ub_
+		out << " g: " << g_ << " f: " << this->get_f() << " ub: " << h_
 		    << " expanded: " << get_expanded() << " "
 		    << " search_number_: " << search_number_;
 	}
@@ -226,19 +223,18 @@ public:
 		return refcount_;
 	}
 
-private:
-	pad_id id_;
-	pad_id parent_id_;
+	pad_id id_ = pad_id(warthog::SN_ID_MAX);
+	pad_id parent_id_ = pad_id(warthog::SN_ID_MAX);
 
-	cost_t g_;
-	cost_t f_;
-	cost_t ub_;
+	cost_t g_ = warthog::COST_MAX;
+	cost_t f_ = warthog::COST_MAX;
+	cost_t h_ = warthog::COST_MAX;
 
 	// TODO steal the high-bit from priority instead of ::status_ ?
-	uint8_t status_;    // open or closed
-	uint32_t priority_; // expansion priority
+	uint8_t status_ = 0;    // open or closed
+	uint32_t priority_ = warthog::INF32; // expansion priority
 
-	uint32_t search_number_;
+	uint32_t search_number_ = UINT32_MAX;
 	static uint32_t refcount_;
 };
 
