@@ -1,6 +1,16 @@
 #ifndef WARTHOG_IO_GRID_H
 #define WARTHOG_IO_GRID_H
 
+// io/grid.h
+//
+// Read utility for gridmap.
+//
+//	Supported MovingAI map format.
+//
+// @author: Ryan Hechenberger
+// @created: 2025-06-01
+//
+
 #include <iomanip>
 #include <stdexcept>
 #include <warthog/limits.h>
