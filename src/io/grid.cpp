@@ -1,6 +1,7 @@
+#include <warthog/io/grid.h>
+
 #include <cstring>
 #include <iomanip>
-#include <warthog/io/grid.h>
 
 namespace warthog::io
 {

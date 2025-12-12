@@ -7,6 +7,7 @@ geometry/geography.cpp
 geometry/geom.cpp
 
 io/grid.cpp
+io/scenario.cpp
 
 memory/node_pool.cpp
 

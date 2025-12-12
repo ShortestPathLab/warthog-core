@@ -1,6 +1,7 @@
+#include <warthog/util/helpers.h>
+
 #include <warthog/search/search.h>
 #include <warthog/search/solution.h>
-#include <warthog/util/helpers.h>
 #include <warthog/util/scenario_manager.h>
 
 #include <cstdint>

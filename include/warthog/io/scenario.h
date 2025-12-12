@@ -1,5 +1,5 @@
-#ifndef WARTHOG_UTIL_SCENARIO_MANAGER_H
-#define WARTHOG_UTIL_SCENARIO_MANAGER_H
+#ifndef WARTHOG_IO_SCENARIO_H
+#define WARTHOG_IO_SCENARIO_H
 
 // io/scenario.h
 //
@@ -27,7 +27,7 @@
 #include <vector>
 #include <memory_resource>
 
-namespace warthog::util
+namespace warthog::io
 {
 
 enum class scenario_version : uint8_t
@@ -64,6 +64,10 @@ struct scenario_query
 class scenario_serialize
 {
 public:
+	static constexpr size_t max_line_length = 2000;
+	scenario_serialize();
+	~scenario_serialize();
+
 	/// @brief reads in file version information, and sets version accessable via get_version()
 	/// @param in optional stream to use, otherwise uses internal-set stream
 	/// @return success std::errc{} (0)
@@ -118,16 +122,30 @@ public:
 	}
 
 protected:
-	std::istream* get_instream(std::istream* in) noexcept
+	std::pair<std::istream*, std::errc> get_instream(std::istream* in) noexcept
 	{
-		return in != nullptr ? in : m_scenario_in;
+		if (in == nullptr)
+			in = m_scenario_in;
+		if (in == nullptr || !in->good())
+			return {nullptr, std::errc::io_error};
+		return {in, {}};
 	}
+	std::pair<std::ostream*, std::errc> get_outstream(std::ostream* out) noexcept
+	{
+		if (out == nullptr)
+			out = m_scenario_out;
+		if (out == nullptr || !out->good())
+			return {nullptr, std::errc::io_error};
+		return {out, {}};
+	}
+	std::pair<std::string_view, std::errc> readline(std::istream* in);
 
 protected:
 	scenario_version m_version = scenario_version::version1;
 	std::filesystem::path m_scenario_filename;
 	std::filesystem::path m_map_filename;
 	std::istream* m_scenario_in = nullptr;
+	std::ostream* m_scenario_out = nullptr;
 	std::bitset<(size_t)dist_type::dist_count> m_dist;
 
 	// dynamic data
@@ -139,4 +157,4 @@ protected:
 
 } // namespace warthog::util
 
-#endif // WARTHOG_UTIL_SCENARIO_MANAGER_H
+#endif // WARTHOG_IO_SCENARIO_H
