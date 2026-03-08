@@ -3,10 +3,13 @@
 
 // io/observer.h
 //
-// The observer pattern defines methods to tightly-bind user provided observers
-// to certain event patterns. Provide a tuple of observers, where some event is
-// triggered will notifiy all observers with function of event name that is
-// callable.
+// Defines use of an observer pattern, in which observer object is registered
+// to an observable, and the observable will trigger events to all relevant
+// observers.
+// The observer is passed to an observable as a list of tuples,
+// and when triggering an event will notify all observers by function call of
+// the event name that is callable to the observer.
+// Observer are either stored as value in the tuple or pointer to an observer.
 //
 // These function names must be registered before use, common ones registered
 // here.
@@ -30,14 +33,19 @@
 	concept observer_has_##func_name = requires(Listener L, Args&&... args) { \
 		{ L.func_name(std::forward<Args>(args)...) };                         \
 	};
-/// @brief Creates function observer_[func_name] that calls
-/// Listener.[func_name] is callable.
-///        WARTHOG_OBSERVER_DEFINE_HAS([func_name]) must be defined.
+/// @brief Creates function observer_[func_name] that triggers an event to the observer.
+/// 
+/// Creates function observer_[func_name], which will trigger relevant observer function
+/// to all observers in tuple. Requires WARTHOG_OBSERVER_DEFINE_HAS([func_name]).
+/// Operates as observer_[func_name](observers, args...), where observers is a tuple of observers.
+/// If an observer is a value, is owned by the owner of the tuple.
+/// If an observer is a pointer, is not owned by the tuple, and will only trigger events to
+/// an observer that is not null.
 ///
-/// The created function observer_[func_name] loops through all listeners in
-/// tuple L. For each it will try to call:
-/// - event([func_name], args...) if able otherwise event([func_name]) if able
-/// - [func_name](args...) if able
+/// Events are triggered for observers in order of the tuple, and events triggered
+/// in order if exists in observer:
+/// - event([func_name], args...) if exists otherwise event([func_name]) if exists
+/// - [func_name](args...) if exists
 #define WARTHOG_OBSERVER_DEFINE_CALL(func_name)                               \
 	template<size_t I = 0, typename Listeners, typename... Args>              \
 	void observer_##func_name(Listeners& L, Args&&... args)                   \
@@ -45,19 +53,35 @@
 		if constexpr(I < std::tuple_size_v<Listeners>)                        \
 		{                                                                     \
 			using T                 = std::tuple_element_t<I, Listeners>;     \
-			constexpr bool has_func = observer_has_##func_name<T, Args...>;   \
-			if constexpr(observer_has_event<T, const char*, Args...>)         \
-			{                                                                 \
+			using Tb                = std::remove_pointer_t<T>;                \
+			constexpr bool has_func = observer_has_##func_name<Tb, Args...>;   \
+			if constexpr(::warthog::io::observer_has_event<Tb, const char*, Args...>)        \
+			{\
+				if constexpr (std::is_pointer_v<T>) {\
+					if (auto* p = std::get<I>(L); p != nullptr)\
+						p->event(#func_name, std::forward<Args>(args)...);\
+				} else {                                                                 \
 				std::get<I>(L).event(                                         \
-				    #func_name, std::forward<Args>(args)...);                 \
+				    #func_name, std::forward<Args>(args)...); \
+				                }                \
 			}                                                                 \
-			else if constexpr(observer_has_event<T, const char*>)             \
+			else if constexpr(::warthog::io::observer_has_event<Tb, const char*>)            \
 			{                                                                 \
-				std::get<I>(L).event(#func_name);                             \
+				if constexpr (std::is_pointer_v<T>) {\
+					if (auto* p = std::get<I>(L); p != nullptr)\
+						p->event(#func_name);\
+				} else {                                                                 \
+				std::get<I>(L).event(#func_name); \
+				                }                \
 			}                                                                 \
 			if constexpr(has_func)                                            \
-			{                                                                 \
-				std::get<I>(L).func_name(std::forward<Args>(args)...);        \
+			{                        \
+				if constexpr (std::is_pointer_v<T>) { \
+					if (auto* p = std::get<I>(L); p != nullptr) \
+						p->func_name(std::forward<Args>(args)...);   \
+				} else { \
+					std::get<I>(L).func_name(std::forward<Args>(args)...);        \
+				} \
 			}                                                                 \
 			observer_##func_name<I + 1>(L, std::forward<Args>(args)...);      \
 		}                                                                     \

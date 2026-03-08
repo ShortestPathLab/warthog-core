@@ -122,6 +122,12 @@ check_optimality(
 	return true;
 }
 
+#ifdef WARTHOG_POSTHOC
+#define WARTHOG_POSTHOC_DO(f) f
+#else
+#define WARTHOG_POSTHOC_DO(f)
+#endif
+
 template<typename Search>
 int
 run_experiments(
@@ -135,21 +141,6 @@ run_experiments(
 	auto* expander = algo.get_expander();
 	if(expander == nullptr) return 1;
 
-#ifdef WARTHOG_POSTHOC
-	if constexpr(std::same_as<
-	                 listener_type,
-	                 std::remove_cvref_t<decltype(algo.get_listeners())>>)
-	{
-		if(!trace_file.empty())
-		{
-			listener_grid& l = std::get<listener_grid>(algo.get_listeners());
-			l.stream_open(trace_file);
-			l.search_id(0);
-			l.set_grid(expander->get_map());
-		}
-	}
-#endif
-
 	out << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
 	    << "\tnanos\tplen\tpcost\tscost\tmap\n";
 	for(uint32_t i  = filter_id >= 0 ? static_cast<uint32_t>(filter_id) : 0,
@@ -158,6 +149,20 @@ run_experiments(
 	        : static_cast<uint32_t>(scenmgr.num_experiments());
 	    i < ie; i++)
 	{
+#ifdef WARTHOG_POSTHOC
+		std::optional<std::ofstream> trace_stream; // open and pass to trace if used
+		if constexpr(std::same_as<
+						listener_type,
+						std::remove_cvref_t<decltype(algo.get_listeners())>>)
+		{
+			if(i == filter_id && !trace_file.empty())
+			{
+				listener_grid& l = std::get<listener_grid>(algo.get_listeners());
+				trace_stream.emplace(trace_file);
+				l.open(*trace_stream);
+			}
+		}
+#endif
 		warthog::util::experiment* exp = scenmgr.get_experiment(i);
 
 		warthog::pack_id startid
@@ -168,6 +173,18 @@ run_experiments(
 		sol.reset();
 
 		algo.get_path(&pi, &par, &sol);
+		
+#ifdef WARTHOG_POSTHOC
+		if constexpr(std::same_as<
+						listener_type,
+						std::remove_cvref_t<decltype(algo.get_listeners())>>)
+		{
+			if (trace_stream.has_value()) {
+				// close
+				std::get<listener_grid>(algo.get_listeners()).close();
+			}
+		}
+#endif
 
 		out << i << "\t" << alg_name << "\t" << sol.met_.nodes_expanded_
 		    << "\t" << sol.met_.nodes_generated_ << "\t"
@@ -204,7 +221,7 @@ run_astar(
 	warthog::util::pqueue_min open;
 
 	warthog::search::unidirectional_search astar(
-	    &heuristic, &expander, &open, listener_type());
+	    &heuristic, &expander, &open, listener_type( WARTHOG_POSTHOC_DO(&map) ));
 
 	int ret = run_experiments(
 	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
@@ -223,7 +240,7 @@ run_astar4c(
 	warthog::util::pqueue_min open;
 
 	warthog::search::unidirectional_search astar(
-	    &heuristic, &expander, &open, listener_type());
+	    &heuristic, &expander, &open, listener_type( WARTHOG_POSTHOC_DO(&map) ));
 
 	int ret = run_experiments(
 	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
@@ -241,7 +258,7 @@ run_dijkstra(
 	warthog::util::pqueue_min open;
 
 	warthog::search::unidirectional_search astar(
-	    &heuristic, &expander, &open, listener_type());
+	    &heuristic, &expander, &open, listener_type( WARTHOG_POSTHOC_DO(&map) ));
 
 	int ret = run_experiments(
 	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);

@@ -44,13 +44,6 @@ log_sink_stream::open(std::ostream& stream)
 	owned_file_.release();
 	log_stream_ = &stream;
 }
-void
-log_sink_stream::open_stderr()
-{
-	data = this;
-	owned_file_.release();
-	log_stream_ = &std::cerr;
-}
 
 // log_sink_stream
 

@@ -57,7 +57,6 @@ events:
 void
 grid_trace::begin_search(int id, const search::search_problem_instance& pi)
 {
-	posthoc_trace::begin_search(id);
 	if(*this)
 	{
 		if(grid_ == nullptr)
