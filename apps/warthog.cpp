@@ -36,6 +36,7 @@
 #include <memory>
 #include <sstream>
 #include <unordered_map>
+#include <iostream>
 
 // #include "time_constraints.h"
 
@@ -191,9 +192,9 @@ run_experiments(
 		    << sol.met_.nodes_reopen_ << "\t" << sol.met_.nodes_surplus_
 		    << "\t" << sol.met_.heap_ops_ << "\t"
 		    << sol.met_.time_elapsed_nano_.count() << "\t"
-		    << (sol.path_.size() - 1) << "\t" << sol.sum_of_edge_costs_ << "\t"
-		    << exp->distance() << "\t" << scenmgr.last_file_loaded()
-		    << std::endl;
+		    << (!sol.path_.empty() ? sol.path_.size() - 1 : 0) << "\t"
+		    << sol.sum_of_edge_costs_ << "\t" << exp->distance() << "\t"
+		    << scenmgr.last_file_loaded() << std::endl;
 
 		if(checkopt)
 		{
