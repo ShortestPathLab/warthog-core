@@ -37,12 +37,12 @@ class stream_observer
 {
 public:
 	/// @brief observer with no open stream
-	stream_observer() noexcept     = default;
+	stream_observer() noexcept = default;
 	/// @brief copies other stream_observer stream
 	stream_observer(const stream_observer& stream) noexcept = default;
-	/// @brief ovserver with ostream, can pass std::cout, std::cerr or user supplied std::ostream
-	stream_observer(std::ostream& stream) noexcept : stream_(&stream)
-	{}
+	/// @brief ovserver with ostream, can pass std::cout, std::cerr or user
+	/// supplied std::ostream
+	stream_observer(std::ostream& stream) noexcept : stream_(&stream) { }
 
 	/// @brief set stream
 	void
@@ -70,17 +70,18 @@ protected:
 	std::ostream* stream_ = nullptr;
 };
 
-/// @brief observer holds support for printing lines, send to a std::ostream or connect to a log_sink.
+/// @brief observer holds support for printing lines, send to a std::ostream or
+/// connect to a log_sink.
 class line_observer
 {
 public:
 	/// @brief observer with no open stream
-	line_observer() noexcept     = default;
+	line_observer() noexcept = default;
 	/// @brief copies other line_observer
 	line_observer(const line_observer& stream) noexcept = default;
-	/// @brief ovserver with ostream, can pass std::cout, std::cerr or user supplied std::ostream
-	line_observer(std::ostream& stream) noexcept : sink_(&stream)
-	{ }
+	/// @brief ovserver with ostream, can pass std::cout, std::cerr or user
+	/// supplied std::ostream
+	line_observer(std::ostream& stream) noexcept : sink_(&stream) { }
 	/// @brief copies other stream_observer stream
 	line_observer(log_sink& logger, log_level level) noexcept
 	{
@@ -104,8 +105,9 @@ public:
 	log(log_sink& logger, log_level level) noexcept
 	{
 		sink_.log = &logger;
-		type_ = (int)level;
-		if ((uint32_t)level >= (uint32_t)log_level::NONE) {
+		type_     = (int)level;
+		if((uint32_t)level >= (uint32_t)log_level::NONE)
+		{
 			WARTHOG_GWARN("line_observer::log level is out of range");
 			close();
 		}
@@ -113,21 +115,22 @@ public:
 
 	operator bool() const noexcept { return sink_.stream != nullptr; }
 
-	/// @brief writes line out (no newline needed), send to std::ostream if set to stream, to log at
+	/// @brief writes line out (no newline needed), send to std::ostream if set
+	/// to stream, to log at
 	///        level if set to log_sink, otherwise do nothing
-	void writeln(std::string_view msg)
+	void
+	writeln(std::string_view msg)
 	{
-		if (sink_.stream != nullptr) {
-			if (type_ < 0) {
-				(*sink_.stream) << msg << '\n';
-			} else {
-				WARTHOG_LOG(*sink_.log,(log_level)type_,msg);
-			}
+		if(sink_.stream != nullptr)
+		{
+			if(type_ < 0) { (*sink_.stream) << msg << '\n'; }
+			else { WARTHOG_LOG(*sink_.log, (log_level)type_, msg); }
 		}
 	}
 
 protected:
-	union {
+	union
+	{
 		std::ostream* stream = nullptr;
 		log_sink* log;
 	} sink_;

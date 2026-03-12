@@ -40,14 +40,15 @@ public:
 	)posthoc";
 		}
 	}
-	
+
 	/// @brief override stream setting (not virtual) to print header
-	/// @param stream 
+	/// @param stream
 	void
 	open(std::ostream& stream) noexcept
 	{
 		stream_observer::open(stream);
-		if (static_cast<stream_observer&>(*this)) {
+		if(static_cast<stream_observer&>(*this))
+		{
 			// print posthoc header on setting the stream
 			print_posthoc_header();
 		}

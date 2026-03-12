@@ -26,8 +26,7 @@ public:
 	using node = search::search_node;
 
 	grid_trace() = default;
-	grid_trace(domain::gridmap* grid) : grid_(grid)
-	{ }
+	grid_trace(domain::gridmap* grid) : grid_(grid) { }
 
 	void
 	set_grid(domain::gridmap* grid) noexcept
