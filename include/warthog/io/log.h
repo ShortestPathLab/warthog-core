@@ -3,11 +3,16 @@
 
 // io/log.h
 //
-// Logging utility.
+// Logging utility framework, where a user can provide at a high-level
+// data structure with function pointers to log messages as a single string
+// with a specific log level.
+// This will call a user-defined function (if able) that will output this
+// message as the user desires.
+// Default functions (output to stderr or file) are defined here.
 //
 // The log_sink is a non-owning copyable struct that points to the data and
 // logging function calls. All logging is performed through log_sink. All
-// classes here are thread safe, follow comments for outlaying cases.
+// classes here are thread safe, follow comments for outlying cases.
 //
 // Special classes inherit log_sink to provide default functionality.
 // log_sink_std should be used to write to std::cout and std::cerr.
