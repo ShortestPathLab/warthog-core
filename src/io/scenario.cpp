@@ -3,6 +3,7 @@
 #include <iomanip>
 #include <cstring>
 #include <cmath>
+#include <warthog/util/scenario_manager.h>
 
 namespace warthog::io
 {
@@ -71,20 +72,72 @@ std::errc scenario_serialize::read_header_v1(std::istream* in)
 		m_state = CurrentState::Error;
 		return err;
 	}
+	// read first query line to get map
+	std::tie(std::ignore, err) = readline(in);
+	if (err != std::errc{})
+	{
+		m_state = CurrentState::Error;
+		return err;
+	}
+	read_query_line_v1(m_query);
+	set_relative_map_filename(m_query.map);
+	m_state = CurrentState::Query;
+	return std::errc{};
+}
+
+std::errc scenario_serialize::read_header_v2(std::istream* in)
+{
+	if (m_state != CurrentState::Header)
+	{
+		return std::errc::state_not_recoverable;
+	} 
+	std::errc err;
+	std::tie(in, err) = get_instream(in);
+	if (err != std::errc{})
+	{
+		m_state = CurrentState::Error;
+		return err;
+	}
+	// read first query line to get map
 	std::string_view line;
+	// height
 	std::tie(line, err) = readline(in);
 	if (err != std::errc{})
 	{
 		m_state = CurrentState::Error;
 		return err;
 	}
-	
-	if (!(*in >> m_token >> version))
+	m_iss.str(std::string(line));
+	if (!(m_iss >> m_token >> m_map_height))
+	{
+		m_state = CurrentState::Error;
 		return std::errc::io_error;
-	if (version < 1 || version > 2)
+	}
+	if (m_map_height < 1 || m_map_height > max_dimension)
+	{
+		m_state = CurrentState::Error;
 		return std::errc::invalid_argument;
-	m_version = version == 1 ? scenario_version::version1 : scenario_version::version2;
-	m_state = CurrentState::Header;
+	}
+	// width
+	std::tie(line, err) = readline(in);
+	if (err != std::errc{})
+	{
+		m_state = CurrentState::Error;
+		return err;
+	}
+	m_iss.str(std::string(line));
+	if (!(m_iss >> m_token >> m_map_width))
+	{
+		m_state = CurrentState::Error;
+		return std::errc::io_error;
+	}
+	if (m_map_width < 1 || m_map_width > max_dimension)
+	{
+		m_state = CurrentState::Error;
+		return std::errc::invalid_argument;
+	}
+	set_relative_map_filename(m_query.map);
+	m_state = CurrentState::Query;
 	return std::errc{};
 }
 
@@ -146,20 +199,11 @@ std::errc scenario_serialize::read_patch_line_v2(scenario_patch& patch)
 	{
 		return std::errc::io_error;
 	}
-	for (auto i : m_dist_id)
+	if (patch.loc_x >= m_map_width || patch.loc_y > m_map_height)
 	{
-		if (!(m_iss >> d))
-		{
-			return std::errc::io_error;
-		}
-		if (!std::isfinite(d))
-		{
-			return std::errc::invalid_argument;
-		}
-		if (i >= 0) {
-			query.dist[i] = d;
-		}
+		return std::errc::invalid_argument;
 	}
+
 	m_iss >> std::ws;
 	if (m_iss.eof())
 	{

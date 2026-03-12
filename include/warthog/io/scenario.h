@@ -84,6 +84,7 @@ public:
 		Error,
 	};
 	static constexpr size_t max_line_length = 2000;
+	static constexpr size_t max_dimension = 15'000;
 	scenario_serialize();
 	~scenario_serialize();
 
@@ -107,6 +108,8 @@ public:
 	{
 		return m_map_filename;
 	}
+
+	void set_relative_map_filename(std::filesystem::path&& filename);
 
 	void set_version(scenario_version version) noexcept
 	{
@@ -211,6 +214,7 @@ protected:
 	// TODO: replace with a custom string stream that does not allocate memory
 	std::istringstream m_iss;
 	std::string m_token;
+	scenario_query m_query;
 };
 
 } // namespace warthog::util
