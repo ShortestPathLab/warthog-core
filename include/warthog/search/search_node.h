@@ -222,8 +222,8 @@ struct search_node
 	pad_id id_        = pad_id(warthog::SN_ID_MAX);
 	pad_id parent_id_ = pad_id(warthog::SN_ID_MAX);
 
-	cost_t g_ = warthog::COST_MAX;
-	cost_t f_ = warthog::COST_MAX;
+	cost_t g_  = warthog::COST_MAX;
+	cost_t f_  = warthog::COST_MAX;
 	cost_t ub_ = warthog::COST_MAX;
 
 	// TODO steal the high-bit from priority instead of ::status_ ?
