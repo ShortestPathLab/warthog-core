@@ -14,6 +14,7 @@
 
 #include "search_metrics.h"
 #include <warthog/io/log.h>
+#include <warthog/util/template.h>
 
 namespace warthog::search
 {
@@ -208,7 +209,7 @@ using uds_trait_observer = typename details::uds_trait_observer<Traits>::type;
 template <typename Traits>
 inline consteval admissibility_criteria uds_trait_ac() noexcept
 {
-	if constexpr (requires { { Traits::ac } -> std::convertible_to<admissibility_criteria>; }) {
+	if constexpr (requires { { Traits::ac } -> util::same_as_rmref<admissibility_criteria>; }) {
 		return Traits::ac;
 	} else {
 		return admissibility_criteria::any;
@@ -218,7 +219,7 @@ inline consteval admissibility_criteria uds_trait_ac() noexcept
 template <typename Traits>
 inline consteval feasibility_criteria uds_trait_fc() noexcept
 {
-	if constexpr (requires { { Traits::fc } -> std::convertible_to<feasibility_criteria>; }) {
+	if constexpr (requires { { Traits::fc } -> util::same_as_rmref<feasibility_criteria>; }) {
 		return Traits::fc;
 	} else {
 		return feasibility_criteria::until_exhaustion;
@@ -228,7 +229,7 @@ inline consteval feasibility_criteria uds_trait_fc() noexcept
 template <typename Traits>
 inline consteval reopen_policy uds_trait_rp() noexcept
 {
-	if constexpr (requires { { Traits::rp } -> std::convertible_to<reopen_policy>; }) {
+	if constexpr (requires { { Traits::rp } -> util::same_as_rmref<reopen_policy>; }) {
 		return Traits::rp;
 	} else {
 		return reopen_policy::no;
