@@ -9,7 +9,6 @@
 #include <fstream>
 #include <stdio.h>
 #include <warthog/util/file_utils.h>
-#include <warthog/util/log.h>
 
 namespace warthog::util
 {

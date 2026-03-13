@@ -13,7 +13,7 @@
 //
 
 #include "search_metrics.h"
-#include <warthog/util/log.h>
+#include <warthog/io/log.h>
 
 namespace warthog::search
 {
@@ -99,24 +99,24 @@ feasible<feasibility_criteria::until_cutoff>(
 
 	if(next->get_f() > par->get_max_cost_cutoff())
 	{
-		info(
-		    par->verbose_, "cost cutoff", next->get_f(), ">",
+		WARTHOG_GINFO_FMT_IF(
+		    par->verbose_, "cost cutoff {} > {}", next->get_f(),
 		    par->get_max_cost_cutoff());
 		return false;
 	}
 
 	if(met->nodes_expanded_ >= par->get_max_expansions_cutoff())
 	{
-		info(
-		    par->verbose_, "expansions cutoff", met->nodes_expanded_, ">",
+		WARTHOG_GINFO_FMT_IF(
+		    par->verbose_, "expansions cutoff {} > {}", met->nodes_expanded_,
 		    par->get_max_expansions_cutoff());
 		return false;
 	}
 
 	if(met->time_elapsed_nano_ > par->get_max_time_cutoff())
 	{
-		info(
-		    par->verbose_, "time cutoff", met->time_elapsed_nano_, ">",
+		WARTHOG_GINFO_FMT_IF(
+		    par->verbose_, "time cutoff {} > {}", met->time_elapsed_nano_,
 		    par->get_max_time_cutoff());
 		return false;
 	}

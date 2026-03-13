@@ -8,6 +8,7 @@
 //
 
 #include <warthog/constants.h>
+#include <warthog/io/log.h>
 #include <warthog/memory/cpool.h>
 
 #include <ostream>
@@ -272,5 +273,28 @@ struct cmp_less_search_node_f_only
 
 std::ostream&
 operator<<(std::ostream& str, const warthog::search::search_node& sn);
+
+template<>
+struct std::formatter<::warthog::search::search_node, char>
+{
+	template<typename ParseContext>
+	constexpr auto
+	parse(ParseContext& ctx) const
+	{
+		return ctx.begin();
+	}
+
+	template<class FmtContext>
+	FmtContext::iterator
+	format(const ::warthog::search::search_node& s, FmtContext& ctx) const
+	{
+		return std::format_to(
+		    ctx.out(),
+		    "search_node id:{} p_id:{} g:{} f:{} ub:{} expanded:{} "
+		    "search_number:{}",
+		    s.get_id().id, s.get_parent().id, s.get_g(), s.get_f(), s.get_ub(),
+		    s.get_expanded(), s.get_search_number());
+	}
+};
 
 #endif // WARTHOG_SEARCH_SEARCH_NODE_H

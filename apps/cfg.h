@@ -1,7 +1,7 @@
 #ifndef WARTHOG_APP_CFG_H
 #define WARTHOG_APP_CFG_H
 
-#include "getopt.h"
+#include <getopt.h>
 
 #include <cstdint>
 #include <iostream>

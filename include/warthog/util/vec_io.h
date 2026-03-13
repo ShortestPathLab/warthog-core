@@ -1,7 +1,6 @@
 #ifndef WARTHOG_UTIL_VEC_IO_H
 #define WARTHOG_UTIL_VEC_IO_H
 
-#include "log.h"
 #include <cstdio>
 #include <cstring>
 #include <iostream>
@@ -9,6 +8,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+#include <warthog/io/log.h>
 
 template<typename T>
 [[deprecated("TDB")]]
@@ -95,9 +95,9 @@ load_vector(std::FILE* file)
 	size_t stuffRead = std::fread(&v[0], sizeof(T), s, file);
 	if((int)stuffRead != s)
 	{
-		error(
-		    "we were expecting to read ", s, " but we read", stuffRead,
-		    "elements instead");
+		WARTHOG_GERROR_FMT(
+		    "we were expecting to read {} but we read {} elements instead", s,
+		    stuffRead);
 		throw std::runtime_error("std::fread failed");
 	}
 

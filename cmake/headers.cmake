@@ -27,6 +27,7 @@ include/warthog/heuristic/octile_heuristic.h
 include/warthog/heuristic/zero_heuristic.h
 
 include/warthog/io/grid.h
+include/warthog/io/log.h
 
 include/warthog/memory/arraylist.h
 include/warthog/memory/bittable.h
@@ -56,7 +57,6 @@ include/warthog/util/file_utils.h
 include/warthog/util/gm_parser.h
 include/warthog/util/helpers.h
 include/warthog/util/intrin.h
-include/warthog/util/log.h
 include/warthog/util/macros.h
 include/warthog/util/pqueue.h
 include/warthog/util/scenario_manager.h
