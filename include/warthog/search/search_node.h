@@ -25,12 +25,12 @@ struct search_node
 	inline void
 	init(
 	    uint32_t search_number, pad_id parent_id, cost_t g, cost_t f,
-	    cost_t h = warthog::COST_MAX)
+	    cost_t ub = warthog::COST_MAX)
 	{
 		parent_id_     = parent_id;
 		f_             = f;
 		g_             = g;
-		h_             = h;
+		ub_            = ub;
 		search_number_ = search_number;
 		status_        = false;
 	}
@@ -122,13 +122,13 @@ struct search_node
 	inline cost_t
 	get_ub() const
 	{
-		return h_;
+		return ub_;
 	}
 
 	inline void
 	set_ub(cost_t ub)
 	{
-		h_ = ub;
+		ub_ = ub;
 	}
 
 	inline void
@@ -137,7 +137,7 @@ struct search_node
 		assert(g < g_);
 		f_ = (f_ - g_) + g;
 		g_ = g;
-		if(h_ < warthog::COST_MAX) { h_ = (h_ - g_) + g; }
+		if(ub_ < warthog::COST_MAX) { ub_ = (ub_ - g_) + g; }
 		parent_id_ = parent_id;
 	}
 
@@ -202,7 +202,7 @@ struct search_node
 		out << "search_node id:" << get_id().id;
 		out << " p_id: ";
 		out << parent_id_.id;
-		out << " g: " << g_ << " f: " << this->get_f() << " ub: " << h_
+		out << " g: " << g_ << " f: " << this->get_f() << " ub: " << ub_
 		    << " expanded: " << get_expanded() << " "
 		    << " search_number_: " << search_number_;
 	}
@@ -224,7 +224,7 @@ struct search_node
 
 	cost_t g_ = warthog::COST_MAX;
 	cost_t f_ = warthog::COST_MAX;
-	cost_t h_ = warthog::COST_MAX;
+	cost_t ub_ = warthog::COST_MAX;
 
 	// TODO steal the high-bit from priority instead of ::status_ ?
 	uint8_t status_    = 0;              // open or closed
