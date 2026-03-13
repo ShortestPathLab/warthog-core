@@ -153,46 +153,47 @@ struct uds_default_traits
 	// using node = std::tuple<>;
 	// using observer = std::tuple<>;
 	static constexpr admissibility_criteria ac = admissibility_criteria::any;
-	static constexpr feasibility_criteria fc   = feasibility_criteria::until_exhaustion;
-	static constexpr reopen_policy rp          = reopen_policy::no;
+	static constexpr feasibility_criteria fc
+	    = feasibility_criteria::until_exhaustion;
+	static constexpr reopen_policy rp = reopen_policy::no;
 };
 
-template <
-	typename N                = search_node,
-    typename L                = std::tuple<>,
+template<
+    typename N = search_node, typename L = std::tuple<>,
     admissibility_criteria AC = admissibility_criteria::any,
     feasibility_criteria FC   = feasibility_criteria::until_exhaustion,
     reopen_policy RP          = reopen_policy::no>
 struct uds_traits
 {
-	using node = N;
-	using observer = L;
+	using node                                 = N;
+	using observer                             = L;
 	static constexpr admissibility_criteria ac = AC;
 	static constexpr feasibility_criteria fc   = FC;
 	static constexpr reopen_policy rp          = RP;
 };
 
-namespace details {
+namespace details
+{
 
-template <typename Traits>
+template<typename Traits>
 struct uds_trait_node
 {
 	using type = search_node;
 };
-template <typename Traits>
-	requires requires { typename Traits::node; }
+template<typename Traits>
+    requires requires { typename Traits::node; }
 struct uds_trait_node<Traits>
 {
 	using type = typename Traits::node;
 };
 
-template <typename Traits>
+template<typename Traits>
 struct uds_trait_observer
 {
 	using type = search_node;
 };
-template <typename Traits>
-	requires requires { typename Traits::observer; }
+template<typename Traits>
+    requires requires { typename Traits::observer; }
 struct uds_trait_observer<Traits>
 {
 	using type = typename Traits::observer;
@@ -200,40 +201,53 @@ struct uds_trait_observer<Traits>
 
 } // namespace details
 
-template <typename Traits>
+template<typename Traits>
 using uds_trait_node = typename details::uds_trait_node<Traits>::type;
 
-template <typename Traits>
+template<typename Traits>
 using uds_trait_observer = typename details::uds_trait_observer<Traits>::type;
 
-template <typename Traits>
-inline consteval admissibility_criteria uds_trait_ac() noexcept
+template<typename Traits>
+inline consteval admissibility_criteria
+uds_trait_ac() noexcept
 {
-	if constexpr (requires { { Traits::ac } -> util::same_as_rmref<admissibility_criteria>; }) {
+	if constexpr(requires {
+		             {
+			             Traits::ac
+		             } -> util::same_as_rmref<admissibility_criteria>;
+	             })
+	{
 		return Traits::ac;
-	} else {
-		return admissibility_criteria::any;
 	}
+	else { return admissibility_criteria::any; }
 }
 
-template <typename Traits>
-inline consteval feasibility_criteria uds_trait_fc() noexcept
+template<typename Traits>
+inline consteval feasibility_criteria
+uds_trait_fc() noexcept
 {
-	if constexpr (requires { { Traits::fc } -> util::same_as_rmref<feasibility_criteria>; }) {
+	if constexpr(requires {
+		             {
+			             Traits::fc
+		             } -> util::same_as_rmref<feasibility_criteria>;
+	             })
+	{
 		return Traits::fc;
-	} else {
-		return feasibility_criteria::until_exhaustion;
 	}
+	else { return feasibility_criteria::until_exhaustion; }
 }
 
-template <typename Traits>
-inline consteval reopen_policy uds_trait_rp() noexcept
+template<typename Traits>
+inline consteval reopen_policy
+uds_trait_rp() noexcept
 {
-	if constexpr (requires { { Traits::rp } -> util::same_as_rmref<reopen_policy>; }) {
+	if constexpr(requires {
+		             { Traits::rp } -> util::same_as_rmref<reopen_policy>;
+	             })
+	{
 		return Traits::rp;
-	} else {
-		return reopen_policy::no;
 	}
+	else { return reopen_policy::no; }
 }
 
 } // namespace warthog::search

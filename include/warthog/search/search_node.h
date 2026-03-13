@@ -18,11 +18,7 @@ namespace warthog::search
 
 struct search_node
 {
-	search_node(pad_id id = pad_id::max())
-	    : id_(id)
-	{
-		refcount_++;
-	}
+	search_node(pad_id id = pad_id::max()) : id_(id) { refcount_++; }
 
 	~search_node() { refcount_--; }
 
@@ -223,7 +219,7 @@ struct search_node
 		return refcount_;
 	}
 
-	pad_id id_ = pad_id(warthog::SN_ID_MAX);
+	pad_id id_        = pad_id(warthog::SN_ID_MAX);
 	pad_id parent_id_ = pad_id(warthog::SN_ID_MAX);
 
 	cost_t g_ = warthog::COST_MAX;
@@ -231,7 +227,7 @@ struct search_node
 	cost_t h_ = warthog::COST_MAX;
 
 	// TODO steal the high-bit from priority instead of ::status_ ?
-	uint8_t status_ = 0;    // open or closed
+	uint8_t status_    = 0;              // open or closed
 	uint32_t priority_ = warthog::INF32; // expansion priority
 
 	uint32_t search_number_ = UINT32_MAX;

@@ -5,8 +5,7 @@
 namespace warthog::memory
 {
 
-node_pool::node_pool()
-{ }
+node_pool::node_pool() { }
 node_pool::node_pool(size_t num_nodes)
 {
 	init(num_nodes);
@@ -46,19 +45,22 @@ node_pool::generate(pad_id node_id)
 	if(!blocks_[block_id])
 	{
 		// std::cerr << "generating block: "<<block_id<<std::endl;
-		blocks_[block_id] = reinterpret_cast<std::byte*>(blockspool_->allocate());
+		blocks_[block_id]
+		    = reinterpret_cast<std::byte*>(blockspool_->allocate());
 		create_block_(blocks_[block_id], block_id, create_block_data_);
 	}
 
 	// return the node from its position in the assocated block
-	return reinterpret_cast<search::search_node*>(blocks_[block_id] + list_id * block_type_sizes_);
+	return reinterpret_cast<search::search_node*>(
+	    blocks_[block_id] + list_id * block_type_sizes_);
 }
 
-void node_pool::release()
+void
+node_pool::release()
 {
-	num_blocks_ = 0;
-	blocks_ = nullptr;
-	blockspool_ = nullptr;
+	num_blocks_   = 0;
+	blocks_       = nullptr;
+	blockspool_   = nullptr;
 	create_block_ = nullptr;
 }
 
@@ -70,7 +72,8 @@ node_pool::get_ptr(pad_id node_id)
 	sn_id_t list_id  = static_cast<sn_id_t>(node_id) & node_pool_ns::NBS_MASK;
 	assert(block_id < num_blocks_);
 	assert(blocks_[block_id] != nullptr);
-	return reinterpret_cast<search::search_node*>(blocks_[block_id] + list_id * block_type_sizes_);
+	return reinterpret_cast<search::search_node*>(
+	    blocks_[block_id] + list_id * block_type_sizes_);
 }
 
 size_t
@@ -82,15 +85,13 @@ node_pool::mem()
 	return bytes;
 }
 
-
-void node_pool::clear()
+void
+node_pool::clear()
 {
-	if (clear_) {
-		(*clear_)(*this);
-	}
-	blockspool_ = nullptr;
-	create_block_ = nullptr;
-	clear_ = nullptr;
+	if(clear_) { (*clear_)(*this); }
+	blockspool_        = nullptr;
+	create_block_      = nullptr;
+	clear_             = nullptr;
 	create_block_data_ = nullptr;
 }
 

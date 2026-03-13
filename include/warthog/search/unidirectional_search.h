@@ -45,24 +45,26 @@ template<
 class unidirectional_search_full
 {
 public:
-	using traits = Traits;
+	using traits      = Traits;
 	using search_node = uds_trait_node<Traits>;
-	using L = uds_trait_observer<Traits>;
+	using L           = uds_trait_observer<Traits>;
 
 	static constexpr admissibility_criteria AC = uds_trait_ac<Traits>();
 	static constexpr feasibility_criteria FC   = uds_trait_fc<Traits>();
 	static constexpr reopen_policy RP          = uds_trait_rp<Traits>();
-	
+
 	unidirectional_search_full(
 	    H* heuristic, E* expander, Q* queue, L listeners = L{})
 	    : heuristic_(heuristic), expander_(expander), open_(queue),
 	      listeners_(listeners)
 	{ }
-	unidirectional_search_full(const unidirectional_search_full& other) = delete;
+	unidirectional_search_full(const unidirectional_search_full& other)
+	    = delete;
 	~unidirectional_search_full() = default;
 
 	unidirectional_search_full&
-	operator=(const unidirectional_search_full& other) = delete;
+	operator=(const unidirectional_search_full& other)
+	    = delete;
 
 	void
 	get_pathcost(problem_instance* pi, search_parameters* par, solution* sol)
@@ -323,12 +325,14 @@ template<
     admissibility_criteria AC = admissibility_criteria::any,
     feasibility_criteria FC   = feasibility_criteria::until_exhaustion,
     reopen_policy RP          = reopen_policy::no>
-class unidirectional_search : public unidirectional_search_full<H, E, Q,
-	uds_traits<search_node, L, AC, FC, RP> >
+class unidirectional_search
+    : public unidirectional_search_full<
+          H, E, Q, uds_traits<search_node, L, AC, FC, RP>>
 {
 public:
-	using unidirectional_search_full = typename unidirectional_search_full<H, E, Q,
-		uds_traits<search_node, L, AC, FC, RP> >::unidirectional_search_full;
+	using unidirectional_search_full = typename unidirectional_search_full<
+	    H, E, Q,
+	    uds_traits<search_node, L, AC, FC, RP>>::unidirectional_search_full;
 
 	using unidirectional_search_full::unidirectional_search_full;
 };
