@@ -13,6 +13,11 @@ node_pool::node_pool(size_t num_nodes)
 	set_type<search::search_node>();
 }
 
+node_pool::~node_pool()
+{
+	clear();
+}
+
 void
 node_pool::init(size_t num_nodes)
 {
@@ -30,8 +35,6 @@ node_pool::init(size_t num_nodes)
 	// full, cpool pre-allocates more, one chunk at a time.
 }
 
-node_pool::~node_pool() = default;
-
 search::search_node*
 node_pool::generate(pad_id node_id)
 {
@@ -44,7 +47,7 @@ node_pool::generate(pad_id node_id)
 	{
 		// std::cerr << "generating block: "<<block_id<<std::endl;
 		blocks_[block_id] = reinterpret_cast<std::byte*>(blockspool_->allocate());
-		create_block_(blocks_[block_id], block_id);
+		create_block_(blocks_[block_id], block_id, create_block_data_);
 	}
 
 	// return the node from its position in the assocated block
@@ -77,6 +80,18 @@ node_pool::mem()
 	    = sizeof(*this) + blockspool_->mem() + num_blocks_ * sizeof(void*);
 
 	return bytes;
+}
+
+
+void node_pool::clear()
+{
+	if (clear_) {
+		(*clear_)(*this);
+	}
+	blockspool_ = nullptr;
+	create_block_ = nullptr;
+	clear_ = nullptr;
+	create_block_data_ = nullptr;
 }
 
 } // namespace warthog::memory
