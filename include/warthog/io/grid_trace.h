@@ -24,7 +24,9 @@ class grid_trace : public posthoc_trace
 {
 public:
 	using node = search::search_node;
-	using posthoc_trace::posthoc_trace;
+
+	grid_trace() = default;
+	grid_trace(domain::gridmap* grid) : grid_(grid) { }
 
 	void
 	set_grid(domain::gridmap* grid) noexcept

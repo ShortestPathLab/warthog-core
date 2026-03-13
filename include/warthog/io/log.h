@@ -3,11 +3,16 @@
 
 // io/log.h
 //
-// Logging utility.
+// Logging utility framework, where a user can provide at a high-level
+// data structure with function pointers to log messages as a single string
+// with a specific log level.
+// This will call a user-defined function (if able) that will output this
+// message as the user desires.
+// Default functions (output to stderr or file) are defined here.
 //
 // The log_sink is a non-owning copyable struct that points to the data and
 // logging function calls. All logging is performed through log_sink. All
-// classes here are thread safe, follow comments for outlaying cases.
+// classes here are thread safe, follow comments for outlying cases.
 //
 // Special classes inherit log_sink to provide default functionality.
 // log_sink_std should be used to write to std::cout and std::cerr.
@@ -135,7 +140,7 @@ struct log_sink_std : log_sink
 {
 	// cerr = true will sink to cerr, false to cout
 	log_sink_std();
-	log_sink_std(bool cerr = true);
+	log_sink_std(bool cerr);
 	static void
 	write_trace(void*, std::string_view msg);
 	static void
@@ -172,8 +177,6 @@ public:
 	    = std::ios_base::out | std::ios_base::app);
 	void
 	open(std::ostream& stream);
-	void
-	open_stderr();
 
 	static void
 	write_trace(void*, std::string_view msg);
@@ -266,21 +269,25 @@ template<typename Log, log_level L>
 concept LoggerLevel
     = Logger<Log> && requires { requires Log::template supports_level<L>; };
 
-#define WARTHOG_LOG(lg, level, msg) lg.log(msg)
-
 #define WARTHOG_LOG_LEVEL_(cond, lg, level, msg)                              \
 	{                                                                         \
 		if constexpr(::warthog::io::Logger<decltype(lg)>)                     \
 		{                                                                     \
 			if constexpr(::warthog::io::LoggerLevel<decltype(lg), level>)     \
 			{                                                                 \
-				if(cond) lg.log(level, msg);                                  \
+				if(cond) (lg).log(level, msg);                                \
 			}                                                                 \
 		}                                                                     \
 		else                                                                  \
 		{                                                                     \
-			if(cond) lg.log(level, msg);                                      \
+			if(cond) (lg).log(level, msg);                                    \
 		}                                                                     \
+	}
+
+#define WARTHOG_LOG(lg, level, msg) (lg).log(level, msg)
+#define WARTHOG_LOG_IF(cond, lg, level, msg)                                  \
+	{                                                                         \
+		if(cond) (lg).log(level, msg);                                        \
 	}
 
 // Write msg (string_view) to log lg.
@@ -317,13 +324,20 @@ concept LoggerLevel
 		{                                                                     \
 			if constexpr(::warthog::io::LoggerLevel<decltype(lg), level>)     \
 			{                                                                 \
-				if(cond) lg.log(level, std::format(__VA_ARGS__));             \
+				if(cond) (lg).log(level, std::format(__VA_ARGS__));           \
 			}                                                                 \
 		}                                                                     \
 		else                                                                  \
 		{                                                                     \
-			if(cond) lg.log(level, std::format(__VA_ARGS__));                 \
+			if(cond) (lg).log(level, std::format(__VA_ARGS__));               \
 		}                                                                     \
+	}
+
+#define WARTHOG_LOG_FMT(lg, level, ...)                                       \
+	(lg).log(level, std::format(__VA_ARGS__))
+#define WARTHOG_LOG_FMT_IF(cond, lg, level, ...)                              \
+	{                                                                         \
+		if(cond) (lg).log(level, std::format(__VA_ARGS__));                   \
 	}
 
 // Write formatted message to log, pass as format,args...
@@ -402,12 +416,15 @@ struct global_logger : logger<MinLevel>
 };
 
 // the global version of the marcos, omits the passing of a logger.
+#define WARTHOG_GLOG(level, msg) WARTHOG_LOG(::warthog::io::glog(), level, msg)
 #define WARTHOG_GTRACE(msg) WARTHOG_TRACE(::warthog::io::glog(), msg)
 #define WARTHOG_GDEBUG(msg) WARTHOG_DEBUG(::warthog::io::glog(), msg)
 #define WARTHOG_GINFO(msg) WARTHOG_INFO(::warthog::io::glog(), msg)
 #define WARTHOG_GWARN(msg) WARTHOG_WARN(::warthog::io::glog(), msg)
 #define WARTHOG_GERROR(msg) WARTHOG_ERROR(::warthog::io::glog(), msg)
 #define WARTHOG_GCRIT(msg) WARTHOG_CRIT(::warthog::io::glog(), msg)
+#define WARTHOG_GLOG_IF(cond, level, msg)                                     \
+	WARTHOG_LOG_IF(cond, ::warthog::io::glog(), level, msg)
 #define WARTHOG_GTRACE_IF(cond, msg)                                          \
 	WARTHOG_TRACE_IF(cond, ::warthog::io::glog(), msg)
 #define WARTHOG_GDEBUG_IF(cond, msg)                                          \
@@ -420,6 +437,8 @@ struct global_logger : logger<MinLevel>
 	WARTHOG_ERROR_IF(cond, ::warthog::io::glog(), msg)
 #define WARTHOG_GCRIT_IF(cond, msg)                                           \
 	WARTHOG_CRIT_IF(cond, ::warthog::io::glog(), msg)
+#define WARTHOG_GLOG_FMT(level, ...)                                          \
+	WARTHOG_LOG_FMT(::warthog::io::glog(), level, __VA_ARGS__)
 #define WARTHOG_GTRACE_FMT(...)                                               \
 	WARTHOG_TRACE_FMT(::warthog::io::glog(), __VA_ARGS__)
 #define WARTHOG_GDEBUG_FMT(...)                                               \
@@ -432,6 +451,8 @@ struct global_logger : logger<MinLevel>
 	WARTHOG_ERROR_FMT(::warthog::io::glog(), __VA_ARGS__)
 #define WARTHOG_GCRIT_FMT(...)                                                \
 	WARTHOG_CRIT_FMT(::warthog::io::glog(), __VA_ARGS__)
+#define WARTHOG_GLOG_FMT_IF(cond, level, ...)                                 \
+	WARTHOG_LOG_FMT_IF(cond, ::warthog::io::glog(), level, __VA_ARGS__)
 #define WARTHOG_GTRACE_FMT_IF(cond, ...)                                      \
 	WARTHOG_TRACE_FMT_IF(cond, ::warthog::io::glog(), __VA_ARGS__)
 #define WARTHOG_GDEBUG_FMT_IF(cond, ...)                                      \

@@ -15,6 +15,8 @@ option(WARTHOG_BMI "Enable support cpu BMI for WARTHOG_INTRIN_HAS(BMI)" OFF)
 option(WARTHOG_BMI2 "Enable support cpu BMI2 for WARTHOG_INTRIN_HAS(BMI2), use for Zen 3+" OFF)
 option(WARTHOG_INTRIN_ALL "Enable march=native and support x86 intrinsics if able (based on system), supersedes all manual instruction sets" OFF)
 
+find_package(Threads REQUIRED)
+
 include(cmake/warthog.cmake)
 
 add_library(warthog_compile INTERFACE)
@@ -31,7 +33,7 @@ target_include_directories(warthog_core PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/include>
   $<INSTALL_INTERFACE:include>
 )
-target_link_libraries(warthog_core PUBLIC warthog::compile)
+target_link_libraries(warthog_core PUBLIC warthog::compile Threads::Threads)
 include(cmake/headers.cmake)
 
 add_executable(warthog_app)
