@@ -18,14 +18,14 @@ namespace warthog::search
 
 struct search_node
 {
-	search_node(pad_id id = pad_id::max()) : id_(id) { refcount_++; }
+	search_node() noexcept = default;
+	search_node(pad_id id = pad_id::max()) noexcept : id_(id) { }
 
-	~search_node() { refcount_--; }
 
 	inline void
 	init(
 	    uint32_t search_number, pad_id parent_id, cost_t g, cost_t f,
-	    cost_t ub = warthog::COST_MAX)
+	    cost_t ub = warthog::COST_MAX) noexcept
 	{
 		parent_id_     = parent_id;
 		f_             = f;
@@ -36,103 +36,103 @@ struct search_node
 	}
 
 	inline uint32_t
-	get_search_number() const
+	get_search_number() const noexcept
 	{
 		return search_number_;
 	}
 
 	inline void
-	set_search_number(uint32_t search_number)
+	set_search_number(uint32_t search_number) noexcept
 	{
 		search_number_ = search_number;
 	}
 
 	inline pad_id
-	get_id() const
+	get_id() const noexcept
 	{
 		return id_;
 	}
 
 	inline void
-	set_id(pad_id id)
+	set_id(pad_id id) noexcept
 	{
 		id_ = id;
 	}
 
 	inline bool
-	get_expanded() const
+	get_expanded() const noexcept
 	{
 		return status_;
 	}
 
 	inline void
-	set_expanded(bool expanded)
+	set_expanded(bool expanded) noexcept
 	{
 		status_ = expanded;
 	}
 
 	inline pad_id
-	get_parent() const
+	get_parent() const noexcept
 	{
 		return parent_id_;
 	}
 
 	inline void
-	set_parent(pad_id parent_id)
+	set_parent(pad_id parent_id) noexcept
 	{
 		parent_id_ = parent_id;
 	}
 
 	inline uint32_t
-	get_priority() const
+	get_priority() const noexcept
 	{
 		return priority_;
 	}
 
 	inline void
-	set_priority(uint32_t priority)
+	set_priority(uint32_t priority) noexcept
 	{
 		priority_ = priority;
 	}
 
 	inline cost_t
-	get_g() const
+	get_g() const noexcept
 	{
 		return g_;
 	}
 
 	inline void
-	set_g(cost_t g)
+	set_g(cost_t g) noexcept
 	{
 		g_ = g;
 	}
 
 	inline cost_t
-	get_f() const
+	get_f() const noexcept
 	{
 		return f_;
 	}
 
 	inline void
-	set_f(cost_t f)
+	set_f(cost_t f) noexcept
 	{
 		f_ = f;
 	}
 
 	inline cost_t
-	get_ub() const
+	get_ub() const noexcept
 	{
 		return ub_;
 	}
 
 	inline void
-	set_ub(cost_t ub)
+	set_ub(cost_t ub) noexcept
 	{
 		ub_ = ub;
 	}
 
 	inline void
-	relax(cost_t g, pad_id parent_id)
+	relax(cost_t g, pad_id parent_id) noexcept
 	{
 		assert(g < g_);
 		f_ = (f_ - g_) + g;
@@ -142,7 +142,7 @@ struct search_node
 	}
 
 	inline bool
-	operator<(const search_node& other) const
+	operator<(const search_node& other) const noexcept
 	{
 		//    static uint64_t SIGN_MASK = UINT64_MAX & (1ULL<<63);
 		//    cost_t result = this->f_ - other.f_;
@@ -163,7 +163,7 @@ struct search_node
 	}
 
 	inline bool
-	operator>(const search_node& other) const
+	operator>(const search_node& other) const noexcept
 	{
 		if(f_ > other.f_) { return true; }
 		if(f_ < other.f_) { return false; }
@@ -174,14 +174,14 @@ struct search_node
 	}
 
 	inline bool
-	operator==(const search_node& other) const
+	operator==(const search_node& other) const noexcept
 	{
 		if(!(*this < other) && !(*this > other)) { return true; }
 		return false;
 	}
 
 	inline bool
-	operator<=(const search_node& other) const
+	operator<=(const search_node& other) const noexcept
 	{
 		if(*this < other) { return true; }
 		if(!(*this > other)) { return true; }
@@ -189,34 +189,20 @@ struct search_node
 	}
 
 	inline bool
-	operator>=(const search_node& other) const
+	operator>=(const search_node& other) const noexcept
 	{
 		if(*this > other) { return true; }
 		if(!(*this < other)) { return true; }
 		return false;
 	}
 
-	inline void
-	print(std::ostream& out) const
-	{
-		out << "search_node id:" << get_id().id;
-		out << " p_id: ";
-		out << parent_id_.id;
-		out << " g: " << g_ << " f: " << this->get_f() << " ub: " << ub_
-		    << " expanded: " << get_expanded() << " "
-		    << " search_number_: " << search_number_;
-	}
+	void
+	print(std::ostream& out) const;
 
 	uint32_t
-	mem()
+	mem() noexcept
 	{
 		return sizeof(*this);
-	}
-
-	static uint32_t
-	get_refcount()
-	{
-		return refcount_;
 	}
 
 	pad_id id_        = pad_id(warthog::SN_ID_MAX);
@@ -231,7 +217,6 @@ struct search_node
 	uint32_t priority_ = warthog::INF32; // expansion priority
 
 	uint32_t search_number_ = UINT32_MAX;
-	static uint32_t refcount_;
 };
 
 struct cmp_less_search_node
