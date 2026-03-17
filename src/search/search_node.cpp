@@ -1,6 +1,7 @@
 #include <warthog/search/search_node.h>
 
-namespace warthog::search {
+namespace warthog::search
+{
 
 void
 search_node::print(std::ostream& out) const
@@ -9,8 +10,8 @@ search_node::print(std::ostream& out) const
 	out << " p_id: ";
 	out << parent_id_.id;
 	out << " g: " << g_ << " f: " << this->get_f() << " ub: " << ub_
-		<< " expanded: " << get_expanded() << " "
-		<< " search_number_: " << search_number_;
+	    << " expanded: " << get_expanded() << " "
+	    << " search_number_: " << search_number_;
 }
 
 std::ostream&

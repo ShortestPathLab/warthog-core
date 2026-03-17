@@ -21,7 +21,6 @@ struct search_node
 	search_node() noexcept = default;
 	search_node(pad_id id = pad_id::max()) noexcept : id_(id) { }
 
-
 	inline void
 	init(
 	    uint32_t search_number, pad_id parent_id, cost_t g, cost_t f,
