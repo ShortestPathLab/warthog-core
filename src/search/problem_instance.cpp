@@ -1,7 +1,10 @@
 #include <warthog/search/problem_instance.h>
 
+namespace warthog::search
+{
+
 std::ostream&
-operator<<(std::ostream& str, const warthog::search::problem_instance& pi)
+operator<<(std::ostream& str, const problem_instance& pi)
 {
 	pi.print(str);
 
@@ -9,10 +12,11 @@ operator<<(std::ostream& str, const warthog::search::problem_instance& pi)
 }
 
 std::ostream&
-operator<<(
-    std::ostream& str, const warthog::search::search_problem_instance& pi)
+operator<<(std::ostream& str, const search_problem_instance& pi)
 {
 	pi.print(str);
 
 	return str;
+}
+
 }

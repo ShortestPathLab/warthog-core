@@ -39,7 +39,7 @@ warthog::util::cfg::parse_args(
 std::string
 warthog::util::cfg::get_param_value(std::string param_name)
 {
-	std::string ret("");
+	std::string ret;
 	std::map<std::string, std::vector<std::string>>::iterator it
 	    = params_.find(param_name);
 	if(it != params_.end())
