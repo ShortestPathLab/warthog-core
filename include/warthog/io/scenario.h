@@ -75,13 +75,13 @@ struct scenario_patch
 class scenario_serialize
 {
 public:
-	enum class CurrentState
+	enum class serialize_state
 	{
-		Init,
-		Version,
-		Header,
-		Query,
-		Error,
+		init,
+		version,
+		header,
+		query,
+		error,
 	};
 	static constexpr size_t max_line_length = 2000;
 	static constexpr size_t max_dimension = 15'000;
@@ -132,7 +132,7 @@ public:
 	bool has_dist_type(dist_type d) const noexcept
 	{
 		assert((uint32_t)d < (uint32_t)dist_type::dist_count);
-		return m_dist.test(d);
+		return m_dist.test((uint32_t)d);
 	}
 
 	/// @brief opens scenario file get_scenario_filename() for reading
@@ -145,9 +145,19 @@ public:
 	std::errc open_write(std::ostream* scenario = nullptr);
 
 	/// @return if scenario is open for reading
-	bool can_read();
+	bool can_read(std::istream* in = nullptr)
+	{
+		if (in == nullptr)
+			in = m_scenario_in;
+		return in != nullptr && in->good();
+	}
 	/// @return if scenario is open for writing
-	bool can_write();
+	bool can_write(std::ostream* out = nullptr)
+	{
+		if (out == nullptr)
+			out = m_scenario_out;
+		return out != nullptr && out->good();
+	}
 
 	/// @brief reads in file version information, and sets version accessable via get_version()
 	/// @param in optional stream to use, otherwise uses internal-set stream
@@ -160,16 +170,9 @@ public:
 	/// With version1: peeks first query to gain map name
 	/// With version2: gets map width/height, available costs and patch filename
 	std::errc read_header(std::istream* in = nullptr);
-	/// @brief calls read_version then read_header for full header
-	/// @param in optional stream to use, otherwise uses internal-set stream
-	/// @return success std::errc{} (0)
-	std::errc read_version_header(std::istream* in = nullptr);
-
-	std::errc read_header_v1(std::istream* in = nullptr);
-	std::errc read_header_v2(std::istream* in = nullptr);
 
 protected:
-	std::pair<std::istream*, std::errc> get_instream(std::istream* in) noexcept
+	std::pair<std::istream*, std::errc> get_istream(std::istream* in = nullptr) noexcept
 	{
 		if (in == nullptr)
 			in = m_scenario_in;
@@ -177,7 +180,7 @@ protected:
 			return {nullptr, std::errc::io_error};
 		return {in, {}};
 	}
-	std::pair<std::ostream*, std::errc> get_outstream(std::ostream* out) noexcept
+	std::pair<std::ostream*, std::errc> get_ostream(std::ostream* out = nullptr) noexcept
 	{
 		if (out == nullptr)
 			out = m_scenario_out;
@@ -187,12 +190,15 @@ protected:
 	}
 	std::pair<std::string_view, std::errc> readline(std::istream* in);
 
-	std::errc read_query_line_v1(scenario_query& query);
-	std::errc read_query_line_v2(scenario_query& query);
-	std::errc read_patch_line_v2(scenario_patch& query);
+	std::errc read_header_v1(std::istream* in = nullptr);
+	std::errc read_header_v2(std::istream* in = nullptr);
+
+	std::pair<bool,std::errc> read_query_line_v1(scenario_query& query);
+	std::pair<bool,std::errc> read_query_line_v2(scenario_query& query);
+	std::pair<bool,std::errc> read_patch_line_v2(scenario_patch& query);
 
 protected:
-	CurrentState m_state = CurrentState::Init;
+	serialize_state m_state = serialize_state::init;
 	scenario_version m_version = scenario_version::version1;
 	std::filesystem::path m_scenario_filename;
 	std::filesystem::path m_map_filename;
@@ -200,8 +206,8 @@ protected:
 	std::ostream* m_scenario_out = nullptr;
 	std::unique_ptr<std::ios_base> m_scenario_file;
 	std::bitset<(size_t)dist_type::dist_count> m_dist;
-	uint32_t m_map_width;
-	uint32_t m_map_height;
+	uint32_t m_map_width = 0;
+	uint32_t m_map_height = 0;
 	int32_t m_query_at = 0;
 
 	// dynamic data

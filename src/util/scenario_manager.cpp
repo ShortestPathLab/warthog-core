@@ -21,62 +21,37 @@ scenario_manager::~scenario_manager()
 }
 
 void
-scenario_manager::load_scenario(const char* filelocation)
+scenario_manager::load_scenario(const std::filesystem::path& filelocation)
 {
-	std::ifstream infile;
-	infile.open(filelocation, std::ios::in);
+}
 
-	if(!infile.good())
-	{
-		std::cerr << "err; scenario_manager::load_scenario "
-		          << "Invalid scenario file: " << filelocation << std::endl;
-		infile.close();
-		exit(1);
-	}
+void
+scenario_manager::load_scenario(std::istream& file, std::istream* map_override, const std::filesystem::path& mapfile_override)
+{
 
-	sfile_ = filelocation;
-
-	char buf[1024];
-	infile.getline(buf, 1024);
-	if(strstr(buf, "version 1"))
-	{
-		// GPPC format scenarios
-		load_gppc_scenario(infile);
-	}
-	else
-	{
-		std::cerr << "err; scenario_manager::load_scenario "
-		          << " scenario file not in GPPC format\n";
-		infile.close();
-		exit(1);
-	}
-	infile.close();
+	si.set_scenario_filename()
 }
 
 // V1.0 is the version officially supported by HOG
-void
-scenario_manager::load_gppc_scenario(std::ifstream& infile)
+std::errc
+scenario_manager::load_gppc_scenario(std::istream& scenfile, std::istream* mapfile)
 {
-	uint32_t sizeX = 0, sizeY = 0;
-	uint32_t bucket;
-	std::string map;
-	uint32_t xs, ys, xg, yg;
-	std::string dist;
+	io::scenario_serialize si;
+	io::bittable_serialize bi;
 
-	while(infile >> bucket >> map >> sizeX >> sizeY >> xs >> ys >> xg >> yg
-	      >> dist)
-	{
-		double dbl_dist = strtod(dist.c_str(), 0);
-		experiments_.push_back(
-		    new experiment(xs, ys, xg, yg, sizeX, sizeY, dbl_dist, map));
-
-		int32_t precision = 0;
-		if(dist.find(".") != std::string::npos)
-		{
-			precision = ((int32_t)dist.size() - (int32_t)(dist.find(".") + 1));
-		}
-		experiments_.back()->set_precision(precision);
-	}
+	// open stream and read header
+	if (auto ec = si.open_read(&scenfile); ec != std::errc{})
+		return ec;
+	if (auto ec = si.read_version(); ec != std::errc{})
+		return std::errc::io_error;
+	if (si.get_version() != io::scenario_version::version1)
+		return std::errc::invalid_argument;
+	if (auto ec = si.read_header(); ec != std::errc{})
+		return std::errc::io_error;
+	
+	sfile_ = si.get_map_filename();
+	experiments_.clear();
+	experiments_.reserve(1024);
 }
 
 void

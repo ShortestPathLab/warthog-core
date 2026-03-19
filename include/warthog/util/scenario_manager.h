@@ -20,8 +20,8 @@
 
 #include "experiment.h"
 #include <warthog/domain/gridmap.h>
-#include <warthog/heuristic/octile_heuristic.h>
-#include <warthog/search/gridmap_expansion_policy.h>
+#include <warthog/io/grid.h>
+#include <warthog/io/scenario.h>
 
 #include <filesystem>
 #include <fstream>
@@ -82,23 +82,29 @@ public:
 	void
 	generate_experiments(domain::gridmap*, int num);
 	void
-	load_scenario(const char* filelocation);
+	load_scenario(const std::filesystem::path& filelocation);
+	void
+	load_scenario(std::istream& file, std::istream* map_override = nullptr, const std::filesystem::path& mapfile_override = {});
 	void
 	write_scenario(std::ostream& out);
 	void
 	sort(); // organise by increasing solution length
 
-private:
-	void
-	load_gppc_scenario(std::ifstream& infile);
+protected:
+	std::errc
+	load_gppc_scenario(std::istream& scenfile, std::istream* mapfile);
 
 	std::vector<experiment*> experiments_;
-	std::string sfile_;
+	std::filesystem::path sfile_;
 };
 
 std::filesystem::path
 find_map_filename(
-    const scenario_manager& scenmgr, std::filesystem::path sfilename = {});
+    const scenario_manager& scenmgr, const std::filesystem::path& sfilename = {});
+
+std::filesystem::path
+find_map_filename(
+    const std::filesystem::path& scenmgr, const std::filesystem::path& sfilename = {});
 
 } // namespace warthog::util
 
