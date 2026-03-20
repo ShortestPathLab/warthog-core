@@ -27,6 +27,7 @@
 #include <fstream>
 #include <iostream>
 #include <vector>
+#include <memory_resource>
 
 namespace warthog::util
 {
@@ -68,15 +69,26 @@ public:
 		return sizeof(*this) + sizeof(experiment) * experiments_.size();
 	}
 
-	const std::string&
+	std::string
 	last_file_loaded() noexcept
 	{
+		return sfile_.string();
+	}
+	const std::filesystem::path&
+	scenario_filename() noexcept
+	{
 		return sfile_;
+	}
+	const std::filesystem::path&
+	map_filename() noexcept
+	{
+		return mfile_;
 	}
 	void
 	clear()
 	{
 		experiments_.clear();
+		experiments_res_.release();
 	}
 
 	void
@@ -84,7 +96,7 @@ public:
 	void
 	load_scenario(const std::filesystem::path& filelocation);
 	void
-	load_scenario(std::istream& file, std::istream* map_override = nullptr, const std::filesystem::path& mapfile_override = {});
+	load_scenario(std::istream& file, std::filesystem::path&& mapfile_override = {});
 	void
 	write_scenario(std::ostream& out);
 	void
@@ -92,10 +104,12 @@ public:
 
 protected:
 	std::errc
-	load_gppc_scenario(std::istream& scenfile, std::istream* mapfile);
+	load_gppc_scenario(std::istream& scenfile);
 
+	std::pmr::monotonic_buffer_resource experiments_res_;
 	std::vector<experiment*> experiments_;
 	std::filesystem::path sfile_;
+	std::filesystem::path mfile_;
 };
 
 std::filesystem::path

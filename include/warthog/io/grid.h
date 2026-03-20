@@ -35,6 +35,8 @@ enum class bittable_cell : uint8_t
 	UNKNOWN
 };
 
+inline constexpr uint32_t GRID_MAX_SIZE = 15'000;
+
 class bittable_serialize
 {
 public:

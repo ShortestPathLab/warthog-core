@@ -52,6 +52,8 @@ struct scenario_query
 {
 	int64_t bucket;
 	std::string map;
+	int32_t width;
+	int32_t height;
 	double start_x;
 	double start_y;
 	double goal_x;
@@ -75,7 +77,7 @@ struct scenario_patch
 class scenario_serialize
 {
 public:
-	enum class serialize_state
+	enum class serialize_state : uint8_t
 	{
 		init,
 		version,
@@ -83,8 +85,15 @@ public:
 		query,
 		error,
 	};
+	enum query_res : uint8_t
+	{
+		valid,
+		invalid,
+		final,
+		next_query,
+		next_patch
+	};
 	static constexpr size_t max_line_length = 2000;
-	static constexpr size_t max_dimension = 15'000;
 	scenario_serialize();
 	~scenario_serialize();
 
@@ -109,7 +118,7 @@ public:
 		return m_map_filename;
 	}
 
-	void set_relative_map_filename(std::filesystem::path&& filename);
+	void set_relative_map_filename(const std::filesystem::path& filename);
 
 	void set_version(scenario_version version) noexcept
 	{
@@ -135,6 +144,32 @@ public:
 		return m_dist.test((uint32_t)d);
 	}
 
+	int32_t get_line_num() const noexcept
+	{
+		return m_line_num;
+	}
+	uint32_t get_map_width() const noexcept
+	{
+		return m_map_width;
+	}
+	int32_t get_map_height() const noexcept
+	{
+		return m_map_height;
+	}
+	std::string_view get_last_line() const noexcept
+	{
+		return m_line;
+	}
+
+	void set_force_int(bool v) noexcept
+	{
+		m_force_int = v;
+	}
+	bool get_force_int() noexcept
+	{
+		return m_force_int;
+	}
+
 	/// @brief opens scenario file get_scenario_filename() for reading
 	/// @param scenario use a user provided instead of get_scenario_filename()
 	/// @return error on operation
@@ -144,19 +179,21 @@ public:
 	/// @return error on operation
 	std::errc open_write(std::ostream* scenario = nullptr);
 
+	void close();
+
 	/// @return if scenario is open for reading
 	bool can_read(std::istream* in = nullptr)
 	{
 		if (in == nullptr)
 			in = m_scenario_in;
-		return in != nullptr && in->good();
+		return in != nullptr && !in->bad();
 	}
 	/// @return if scenario is open for writing
 	bool can_write(std::ostream* out = nullptr)
 	{
 		if (out == nullptr)
 			out = m_scenario_out;
-		return out != nullptr && out->good();
+		return out != nullptr && !out->bad();
 	}
 
 	/// @brief reads in file version information, and sets version accessable via get_version()
@@ -170,6 +207,15 @@ public:
 	/// With version1: peeks first query to gain map name
 	/// With version2: gets map width/height, available costs and patch filename
 	std::errc read_header(std::istream* in = nullptr);
+
+	std::errc read_header_v1(std::istream* in = nullptr);
+	std::errc read_header_v2(std::istream* in = nullptr);
+
+	std::pair<query_res,std::errc> read_query_line(scenario_query& query, std::istream* in = nullptr);
+
+	std::pair<query_res,std::errc> read_query_line_v1(scenario_query& query, std::istream* in = nullptr);
+	std::pair<query_res,std::errc> read_query_line_v2(scenario_query& query, std::istream* in = nullptr);
+	std::pair<query_res,std::errc> read_patch_line_v2(scenario_patch& query, std::istream* in = nullptr);
 
 protected:
 	std::pair<std::istream*, std::errc> get_istream(std::istream* in = nullptr) noexcept
@@ -188,31 +234,30 @@ protected:
 			return {nullptr, std::errc::io_error};
 		return {out, {}};
 	}
+	std::istream& line_stream(std::string_view line);
 	std::pair<std::string_view, std::errc> readline(std::istream* in);
-
-	std::errc read_header_v1(std::istream* in = nullptr);
-	std::errc read_header_v2(std::istream* in = nullptr);
-
-	std::pair<bool,std::errc> read_query_line_v1(scenario_query& query);
-	std::pair<bool,std::errc> read_query_line_v2(scenario_query& query);
-	std::pair<bool,std::errc> read_patch_line_v2(scenario_patch& query);
+	void unreadline(std::string_view line);
 
 protected:
 	serialize_state m_state = serialize_state::init;
 	scenario_version m_version = scenario_version::version1;
+	bool m_force_int = false;
 	std::filesystem::path m_scenario_filename;
 	std::filesystem::path m_map_filename;
+	std::unique_ptr<std::ios_base> m_scenario_stream;
 	std::istream* m_scenario_in = nullptr;
 	std::ostream* m_scenario_out = nullptr;
-	std::unique_ptr<std::ios_base> m_scenario_file;
 	std::bitset<(size_t)dist_type::dist_count> m_dist;
 	uint32_t m_map_width = 0;
 	uint32_t m_map_height = 0;
 	int32_t m_query_at = 0;
+	int32_t m_line_num = -1;
 
 	// dynamic data
 	std::pmr::monotonic_buffer_resource m_dyn_res;
-	std::pmr::string m_line;
+	std::pmr::monotonic_buffer_resource m_string_res;
+	char* m_line = nullptr; ///< sets from m_dyn_res
+	std::pmr::string m_unget_line;
 	std::pmr::vector<std::string_view> m_dist_strings;
 	std::pmr::vector<int16_t> m_dist_id;
 
@@ -220,7 +265,6 @@ protected:
 	// TODO: replace with a custom string stream that does not allocate memory
 	std::istringstream m_iss;
 	std::string m_token;
-	scenario_query m_query;
 };
 
 } // namespace warthog::util
