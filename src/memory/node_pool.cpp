@@ -5,7 +5,7 @@
 namespace warthog::memory
 {
 
-node_pool::node_pool() { }
+node_pool::node_pool() = default;
 node_pool::node_pool(size_t num_nodes)
 {
 	init(num_nodes);
