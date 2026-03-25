@@ -26,8 +26,8 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
-#include <vector>
 #include <memory_resource>
+#include <vector>
 
 namespace warthog::util
 {
@@ -96,7 +96,8 @@ public:
 	void
 	load_scenario(const std::filesystem::path& filelocation);
 	void
-	load_scenario(std::istream& file, std::filesystem::path&& mapfile_override = {});
+	load_scenario(
+	    std::istream& file, std::filesystem::path&& mapfile_override = {});
 	void
 	write_scenario(std::ostream& out);
 	void
@@ -114,11 +115,13 @@ protected:
 
 std::filesystem::path
 find_map_filename(
-    const scenario_manager& scenmgr, const std::filesystem::path& sfilename = {});
+    const scenario_manager& scenmgr,
+    const std::filesystem::path& sfilename = {});
 
 std::filesystem::path
 find_map_filename(
-    const std::filesystem::path& scenmgr, const std::filesystem::path& sfilename = {});
+    const std::filesystem::path& scenmgr,
+    const std::filesystem::path& sfilename = {});
 
 } // namespace warthog::util
 

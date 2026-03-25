@@ -35,8 +35,8 @@ public:
 	    uint32_t sx, uint32_t sy, uint32_t gx, uint32_t gy, uint32_t mapwidth,
 	    uint32_t mapheight, double d, std::string&& m)
 	    : startx_(sx), starty_(sy), goalx_(gx), goaly_(gy),
-	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d), map_(std::move(m)),
-	      precision_(4)
+	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d),
+	      map_(std::move(m)), precision_(4)
 	{ }
 
 	// no copy

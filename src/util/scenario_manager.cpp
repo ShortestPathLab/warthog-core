@@ -1,8 +1,8 @@
 #include <warthog/util/scenario_manager.h>
 
+#include <warthog/io/log.h>
 #include <warthog/search/dummy_listener.h>
 #include <warthog/search/problem_instance.h>
-#include <warthog/io/log.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -19,21 +19,24 @@ scenario_manager::load_scenario(const std::filesystem::path& filelocation)
 {
 	sfile_ = filelocation;
 	std::ifstream in(filelocation);
-	if (load_gppc_scenario(in) != std::errc{})
+	if(load_gppc_scenario(in) != std::errc{})
 	{
-		WARTHOG_GERROR_FMT("Failed to load scenario file \"{}\"", std::string(sfile_));
+		WARTHOG_GERROR_FMT(
+		    "Failed to load scenario file \"{}\"", std::string(sfile_));
 		throw std::runtime_error("scenario_manager failed to load scenario");
 	}
 }
 
 void
-scenario_manager::load_scenario(std::istream& file, std::filesystem::path&& scenfile)
+scenario_manager::load_scenario(
+    std::istream& file, std::filesystem::path&& scenfile)
 {
 	sfile_ = std::move(scenfile);
 	load_gppc_scenario(file);
-	if (load_gppc_scenario(file) != std::errc{})
+	if(load_gppc_scenario(file) != std::errc{})
 	{
-		WARTHOG_GERROR_FMT("Failed to load scenario file \"{}\"", std::string(sfile_));
+		WARTHOG_GERROR_FMT(
+		    "Failed to load scenario file \"{}\"", std::string(sfile_));
 		throw std::runtime_error("scenario_manager failed to load scenario");
 	}
 }
@@ -49,59 +52,63 @@ scenario_manager::load_gppc_scenario(std::istream& scenfile)
 	si.set_force_int(true);
 
 	// open stream and read header
-	if (auto ec = si.open_read(&scenfile); ec != std::errc{})
+	if(auto ec = si.open_read(&scenfile); ec != std::errc{})
 	{
 		WARTHOG_GERROR("scenario_manager failed to open for read");
 		return ec;
 	}
-	if (auto ec = si.read_version(); ec != std::errc{}){
-		WARTHOG_GERROR_FMT("scenario_manager failed to read version on line: {}", si.get_line_num());
+	if(auto ec = si.read_version(); ec != std::errc{})
+	{
+		WARTHOG_GERROR_FMT(
+		    "scenario_manager failed to read version on line: {}",
+		    si.get_line_num());
 		return std::errc::io_error;
 	}
-	if (si.get_version() != io::scenario_version::version1)
+	if(si.get_version() != io::scenario_version::version1)
 	{
 		WARTHOG_GERROR("scenario_manager reading unsupported version");
 		return std::errc::invalid_argument;
 	}
-	if (auto ec = si.read_header_v1(); ec != std::errc{})
+	if(auto ec = si.read_header_v1(); ec != std::errc{})
 	{
-		WARTHOG_GERROR_FMT("scenario_manager failed to read scenario header on line: {}", si.get_line_num());
+		WARTHOG_GERROR_FMT(
+		    "scenario_manager failed to read scenario header on line: {}",
+		    si.get_line_num());
 		return std::errc::io_error;
 	}
-	
+
 	mfile_ = si.get_map_filename();
 	experiments_.clear();
 	experiments_.reserve(1024);
-	uint32_t width = si.get_map_width();
+	uint32_t width  = si.get_map_width();
 	uint32_t height = si.get_map_height();
 	// read queries until done
 	bool first = true;
 	io::scenario_query Q; // keep out of loop to reuse std::string
-	while (true)
+	while(true)
 	{
 		Q.reset();
-		auto [con,ec] = si.read_query_line_v1(Q);
-		if (ec != std::errc{})
+		auto [con, ec] = si.read_query_line_v1(Q);
+		if(ec != std::errc{})
 		{
-			WARTHOG_GERROR_FMT("scenario_manager failed to read query on line: {}", si.get_line_num());
+			WARTHOG_GERROR_FMT(
+			    "scenario_manager failed to read query on line: {}",
+			    si.get_line_num());
 			return std::errc::io_error;
 		}
-		if (con == io::scenario_serialize::valid)
+		if(con == io::scenario_serialize::valid)
 		{
-			// no need to check for 
+			// no need to check for
 			experiment* ex = std::construct_at(
-				static_cast<experiment*>(experiments_res_.allocate(sizeof(experiment), alignof(experiment))),
-				(uint32_t)Q.start_x, (uint32_t)Q.start_y,
-				(uint32_t)Q.goal_x, (uint32_t)Q.goal_y,
-				si.get_map_width(), si.get_map_height(),
-				Q.dist[(int)io::dist_type::octile_ncc],
-				(first ? std::string(Q.map) : std::string())
-			);
+			    static_cast<experiment*>(experiments_res_.allocate(
+			        sizeof(experiment), alignof(experiment))),
+			    (uint32_t)Q.start_x, (uint32_t)Q.start_y, (uint32_t)Q.goal_x,
+			    (uint32_t)Q.goal_y, si.get_map_width(), si.get_map_height(),
+			    Q.dist[(int)io::dist_type::octile_ncc],
+			    (first ? std::string(Q.map) : std::string()));
 			experiments_.push_back(ex);
-		} else if (con == io::scenario_serialize::final)
-		{
-			break;
 		}
+		else if(con == io::scenario_serialize::final) { break; }
 		first = false; // store map in first query for backward compatability
 	}
 	return std::errc{};
@@ -209,9 +216,10 @@ find_map_filename(
  */
 std::filesystem::path
 find_map_filename(
-    const std::filesystem::path& mapname, const std::filesystem::path& sfilename)
+    const std::filesystem::path& mapname,
+    const std::filesystem::path& sfilename)
 {
-	namespace fs        = std::filesystem;
+	namespace fs = std::filesystem;
 	// scen file has a map name designated.
 	if(!mapname.empty())
 	{
