@@ -9,7 +9,7 @@ jobs:
       contents: write
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
     - uses: DoozyX/clang-format-lint-action@v0.18.1
       with:
         source: '.'
