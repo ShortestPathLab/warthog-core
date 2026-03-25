@@ -76,9 +76,10 @@ scenario_manager::load_gppc_scenario(std::istream& scenfile)
 	uint32_t height = si.get_map_height();
 	// read queries until done
 	bool first = true;
+	io::scenario_query Q; // keep out of loop to reuse std::string
 	while (true)
 	{
-		io::scenario_query Q;
+		Q.reset();
 		auto [con,ec] = si.read_query_line_v1(Q);
 		if (ec != std::errc{})
 		{
