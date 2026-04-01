@@ -32,6 +32,30 @@
 namespace warthog::util
 {
 
+struct scenario_command
+{
+	enum type_ : uint8_t {
+		SNAPSHOT,
+		PATCH,
+		QUERY
+	};
+	int type; ///< command type
+	int32_t bucket; ///< bucket id number (meta), snapshot id for dynamic
+	int32_t id; ///< SNAPSHOT: snapshot num, PATCH: patch to apply, QUERY: experiment num
+	union cmd_ {
+		struct snapshot_ {
+			uint32_t count; ///< number of commands until next SNAPSHOT
+		} snapshot;
+		struct patch_ {
+			uint16_t topleft_x;
+			uint16_t topleft_y;
+		} patch;
+		struct query_ {
+			uint32_t query_id; ///< experiment number
+		} query;
+	} cmd; ///< command union based on type
+};
+
 class scenario_manager
 {
 public:
@@ -39,16 +63,77 @@ public:
 	~scenario_manager();
 
 	experiment*
-	get_experiment(unsigned int which)
+	get_experiment(uint32_t which)
 	{
-		if(which < experiments_.size()) { return experiments_[which]; }
-		return 0;
+		if(which >= experiments_.size())
+			return nullptr;
+		if (static_scenario_start_ >= 0) {
+			return experiments_[which];
+		}
+		// handle dynamic scenario
+		if (experiment_at_ == which) {
+			return experiments_[which];
+		} else if (experiment_at_ < (int32_t)which) {
+			return experiment_next((int32_t)which - experiment_at_).first;
+		} else {
+			throw std::logic_error("scenario_manager::get_experiment can only progress forwards in dynamic scenarios.");
+		}
 	}
 	const experiment*
-	get_experiment(unsigned int which) const
+	get_experiment(uint32_t which) const
 	{
-		if(which < experiments_.size()) { return experiments_[which]; }
-		return 0;
+		if (static_scenario_start_ >= 0) {
+			if(which < experiments_.size()) { return experiments_[which]; }
+			return nullptr;
+		}
+		throw std::logic_error("scenario_manager::get_experiment can only be const for static scenarios.");
+	}
+
+	/// @brief progress from current to count experiment away and return it
+	/// @param count 
+	/// @return pair of the reached query and snapshot id.
+	///
+	/// Will progress through commands until count queries are encounted, returning the final query.
+	/// When count == 1, is exactly the next query.
+	/// All patches required 
+	std::pair<experiment*, int>
+	experiment_next(uint32_t count = 1);
+
+	/// @brief reset scenario to first command
+	void
+	restart();
+	/// @brief goto the start of the next snapshot (SNAPSHOT command)
+	/// @return snapshot id reached, or -1 if at end of commands (no more snapshots)
+	///
+	/// If current command is SNAPSHOT, if id != current_snapshot() then already at next snapshot,
+	/// otherwise progress until next SNAPSHOT command is reached (or end of commands).
+	/// Clears all patches from get_patches() and replaces with any PATCH command to next snapshot.
+	int
+	snapshot_next(bool clear_patch = true);
+	/// @brief starting at SNAPSHOT or current PATCH, apply all patches until reaching SNAPSHOT or QUERY
+	/// @param clear_patch clears get_patches()
+	/// @return the number of patches, patch id are retrivable from get_patches()
+	///
+	/// Requires to be on SNAPSHOT or PATCH, otherwise returns 0 and does nothing.
+	/// If @clear_patch is set, clears get_patches().
+	/// Appends all processed PATCH commands to get_patches().
+	int
+	snapshot_patches(bool clear_patch = true);
+	/// @brief returns the current query experiment if at query and progress to next command
+	/// @return the current query experiment if command is query, otherwise nullptr
+	///
+	/// Requires to be on QUERY, otherwise return nullptr and do nothing.
+	/// If QUERY, returns corrisponding experiment and goto next command.
+	/// Does not affect get_patches().
+	experiment*
+	snapshot_query();
+
+	bool complete() const noexcept { return command_at_ >= commands_.size(); }
+	
+	std::span<const uint32_t>
+	get_patches() const noexcept
+	{
+		return patches_;
 	}
 
 	void
@@ -85,14 +170,8 @@ public:
 		return mfile_;
 	}
 	void
-	clear()
-	{
-		experiments_.clear();
-		experiments_res_.release();
-	}
+	clear();
 
-	void
-	generate_experiments(domain::gridmap*, int num);
 	void
 	load_scenario(const std::filesystem::path& filelocation);
 	void
@@ -100,17 +179,31 @@ public:
 	    std::istream& file, std::filesystem::path&& mapfile_override = {});
 	void
 	write_scenario(std::ostream& out);
-	void
-	sort(); // organise by increasing solution length
+
+	bool is_static_scenario() const noexcept { return static_scenario_start_ >= 0; }
 
 protected:
 	std::errc
 	load_gppc_scenario(std::istream& scenfile);
 
+	std::errc
+	load_gppc_scenario_body_v1(io::scenario_serialize& si);
+	std::errc
+	load_gppc_scenario_body_v2(io::scenario_serialize& si);
+
+	std::string_view copy_string(std::string_view str);
+
 	std::pmr::monotonic_buffer_resource experiments_res_;
 	std::vector<experiment*> experiments_;
+	std::vector<scenario_command> commands_;
+	std::vector<uint32_t> patches_;
 	std::filesystem::path sfile_;
 	std::filesystem::path mfile_;
+	io::scenario_version version_ = io::scenario_version::UNKNOWN;
+	int32_t static_scenario_start_ = -1; ///< >=0: is static scenario where query commands start at pos, else is dynamic scenario
+	uint32_t command_at_ = 0; ///< command at, used for dynamic scenario
+	int32_t experiment_at_ = 0;
+	int32_t snapshot_at_ = -1;
 };
 
 std::filesystem::path

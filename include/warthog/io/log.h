@@ -56,6 +56,16 @@
 #include <utility>
 #include <warthog/constants.h>
 
+// define utility for help with log messages
+#define WARTHOG_STRING_(x) #x
+#define WARTHOG_STRING(x) WARTHOG_STRING_(x)
+#define WARTHOG_STRING2(x) WARTHOG_STRING(x)
+#define WARTHOG_STRING3(x) WARTHOG_STRING(x)
+#define WARTHOG_STRING4(x) WARTHOG_STRING(x)
+
+#define WARTHOG_LINE WARTHOG_STRING2(__LINE__)
+#define WARTHOG_FILENAME_LINE __FILE__ "@" WARTHOG_LINE
+
 // default log levels, also for global logger
 #ifdef WARTHOG_LOG
 #define WARTHOG_DEFAULT_LOG_LEVEL WARTHOG_LOG

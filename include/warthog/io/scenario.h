@@ -35,17 +35,18 @@ namespace warthog::io
 
 enum class scenario_version : uint8_t
 {
-	version1,
-	version2,
+	UNKNOWN,
+	VERSION_1,
+	VERSION_2,
 };
 enum class dist_type : uint8_t
 {
-	octile_ncc,
-	octile_cc,
-	manhatten,
-	anyangle_ncc,
-	anyangle_cc,
-	dist_count,
+	N_8C_NCC,
+	N_8C_CC,
+	N_4C,
+	AA_NCC,
+	AA_CC,
+	DISC_COUNT,
 };
 
 struct scenario_query
@@ -58,7 +59,7 @@ struct scenario_query
 	double start_y;
 	double goal_x;
 	double goal_y;
-	std::array<double, (size_t)dist_type::dist_count> dist;
+	std::array<double, (size_t)dist_type::DISC_COUNT> dist;
 
 	void
 	reset()
@@ -133,7 +134,7 @@ public:
 	{
 		m_version = version;
 		m_dist.reset();
-		if(version == scenario_version::version1) m_dist.set(0, true);
+		if(version == scenario_version::VERSION_1) m_dist.set(0, true);
 	}
 	scenario_version
 	get_version() const noexcept
@@ -152,7 +153,7 @@ public:
 	bool
 	has_dist_type(dist_type d) const noexcept
 	{
-		assert((uint32_t)d < (uint32_t)dist_type::dist_count);
+		assert((uint32_t)d < (uint32_t)dist_type::DISC_COUNT);
 		return m_dist.test((uint32_t)d);
 	}
 
@@ -227,7 +228,7 @@ public:
 	/// @param in optional stream to use, otherwise uses internal-set stream
 	/// @return success std::errc{} (0)
 	///
-	/// With version1: peeks first query to gain map name
+	/// With VERSION1: peeks first query to gain map name
 	/// With version2: gets map width/height, available costs and patch
 	/// filename
 	std::errc
@@ -273,14 +274,14 @@ protected:
 
 protected:
 	serialize_state m_state    = serialize_state::init;
-	scenario_version m_version = scenario_version::version1;
+	scenario_version m_version = scenario_version::UNKNOWN;
 	bool m_force_int           = false;
 	std::filesystem::path m_scenario_filename;
 	std::filesystem::path m_map_filename;
 	std::unique_ptr<std::ios_base> m_scenario_stream;
 	std::istream* m_scenario_in  = nullptr;
 	std::ostream* m_scenario_out = nullptr;
-	std::bitset<(size_t)dist_type::dist_count> m_dist;
+	std::bitset<(size_t)dist_type::DISC_COUNT> m_dist;
 	uint32_t m_map_width  = 0;
 	uint32_t m_map_height = 0;
 	int32_t m_query_at    = 0;

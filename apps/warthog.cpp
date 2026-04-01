@@ -340,15 +340,6 @@ main(int argc, char** argv)
 	trace_file = cfg.get_param_value("trace");
 #endif
 
-	// if(gen != "")
-	// {
-	// 	warthog::util::scenario_manager sm;
-	// 	warthog::domain::gridmap gm(gen.c_str());
-	// 	sm.generate_experiments(&gm, 1000) ;
-	// 	sm.write_scenario(std::cout);
-	//     exit(0);
-	// }
-
 	// running experiments
 	if(alg == "" || sfile == "")
 	{

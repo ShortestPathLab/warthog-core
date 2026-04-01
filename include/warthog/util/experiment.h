@@ -23,7 +23,7 @@
 #include <warthog/search/problem_instance.h>
 
 #include <iostream>
-#include <string>
+#include <string_view>
 
 namespace warthog::util
 {
@@ -33,10 +33,17 @@ class experiment
 public:
 	experiment(
 	    uint32_t sx, uint32_t sy, uint32_t gx, uint32_t gy, uint32_t mapwidth,
-	    uint32_t mapheight, double d, std::string&& m)
+	    uint32_t mapheight, double d, std::string_view m)
 	    : startx_(sx), starty_(sy), goalx_(gx), goaly_(gy),
 	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d),
-	      map_(std::move(m)), precision_(4)
+	      map_(m), precision_(4)
+	{ }
+	experiment(
+	    double sx, double sy, double gx, double gy, uint32_t mapwidth,
+	    uint32_t mapheight, double d, std::string_view m)
+	    : startx_(sx), starty_(sy), goalx_(gx), goaly_(gy),
+	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d),
+	      map_(m), precision_(4)
 	{ }
 
 	// no copy
@@ -50,11 +57,21 @@ public:
 	uint32_t
 	startx() const noexcept
 	{
+		return static_cast<uint32_t>(startx_);
+	}
+	double
+	startx_f() const noexcept
+	{
 		return startx_;
 	}
 
 	uint32_t
 	starty() const noexcept
+	{
+		return static_cast<uint32_t>(starty_);
+	}
+	double
+	starty_f() const noexcept
 	{
 		return starty_;
 	}
@@ -62,11 +79,21 @@ public:
 	uint32_t
 	goalx() const noexcept
 	{
+		return static_cast<uint32_t>(goalx_);
+	}
+	double
+	goalx_f() const noexcept
+	{
 		return goalx_;
 	}
 
 	uint32_t
 	goaly() const noexcept
+	{
+		return static_cast<uint32_t>(goaly_);
+	}
+	double
+	goaly_f() const noexcept
 	{
 		return goaly_;
 	}
@@ -77,7 +104,7 @@ public:
 		return distance_;
 	}
 
-	const std::string&
+	std::string_view
 	map() const noexcept
 	{
 		return map_;
@@ -114,15 +141,15 @@ public:
 	get_instance() const noexcept
 	{
 		return search::problem_instance(
-		    pack_id{starty_ * mapwidth_ + startx_},
-		    pack_id{goaly_ * mapwidth_ + goalx_});
+		    pack_id{starty() * mapwidth_ + startx()},
+		    pack_id{goaly() * mapwidth_ + goalx()});
 	}
 
 private:
-	uint32_t startx_, starty_, goalx_, goaly_;
+	double startx_, starty_, goalx_, goaly_;
 	uint32_t mapwidth_, mapheight_;
 	double distance_;
-	std::string map_;
+	std::string_view map_;
 	int32_t precision_;
 };
 

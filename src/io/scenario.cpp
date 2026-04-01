@@ -45,7 +45,7 @@ void
 scenario_serialize::close()
 {
 	m_state        = serialize_state::init;
-	m_version      = scenario_version::version1;
+	m_version      = scenario_version::UNKNOWN;
 	m_scenario_in  = nullptr;
 	m_scenario_out = nullptr;
 	m_dist.reset();
@@ -146,8 +146,8 @@ scenario_serialize::read_version(std::istream* in)
 		m_state = serialize_state::error;
 		return std::errc::invalid_argument;
 	}
-	m_version = version == 1 ? scenario_version::version1
-	                         : scenario_version::version2;
+	m_version = version == 1 ? scenario_version::VERSION_1
+	                         : scenario_version::VERSION_2;
 	m_state   = serialize_state::header;
 	return std::errc{};
 }
@@ -162,9 +162,9 @@ scenario_serialize::read_header(std::istream* in)
 
 	switch(m_version)
 	{
-	case scenario_version::version1:
+	case scenario_version::VERSION_1:
 		return read_header_v1(get_istream().first);
-	case scenario_version::version2:
+	case scenario_version::VERSION_2:
 		return read_header_v2(get_istream().first);
 	default:
 		return std::errc::state_not_recoverable;
@@ -237,7 +237,7 @@ scenario_serialize::read_header_v2(std::istream* in)
 			return std::errc::io_error;
 		}
 	}
-	if(m_map_height < 1 || m_map_height > GRID_MAX_SIZE)
+	if(m_token != "height" || m_map_height < 1 || m_map_height > GRID_MAX_SIZE)
 	{
 		m_state = serialize_state::error;
 		return std::errc::invalid_argument;
@@ -257,7 +257,27 @@ scenario_serialize::read_header_v2(std::istream* in)
 			return std::errc::io_error;
 		}
 	}
-	if(m_map_width < 1 || m_map_width > GRID_MAX_SIZE)
+	// cost
+	std::tie(line, err) = readline(in);
+	if(err != std::errc{})
+	{
+		m_state = serialize_state::error;
+		return err;
+	}
+	{
+		auto& iss = line_stream(line);
+		int cost_count;
+		if(!(iss >> m_token >> cost_count))
+		{
+			m_state = serialize_state::error;
+			return std::errc::io_error;
+		}
+		if (cost_count < 0 || cost_count > 128)
+		{
+			// limit cost_count to be within reason
+		}
+	}
+	if(m_token != "width" || m_map_width < 1 || m_map_width > GRID_MAX_SIZE)
 	{
 		m_state = serialize_state::error;
 		return std::errc::invalid_argument;
