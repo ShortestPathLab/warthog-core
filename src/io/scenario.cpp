@@ -12,9 +12,10 @@ namespace warthog::io
 {
 
 scenario_serialize::scenario_serialize()
-    : m_line(static_cast<char*>(m_dyn_res.allocate(max_line_length + 2))),
+    : m_dyn_res(1024), m_string_res(256),
+	  m_line(static_cast<char*>(m_dyn_res.allocate(max_line_length + 2))),
       m_unget_line(&m_dyn_res), m_dist_strings(&m_dyn_res),
-      m_dist_id(&m_dyn_res)
+      m_dist_type(&m_dyn_res), m_dist_value(&m_dyn_res)
 {
 	m_line[0] = '\0';
 }
@@ -48,15 +49,16 @@ scenario_serialize::close()
 	m_version      = scenario_version::UNKNOWN;
 	m_scenario_in  = nullptr;
 	m_scenario_out = nullptr;
-	m_dist.reset();
 	m_map_width  = 0;
 	m_map_height = 0;
 	m_query_at   = 0;
 	m_line_num   = -1;
-	m_line[0]    = '\0';
+	if (m_line != nullptr)
+		m_line[0]    = '\0';
 	m_unget_line.clear();
 	m_dist_strings.clear();
-	m_dist_id.clear();
+	m_dist_type.clear();
+	m_dist_value.clear();
 	m_scenario_stream = nullptr;
 }
 
@@ -87,8 +89,8 @@ scenario_serialize::readline(std::istream* in)
 				return {{}, std::errc::io_error};
 		}
 		len = strlen(m_line);
+		m_line_num += 1;
 	}
-	m_line_num += 1;
 	return {std::string_view(m_line, len), {}};
 }
 void
@@ -207,6 +209,13 @@ scenario_serialize::read_header_v1(std::istream* in)
 	}
 	unreadline(m_line);
 	m_state = serialize_state::query;
+	// setup distance types
+	m_dist_strings.resize(1);
+	m_dist_type.resize(1);
+	m_dist_value.resize(1);
+	m_dist_strings[0] = get_dist_str(dist_type::N_8C_NCC);
+	m_dist_type[0] = dist_type::N_8C_NCC;
+	m_dist_value[0] = -1;
 	return std::errc{};
 }
 
@@ -304,12 +313,14 @@ scenario_serialize::read_query_line_v1(scenario_query& query, std::istream* in)
 		return std::isspace((unsigned char)a);
 	}));
 	auto& iss = line_stream(line);
-	if(!(iss >> query.bucket >> query.map >> query.width >> query.height
+	if(!(iss >> query.bucket >> m_token >> query.width >> query.height
 	     >> query.start_x >> query.start_y >> query.goal_x >> query.goal_y
-	     >> query.dist[0]))
+	     >> m_dist_value.at(0)))
 	{
 		return {invalid, std::errc::io_error};
 	}
+	query.map = m_token;
+	query.dist = m_dist_value;
 	if(!std::isfinite(query.start_x) || !std::isfinite(query.start_y)
 	   || !std::isfinite(query.goal_x) || !std::isfinite(query.goal_y)
 	   || !std::isfinite(query.dist[0]))
@@ -355,13 +366,13 @@ scenario_serialize::read_query_line_v2(scenario_query& query, std::istream* in)
 	assert(can_read(in));
 	int width, height;
 	double d;
-	query.dist.fill(-1.0);
+	std::fill(m_dist_value.begin(), m_dist_value.end(), -1.0);
 	if(!(m_iss >> query.bucket >> query.start_x >> query.start_y
 	     >> query.goal_x >> query.goal_y))
 	{
 		return {invalid, std::errc::io_error};
 	}
-	for(auto i : m_dist_id)
+	for(uint32_t i = 0, ie = m_dist_type.size(); i < ie; ++i)
 	{
 		if(!(m_iss >> d)) { return {invalid, std::errc::io_error}; }
 		if(!std::isfinite(d))

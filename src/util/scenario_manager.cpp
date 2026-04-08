@@ -129,11 +129,11 @@ scenario_manager::snapshot_query()
 		return nullptr;
 	command_at_ += 1;
 	experiment_at_ += 1;
-	if (cmd.cmd.query.query_id >= experiments_.size() || cmd.cmd.query.query_id != (uint32_t)experiment_at_) {
-		WARTHOG_GERROR_FMT("scenario_manager::snapshot_query invalid query_id {} to experiment, expected {} (max {}) in {}", cmd.cmd.query.query_id, experiment_at_, experiments_.size(), WARTHOG_FILENAME_LINE);
+	if (cmd.cmd.query.experiment_id >= experiments_.size() || cmd.cmd.query.experiment_id != (uint32_t)experiment_at_) {
+		WARTHOG_GERROR_FMT("scenario_manager::snapshot_query invalid experiment_id {} to experiment, expected {} (max {}) in {}", cmd.cmd.query.experiment_id, experiment_at_, experiments_.size(), WARTHOG_FILENAME_LINE);
 		return nullptr;
 	}
-	return experiments_[cmd.cmd.query.query_id];
+	return experiments_[cmd.cmd.query.experiment_id];
 }
 
 void
@@ -212,8 +212,14 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 
 	mfile_ = si.get_map_filename();
 	experiments_.reserve(1024);
+	commands_.reserve(1024);
 	uint32_t width  = si.get_map_width();
 	uint32_t height = si.get_map_height();
+	// setup commands header for static scenario
+	commands_.push_back(scenario_command::make_snapshot(0, 0));
+	commands_.push_back(scenario_command::make_patch(0, 0, 0, 0));
+	++patch_count_;
+	static_scenario_start_ = (int32_t)commands_.size();
 	// read queries until done
 	bool first = true;
 	io::scenario_query Q; // keep out of loop to reuse std::string
@@ -250,6 +256,7 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 			    Q.dist[(int)io::dist_type::N_8C_NCC],
 			   	map_string);
 			experiments_.push_back(ex);
+			commands_.push_back(scenario_command::make_query(Q.bucket, query_count_++, (uint32_t)(experiments_.size()-1)));
 		}
 		else if(con == io::scenario_serialize::final) { break; }
 	}

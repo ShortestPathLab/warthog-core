@@ -29,6 +29,7 @@
 #include <memory_resource>
 #include <sstream>
 #include <vector>
+#include <span>
 
 namespace warthog::io
 {
@@ -46,20 +47,20 @@ enum class dist_type : uint8_t
 	N_4C,
 	AA_NCC,
 	AA_CC,
-	DISC_COUNT,
+	OTHER,
 };
 
 struct scenario_query
 {
 	int64_t bucket;
-	std::string map;
+	std::string_view map;
 	int32_t width;
 	int32_t height;
 	double start_x;
 	double start_y;
 	double goal_x;
 	double goal_y;
-	std::array<double, (size_t)dist_type::DISC_COUNT> dist;
+	std::span<double> dist;
 
 	void
 	reset()
@@ -99,6 +100,9 @@ public:
 	scenario_serialize();
 	~scenario_serialize();
 
+	static constexpr std::string_view get_dist_str(dist_type a) noexcept;
+	static constexpr dist_type get_dist_type(std::string_view a) noexcept;
+
 	/// @brief Resets class, including memory.  Must use between seperate
 	/// read/writes, needed for memory managment.
 	void
@@ -133,8 +137,6 @@ public:
 	set_version(scenario_version version) noexcept
 	{
 		m_version = version;
-		m_dist.reset();
-		if(version == scenario_version::VERSION_1) m_dist.set(0, true);
 	}
 	scenario_version
 	get_version() const noexcept
@@ -145,16 +147,26 @@ public:
 	/// @brief the types of dist used, only relivent for version2, otherwise
 	/// octile_ncc(0)
 	/// @return bitset<dist_count>
-	auto
-	get_dist_types() const noexcept
+	std::span<const std::string_view>
+	get_dist_strings() const noexcept
 	{
-		return m_dist;
+		return m_dist_strings;
 	}
-	bool
-	has_dist_type(dist_type d) const noexcept
+	std::span<const dist_type>
+	get_dist_type() const noexcept
 	{
-		assert((uint32_t)d < (uint32_t)dist_type::DISC_COUNT);
-		return m_dist.test((uint32_t)d);
+		return m_dist_type;
+	}
+	std::span<const double>
+	get_dist_value() const noexcept
+	{
+		return m_dist_value;
+	}
+	int
+	get_dist_index(dist_type d) const noexcept
+	{
+		auto it = std::find(m_dist_type.begin(), m_dist_type.end(), d);
+		return it != m_dist_type.end() ? static_cast<int>(it - m_dist_type.begin()) : -1;
 	}
 
 	int32_t
@@ -281,7 +293,6 @@ protected:
 	std::unique_ptr<std::ios_base> m_scenario_stream;
 	std::istream* m_scenario_in  = nullptr;
 	std::ostream* m_scenario_out = nullptr;
-	std::bitset<(size_t)dist_type::DISC_COUNT> m_dist;
 	uint32_t m_map_width  = 0;
 	uint32_t m_map_height = 0;
 	int32_t m_query_at    = 0;
@@ -292,14 +303,48 @@ protected:
 	std::pmr::monotonic_buffer_resource m_string_res;
 	char* m_line = nullptr; ///< sets from m_dyn_res
 	std::pmr::string m_unget_line;
-	std::pmr::vector<std::string_view> m_dist_strings;
-	std::pmr::vector<int16_t> m_dist_id;
+	// distance types
+	std::pmr::vector<std::string_view> m_dist_strings; ///< names read in
+	std::pmr::vector<dist_type> m_dist_type; ///< dist_type of index (corrisponding dist_strings and dist_value)
+	std::pmr::vector<double> m_dist_value; ///< distance value stored, will be placed in dynamic_scenario
 
 	// shared temp parameter
 	// TODO: replace with a custom string stream that does not allocate memory
 	std::istringstream m_iss;
 	std::string m_token;
 };
+
+inline constexpr std::string_view scenario_serialize::get_dist_str(dist_type a) noexcept
+{
+	switch(a) {
+	case dist_type::N_8C_NCC:
+		return "8c-ncc";
+	case dist_type::N_8C_CC:
+		return "8c-cc";
+	case dist_type::N_4C:
+		return "4c";
+	case dist_type::AA_NCC:
+		return "aa-ncc";
+	case dist_type::AA_CC:
+		return "aa-cc";
+	default:
+		return std::string_view();
+	}
+}
+inline constexpr dist_type scenario_serialize::get_dist_type(std::string_view a) noexcept
+{
+	if (a == "8c-ncc")
+		return dist_type::N_8C_NCC;
+	if (a == "8c-cc")
+		return dist_type::N_8C_CC;
+	if (a == "4c")
+		return dist_type::N_4C;
+	if (a == "aa-ncc")
+		return dist_type::AA_NCC;
+	if (a == "aa-cc")
+		return dist_type::AA_CC;
+	return dist_type::OTHER;
+}
 
 } // namespace warthog::util
 

@@ -41,19 +41,30 @@ struct scenario_command
 	};
 	int type; ///< command type
 	int32_t bucket; ///< bucket id number (meta), snapshot id for dynamic
-	int32_t id; ///< SNAPSHOT: snapshot num, PATCH: patch to apply, QUERY: experiment num
+	uint32_t id; ///< SNAPSHOT: snapshot num, PATCH: patch to apply, QUERY: query id
 	union cmd_ {
-		struct snapshot_ {
-			uint32_t count; ///< number of commands until next SNAPSHOT
-		} snapshot;
+		struct snapshot_ { } snapshot;
 		struct patch_ {
 			uint16_t topleft_x;
 			uint16_t topleft_y;
 		} patch;
 		struct query_ {
-			uint32_t query_id; ///< experiment number
+			uint32_t experiment_id; ///< experiment number
 		} query;
 	} cmd; ///< command union based on type
+
+	static constexpr scenario_command make_snapshot(int32_t bucket_id, uint32_t snapshot_id) noexcept
+	{
+		return scenario_command{SNAPSHOT, bucket_id, snapshot_id, {.snapshot={}}};
+	}
+	static constexpr scenario_command make_patch(int32_t bucket_id, uint32_t patch_id, uint16_t x, uint16_t y) noexcept
+	{
+		return scenario_command{PATCH, bucket_id, patch_id, {.patch={x,y}}};
+	}
+	static constexpr scenario_command make_query(int32_t bucket_id, uint32_t query_id, uint32_t experiment_id) noexcept
+	{
+		return scenario_command{QUERY, bucket_id, query_id, {.query={experiment_id}}};
+	}
 };
 
 class scenario_manager
@@ -200,6 +211,8 @@ protected:
 	std::filesystem::path sfile_;
 	std::filesystem::path mfile_;
 	io::scenario_version version_ = io::scenario_version::UNKNOWN;
+	uint32_t query_count_ = 0;
+	uint32_t patch_count_ = 0;
 	int32_t static_scenario_start_ = -1; ///< >=0: is static scenario where query commands start at pos, else is dynamic scenario
 	uint32_t command_at_ = 0; ///< command at, used for dynamic scenario
 	int32_t experiment_at_ = 0;
