@@ -20,120 +20,6 @@ void scenario_manager::clear()
 	experiments_res_.release();
 	sfile_.clear();
 	mfile_.clear();
-	restart();
-}
-
-std::pair<experiment*, int> scenario_manager::experiment_next(uint32_t count)
-{
-	patches_.clear(); // reset patches
-	if (count == 0)
-		return {nullptr, 0};
-	uint32_t command_size = static_cast<uint32_t>(commands_.size());
-	int patch_count = 0;
-	while (command_at_ < command_size) {
-		auto cmd = commands_[command_at_];
-		// command_at_ incremented in following fuction calls
-		switch (cmd.type) {
-		case scenario_command::SNAPSHOT:
-		case scenario_command::PATCH:
-			patch_count += snapshot_patches();
-			break;
-		case scenario_command::QUERY:
-			if (experiment* query = snapshot_query(); query != nullptr) {
-				if (--count == 0)
-					return {query, patch_count};
-			}
-			break;
-		default:
-			// should never be reached
-			++command_at_;
-			WARTHOG_GDEBUG("scenario_manager::experiment_next invalid command type in " WARTHOG_FILENAME_LINE);
-		}
-		// exits loop 
-	}
-	// no more experiments
-	return {nullptr, patch_count};
-}
-
-void
-scenario_manager::restart()
-{
-	patches_.clear();
-	version_ = io::scenario_version::UNKNOWN;
-	static_scenario_start_ = -1;
-	command_at_ = 0;
-	experiment_at_ = -1;
-	snapshot_at_ = -1;
-}
-
-int
-scenario_manager::snapshot_next(bool clear_patch)
-{
-	if (clear_patch)
-		patches_.clear();
-	const uint32_t command_size = static_cast<uint32_t>(commands_.size());
-	while (command_at_ < command_size) {
-		auto cmd = commands_[command_at_];
-		switch (cmd.type) {
-		case scenario_command::SNAPSHOT:
-			if (cmd.id != snapshot_at_) {
-				// at new snapshot, return
-				snapshot_at_ = cmd.id;
-				return snapshot_at_;
-			}
-			// current snapshot, goto next snapshot
-		[[fallthrough]];
-		case scenario_command::QUERY:
-			++snapshot_at_;
-			break;
-		case scenario_command::PATCH:
-			snapshot_patches(false);
-			// snapshot_patches increments snapshot_at_
-			break;
-		default:
-			WARTHOG_GDEBUG("scenario_manager::snapshot_next invalid command type in " WARTHOG_FILENAME_LINE);
-		}
-	}
-	return false;
-}
-
-int
-scenario_manager::snapshot_patches(bool clear_patch)
-{
-	if (clear_patch)
-		patches_.clear();
-	const uint32_t command_size = static_cast<uint32_t>(commands_.size());
-	int count = 0;
-	// if start of snapshot, apply that snapshot patches
-	if (command_at_ < command_size && commands_[command_at_].type == scenario_command::SNAPSHOT)
-		command_at_ += 1;
-	// while command_at_ is PATCH, add patch to applied list
-	while (command_at_ < command_size) {
-		if (auto cmd = commands_[command_at_]; cmd.bucket == scenario_command::PATCH) {
-			command_at_ += 1;
-			count += 1;
-			patches_.push_back(cmd.id);
-		}
-	}
-	// end at first non-PATCH command
-	return count;
-}
-
-experiment*
-scenario_manager::snapshot_query()
-{
-	if (command_at_ >= commands_.size())
-		return nullptr;
-	auto cmd = commands_[command_at_];
-	if (cmd.type != scenario_command::QUERY)
-		return nullptr;
-	command_at_ += 1;
-	experiment_at_ += 1;
-	if (cmd.cmd.query.experiment_id >= experiments_.size() || cmd.cmd.query.experiment_id != (uint32_t)experiment_at_) {
-		WARTHOG_GERROR_FMT("scenario_manager::snapshot_query invalid experiment_id {} to experiment, expected {} (max {}) in {}", cmd.cmd.query.experiment_id, experiment_at_, experiments_.size(), WARTHOG_FILENAME_LINE);
-		return nullptr;
-	}
-	return experiments_[cmd.cmd.query.experiment_id];
 }
 
 void
@@ -253,7 +139,7 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 			        sizeof(experiment), alignof(experiment))),
 			    (uint32_t)Q.start_x, (uint32_t)Q.start_y, (uint32_t)Q.goal_x,
 			    (uint32_t)Q.goal_y, si.get_map_width(), si.get_map_height(),
-			    Q.dist[(int)io::dist_type::N_8C_NCC],
+			    Q.dist[(int)io::cost_type::G_8C_NCC],
 			   	map_string);
 			experiments_.push_back(ex);
 			commands_.push_back(scenario_command::make_query(Q.bucket, query_count_++, (uint32_t)(experiments_.size()-1)));
@@ -312,7 +198,7 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			        sizeof(experiment), alignof(experiment))),
 			    (uint32_t)Q.start_x, (uint32_t)Q.start_y, (uint32_t)Q.goal_x,
 			    (uint32_t)Q.goal_y, si.get_map_width(), si.get_map_height(),
-			    Q.dist[(int)io::dist_type::N_8C_NCC],
+			    Q.dist[(int)io::cost_type::G_8C_NCC],
 			   	map_string);
 			experiments_.push_back(ex);
 		}

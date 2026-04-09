@@ -28,5 +28,6 @@ util/file_utils.cpp
 util/gm_parser.cpp
 util/helpers.cpp
 util/scenario_manager.cpp
+util/scenario_runner.cpp
 util/timer.cpp
 )

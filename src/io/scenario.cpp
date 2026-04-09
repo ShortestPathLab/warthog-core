@@ -15,7 +15,7 @@ scenario_serialize::scenario_serialize()
     : m_dyn_res(1024), m_string_res(256),
 	  m_line(static_cast<char*>(m_dyn_res.allocate(max_line_length + 2))),
       m_unget_line(&m_dyn_res), m_dist_strings(&m_dyn_res),
-      m_dist_type(&m_dyn_res), m_dist_value(&m_dyn_res)
+      m_cost_type(&m_dyn_res), m_dist_value(&m_dyn_res)
 {
 	m_line[0] = '\0';
 }
@@ -57,7 +57,7 @@ scenario_serialize::close()
 		m_line[0]    = '\0';
 	m_unget_line.clear();
 	m_dist_strings.clear();
-	m_dist_type.clear();
+	m_cost_type.clear();
 	m_dist_value.clear();
 	m_scenario_stream = nullptr;
 }
@@ -211,10 +211,10 @@ scenario_serialize::read_header_v1(std::istream* in)
 	m_state = serialize_state::query;
 	// setup distance types
 	m_dist_strings.resize(1);
-	m_dist_type.resize(1);
+	m_cost_type.resize(1);
 	m_dist_value.resize(1);
-	m_dist_strings[0] = get_dist_str(dist_type::N_8C_NCC);
-	m_dist_type[0] = dist_type::N_8C_NCC;
+	m_dist_strings[0] = get_dist_str(cost_type::G_8C_NCC);
+	m_cost_type[0] = cost_type::G_8C_NCC;
 	m_dist_value[0] = -1;
 	return std::errc{};
 }
@@ -372,7 +372,7 @@ scenario_serialize::read_query_line_v2(scenario_query& query, std::istream* in)
 	{
 		return {invalid, std::errc::io_error};
 	}
-	for(uint32_t i = 0, ie = m_dist_type.size(); i < ie; ++i)
+	for(uint32_t i = 0, ie = m_cost_type.size(); i < ie; ++i)
 	{
 		if(!(m_iss >> d)) { return {invalid, std::errc::io_error}; }
 		if(!std::isfinite(d))

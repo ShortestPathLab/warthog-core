@@ -30,6 +30,8 @@
 #include <sstream>
 #include <vector>
 #include <span>
+#include <compare>
+#include <algorithm>
 
 namespace warthog::io
 {
@@ -40,11 +42,11 @@ enum class scenario_version : uint8_t
 	VERSION_1,
 	VERSION_2,
 };
-enum class dist_type : uint8_t
+enum class cost_type : uint8_t
 {
-	N_8C_NCC,
-	N_8C_CC,
-	N_4C,
+	G_8C_NCC,
+	G_8C_CC,
+	G_4C,
 	AA_NCC,
 	AA_CC,
 	OTHER,
@@ -100,8 +102,8 @@ public:
 	scenario_serialize();
 	~scenario_serialize();
 
-	static constexpr std::string_view get_dist_str(dist_type a) noexcept;
-	static constexpr dist_type get_dist_type(std::string_view a) noexcept;
+	static constexpr std::string_view get_dist_str(cost_type a) noexcept;
+	static constexpr cost_type get_cost_type(std::string_view a) noexcept;
 
 	/// @brief Resets class, including memory.  Must use between seperate
 	/// read/writes, needed for memory managment.
@@ -152,10 +154,10 @@ public:
 	{
 		return m_dist_strings;
 	}
-	std::span<const dist_type>
-	get_dist_type() const noexcept
+	std::span<const cost_type>
+	get_cost_type() const noexcept
 	{
-		return m_dist_type;
+		return m_cost_type;
 	}
 	std::span<const double>
 	get_dist_value() const noexcept
@@ -163,10 +165,10 @@ public:
 		return m_dist_value;
 	}
 	int
-	get_dist_index(dist_type d) const noexcept
+	get_dist_index(cost_type d) const noexcept
 	{
-		auto it = std::find(m_dist_type.begin(), m_dist_type.end(), d);
-		return it != m_dist_type.end() ? static_cast<int>(it - m_dist_type.begin()) : -1;
+		auto it = std::find(m_cost_type.begin(), m_cost_type.end(), d);
+		return it != m_cost_type.end() ? static_cast<int>(it - m_cost_type.begin()) : -1;
 	}
 
 	int32_t
@@ -305,7 +307,7 @@ protected:
 	std::pmr::string m_unget_line;
 	// distance types
 	std::pmr::vector<std::string_view> m_dist_strings; ///< names read in
-	std::pmr::vector<dist_type> m_dist_type; ///< dist_type of index (corrisponding dist_strings and dist_value)
+	std::pmr::vector<cost_type> m_cost_type; ///< cost_type of index (corrisponding dist_strings and dist_value)
 	std::pmr::vector<double> m_dist_value; ///< distance value stored, will be placed in dynamic_scenario
 
 	// shared temp parameter
@@ -314,36 +316,36 @@ protected:
 	std::string m_token;
 };
 
-inline constexpr std::string_view scenario_serialize::get_dist_str(dist_type a) noexcept
+inline constexpr std::string_view scenario_serialize::get_dist_str(cost_type a) noexcept
 {
 	switch(a) {
-	case dist_type::N_8C_NCC:
+	case cost_type::G_8C_NCC:
 		return "8c-ncc";
-	case dist_type::N_8C_CC:
+	case cost_type::G_8C_CC:
 		return "8c-cc";
-	case dist_type::N_4C:
+	case cost_type::G_4C:
 		return "4c";
-	case dist_type::AA_NCC:
+	case cost_type::AA_NCC:
 		return "aa-ncc";
-	case dist_type::AA_CC:
+	case cost_type::AA_CC:
 		return "aa-cc";
 	default:
 		return std::string_view();
 	}
 }
-inline constexpr dist_type scenario_serialize::get_dist_type(std::string_view a) noexcept
+inline constexpr cost_type scenario_serialize::get_cost_type(std::string_view a) noexcept
 {
 	if (a == "8c-ncc")
-		return dist_type::N_8C_NCC;
+		return cost_type::G_8C_NCC;
 	if (a == "8c-cc")
-		return dist_type::N_8C_CC;
+		return cost_type::G_8C_CC;
 	if (a == "4c")
-		return dist_type::N_4C;
+		return cost_type::G_4C;
 	if (a == "aa-ncc")
-		return dist_type::AA_NCC;
+		return cost_type::AA_NCC;
 	if (a == "aa-cc")
-		return dist_type::AA_CC;
-	return dist_type::OTHER;
+		return cost_type::AA_CC;
+	return cost_type::OTHER;
 }
 
 } // namespace warthog::util

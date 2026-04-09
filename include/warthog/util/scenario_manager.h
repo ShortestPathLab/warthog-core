@@ -76,75 +76,42 @@ public:
 	experiment*
 	get_experiment(uint32_t which)
 	{
-		if(which >= experiments_.size())
+		if(which >= experiments_.size()) {
+			WARTHOG_GWARN_FMT("scenario has max {} experiments, cannot retrive {}", experiments_.size(), which);
 			return nullptr;
-		if (static_scenario_start_ >= 0) {
-			return experiments_[which];
 		}
-		// handle dynamic scenario
-		if (experiment_at_ == which) {
-			return experiments_[which];
-		} else if (experiment_at_ < (int32_t)which) {
-			return experiment_next((int32_t)which - experiment_at_).first;
-		} else {
-			throw std::logic_error("scenario_manager::get_experiment can only progress forwards in dynamic scenarios.");
-		}
+		return experiments_[which];
 	}
 	const experiment*
 	get_experiment(uint32_t which) const
 	{
-		if (static_scenario_start_ >= 0) {
-			if(which < experiments_.size()) { return experiments_[which]; }
+		if(which >= experiments_.size()) {
+			WARTHOG_GWARN_FMT("scenario has max {} experiments, cannot retrive {}", experiments_.size(), which);
 			return nullptr;
 		}
-		throw std::logic_error("scenario_manager::get_experiment can only be const for static scenarios.");
+		return experiments_[which];
 	}
 
-	/// @brief progress from current to count experiment away and return it
-	/// @param count 
-	/// @return pair of the reached query and snapshot id.
-	///
-	/// Will progress through commands until count queries are encounted, returning the final query.
-	/// When count == 1, is exactly the next query.
-	/// All patches required 
-	std::pair<experiment*, int>
-	experiment_next(uint32_t count = 1);
-
-	/// @brief reset scenario to first command
-	void
-	restart();
-	/// @brief goto the start of the next snapshot (SNAPSHOT command)
-	/// @return snapshot id reached, or -1 if at end of commands (no more snapshots)
-	///
-	/// If current command is SNAPSHOT, if id != current_snapshot() then already at next snapshot,
-	/// otherwise progress until next SNAPSHOT command is reached (or end of commands).
-	/// Clears all patches from get_patches() and replaces with any PATCH command to next snapshot.
-	int
-	snapshot_next(bool clear_patch = true);
-	/// @brief starting at SNAPSHOT or current PATCH, apply all patches until reaching SNAPSHOT or QUERY
-	/// @param clear_patch clears get_patches()
-	/// @return the number of patches, patch id are retrivable from get_patches()
-	///
-	/// Requires to be on SNAPSHOT or PATCH, otherwise returns 0 and does nothing.
-	/// If @clear_patch is set, clears get_patches().
-	/// Appends all processed PATCH commands to get_patches().
-	int
-	snapshot_patches(bool clear_patch = true);
-	/// @brief returns the current query experiment if at query and progress to next command
-	/// @return the current query experiment if command is query, otherwise nullptr
-	///
-	/// Requires to be on QUERY, otherwise return nullptr and do nothing.
-	/// If QUERY, returns corrisponding experiment and goto next command.
-	/// Does not affect get_patches().
-	experiment*
-	snapshot_query();
-
-	bool complete() const noexcept { return command_at_ >= commands_.size(); }
-	
-	std::span<const uint32_t>
-	get_patches() const noexcept
+	std::span<experiment*>
+	get_experiments() noexcept
 	{
-		return patches_;
+		return experiments_;
+	}
+	std::span<const experiment* const>
+	get_experiments() const noexcept
+	{
+		return experiments_;
+	}
+
+	std::span<scenario_command>
+	get_commands() noexcept
+	{
+		return commands_;
+	}
+	std::span<const scenario_command>
+	get_commands() const noexcept
+	{
+		return commands_;
 	}
 
 	void
@@ -192,6 +159,7 @@ public:
 	write_scenario(std::ostream& out);
 
 	bool is_static_scenario() const noexcept { return static_scenario_start_ >= 0; }
+	int32_t get_static_scenario_start() const noexcept { return static_scenario_start_; }
 
 protected:
 	std::errc
@@ -214,9 +182,6 @@ protected:
 	uint32_t query_count_ = 0;
 	uint32_t patch_count_ = 0;
 	int32_t static_scenario_start_ = -1; ///< >=0: is static scenario where query commands start at pos, else is dynamic scenario
-	uint32_t command_at_ = 0; ///< command at, used for dynamic scenario
-	int32_t experiment_at_ = 0;
-	int32_t snapshot_at_ = -1;
 };
 
 std::filesystem::path
