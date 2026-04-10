@@ -5,16 +5,19 @@
 //
 // Read utility for gridmap.
 //
-//	Supported MovingAI map format.
+//Supported MovingAI map format.  Read format spec: https://movingai.com/benchmarks/formats.html
 //
 // @author: Ryan Hechenberger
 // @created: 2025-06-01
 //
 
-#include <iomanip>
-#include <stdexcept>
+#include "serialize_base.h"
 #include <warthog/limits.h>
 #include <warthog/memory/bittable.h>
+
+#include <iomanip>
+#include <stdexcept>
+#include <vector>
 
 namespace warthog::io
 {
@@ -28,16 +31,35 @@ enum class bittable_type : uint8_t
 	NONE,
 };
 
-enum class bittable_cell : uint8_t
+enum class gridmap_cell : char
 {
-	BLOCKER,
-	TRAVERSABLE,
-	UNKNOWN
+	TERRAIN = '.',
+	TERRAIN_2 = 'G',
+	OUT_OF_BOUNDS = '@',
+	OUT_OF_BOUNDS_2 = 'O',
+	TREES = 'T',
+	SWAMP = 'S',
+	WATER = 'W',
 };
+
+constexpr inline bool gridmap_cell_traversable(gridmap_cell c) noexcept
+{
+	switch (c) {
+	case gridmap_cell::TERRAIN:
+	case gridmap_cell::TERRAIN_2:
+		return true;
+	default:
+		return false;
+	}
+}
+constexpr inline bool gridmap_cell_traversable(char c) noexcept
+{
+	return gridmap_cell_traversable(static_cast<gridmap_cell>(c));
+}
 
 inline constexpr uint32_t GRID_MAX_SIZE = 15'000;
 
-class bittable_serialize
+class bittable_serialize : public serialize_base
 {
 public:
 	memory::bittable_dimension
@@ -49,37 +71,6 @@ public:
 	get_type() const noexcept
 	{
 		return m_type;
-	}
-
-	static constexpr bool
-	is_traversable(char c) noexcept
-	{
-		switch(c)
-		{
-		case '.':
-		case 'G':
-			return true;
-		default:
-			return false;
-		}
-	}
-	static constexpr bittable_cell
-	cell_type(char c) noexcept
-	{
-		switch(c)
-		{
-		case '.':
-		case 'G':
-			return bittable_cell::TRAVERSABLE;
-		case '@':
-		case 'O':
-		case 'S':
-		case 'T':
-		case 'W':
-			return bittable_cell::BLOCKER;
-		default:
-			return bittable_cell::UNKNOWN;
-		}
 	}
 
 	void
@@ -105,14 +96,21 @@ public:
 		m_type = type;
 	}
 
-	bool
-	read_header(std::istream& in);
+	std::errc
+	read_header(std::istream* in = nullptr);
+
+	std::errc
+	read_grid_header(std::istream* in = nullptr);
 
 	template<typename BitTable>
-	bool
-	read_map(
-	    std::istream& in, BitTable& table, uint32_t offset_x = 0,
-	    uint32_t offset_y = 0);
+	std::errc
+	read_grid_data(
+	    BitTable& table, uint32_t offset_x = 0,
+	    uint32_t offset_y = 0, std::istream* in = nullptr);
+
+	std::errc
+	read_grid_raw(
+	    std::vector<char>& raw_data, std::istream* in = nullptr);
 
 protected:
 	memory::bittable_dimension m_dim = {};
@@ -121,40 +119,53 @@ protected:
 };
 
 template<typename BitTable>
-bool
-bittable_serialize::read_map(
-    std::istream& in, BitTable& table, uint32_t offset_x, uint32_t offset_y)
+std::errc
+bittable_serialize::read_grid_data(
+    BitTable& table, uint32_t offset_x, uint32_t offset_y, std::istream* in)
 {
+	// check table
 	const memory::bittable_dimension dim      = table.dim();
 	const memory::bittable_dimension read_dim = m_dim;
-	table.fill(0); // set whole table to 0 (blocker)
 	// detect for overflow
 	if(offset_x >= dim.width || read_dim.width + offset_x > dim.width)
-		return false;
+		return std::errc::argument_out_of_domain;
 	if(offset_y >= dim.height || read_dim.height + offset_y > dim.height)
-		return false;
-	assert(read_dim.width <= GRID_DIMENSION_MAX);
-	if(read_dim.width > GRID_DIMENSION_MAX)
-		return false; // shound never happen
+		return std::errc::argument_out_of_domain;
 	uint32_t bit_id
 	    = static_cast<uint32_t>(table.xy_to_id(offset_x, offset_y));
 	const uint32_t bit_row_offset = dim.width - read_dim.width;
-	char buffer[(GRID_DIMENSION_MAX + 16) & ~7ull];
-	static_assert(sizeof(buffer) / sizeof(char) >= GRID_DIMENSION_MAX);
+
+	std::errc err;
+	std::tie(in, err) = get_istream(in);
+	if(err != std::errc{})
+	{
+		return err;
+	}
+	std::string_view line;
 	for(uint32_t y = 0; y < read_dim.height; ++y, bit_id += bit_row_offset)
 	{
-		in >> std::ws;
-		in.read(buffer, read_dim.width);
+		// read row
+		std::tie(line, err) = readline(in);
+		if(err != std::errc{})
+		{
+			return err;
+		}
+		auto& iss = line_stream(line);
+		if (!(iss >> m_token) || !line_stream_eof())
+		{
+			return std::errc::io_error;
+		}
+		if (m_token.size() != read_dim.width)
+			return std::errc::argument_out_of_domain;
+		// copy row to table
 		for(uint32_t x = 0; x < read_dim.width; ++x, ++bit_id)
 		{
-			auto cell = cell_type(buffer[x]);
-			if(cell == bittable_cell::UNKNOWN)
-				return false;
-			else if(cell == bittable_cell::TRAVERSABLE)
+			if (gridmap_cell_traversable(m_token[x]))
 				table.bit_or(static_cast<BitTable::id_type>(bit_id), 1);
 		}
 	}
-	return true;
+
+	return std::errc{};
 }
 
 } // namespace warthog::memory

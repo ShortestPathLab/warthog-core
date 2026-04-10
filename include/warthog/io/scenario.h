@@ -19,13 +19,13 @@
 // @created: 2025-12-04
 //
 
+#include "serialize_base.h"
+
 #include <array>
 #include <bitset>
 #include <cassert>
 #include <cstdint>
 #include <filesystem>
-#include <fstream>
-#include <iomanip>
 #include <memory_resource>
 #include <sstream>
 #include <vector>
@@ -79,7 +79,7 @@ struct scenario_patch
 	uint16_t loc_y;
 };
 
-class scenario_serialize
+class scenario_serialize : public serialize_base
 {
 public:
 	enum class serialize_state : uint8_t
@@ -100,7 +100,7 @@ public:
 	};
 	static constexpr size_t max_line_length = 2000;
 	scenario_serialize();
-	~scenario_serialize();
+	~scenario_serialize() override;
 
 	static constexpr std::string_view get_dist_str(cost_type a) noexcept;
 	static constexpr cost_type get_cost_type(std::string_view a) noexcept;
@@ -113,12 +113,12 @@ public:
 	void
 	set_scenario_filename(std::filesystem::path&& filename)
 	{
-		m_scenario_filename = std::move(filename);
+		set_filename(std::move(filename));
 	}
 	const std::filesystem::path&
 	get_scenario_filename() const noexcept
 	{
-		return m_scenario_filename;
+		return get_filename();
 	}
 
 	void
@@ -171,11 +171,6 @@ public:
 		return it != m_cost_type.end() ? static_cast<int>(it - m_cost_type.begin()) : -1;
 	}
 
-	int32_t
-	get_line_num() const noexcept
-	{
-		return m_line_num;
-	}
 	uint32_t
 	get_map_width() const noexcept
 	{
@@ -185,11 +180,6 @@ public:
 	get_map_height() const noexcept
 	{
 		return m_map_height;
-	}
-	std::string_view
-	get_last_line() const noexcept
-	{
-		return m_line;
 	}
 
 	void
@@ -203,34 +193,8 @@ public:
 		return m_force_int;
 	}
 
-	/// @brief opens scenario file get_scenario_filename() for reading
-	/// @param scenario use a user provided instead of get_scenario_filename()
-	/// @return error on operation
-	std::errc
-	open_read(std::istream* scenario = nullptr);
-	/// @brief opens scenario file get_scenario_filename() for writing
-	/// @param scenario use a user provided instead of get_scenario_filename()
-	/// @return error on operation
-	std::errc
-	open_write(std::ostream* scenario = nullptr);
-
 	void
-	close();
-
-	/// @return if scenario is open for reading
-	bool
-	can_read(std::istream* in = nullptr)
-	{
-		if(in == nullptr) in = m_scenario_in;
-		return in != nullptr && !in->bad();
-	}
-	/// @return if scenario is open for writing
-	bool
-	can_write(std::ostream* out = nullptr)
-	{
-		if(out == nullptr) out = m_scenario_out;
-		return out != nullptr && !out->bad();
-	}
+	close() override;
 
 	/// @brief reads in file version information, and sets version accessable
 	/// via get_version()
@@ -264,56 +228,21 @@ public:
 	read_patch_line_v2(scenario_patch& query, std::istream* in = nullptr);
 
 protected:
-	std::pair<std::istream*, std::errc>
-	get_istream(std::istream* in = nullptr) noexcept
-	{
-		if(in == nullptr) in = m_scenario_in;
-		if(in == nullptr || !in->good()) return {nullptr, std::errc::io_error};
-		return {in, {}};
-	}
-	std::pair<std::ostream*, std::errc>
-	get_ostream(std::ostream* out = nullptr) noexcept
-	{
-		if(out == nullptr) out = m_scenario_out;
-		if(out == nullptr || !out->good())
-			return {nullptr, std::errc::io_error};
-		return {out, {}};
-	}
-	std::istream&
-	line_stream(std::string_view line);
-	std::pair<std::string_view, std::errc>
-	readline(std::istream* in);
-	void
-	unreadline(std::string_view line);
-
-protected:
 	serialize_state m_state    = serialize_state::init;
 	scenario_version m_version = scenario_version::UNKNOWN;
 	bool m_force_int           = false;
-	std::filesystem::path m_scenario_filename;
 	std::filesystem::path m_map_filename;
-	std::unique_ptr<std::ios_base> m_scenario_stream;
-	std::istream* m_scenario_in  = nullptr;
-	std::ostream* m_scenario_out = nullptr;
 	uint32_t m_map_width  = 0;
 	uint32_t m_map_height = 0;
 	int32_t m_query_at    = 0;
-	int32_t m_line_num    = -1;
 
 	// dynamic data
 	std::pmr::monotonic_buffer_resource m_dyn_res;
 	std::pmr::monotonic_buffer_resource m_string_res;
-	char* m_line = nullptr; ///< sets from m_dyn_res
-	std::pmr::string m_unget_line;
 	// distance types
 	std::pmr::vector<std::string_view> m_dist_strings; ///< names read in
 	std::pmr::vector<cost_type> m_cost_type; ///< cost_type of index (corrisponding dist_strings and dist_value)
 	std::pmr::vector<double> m_dist_value; ///< distance value stored, will be placed in dynamic_scenario
-
-	// shared temp parameter
-	// TODO: replace with a custom string stream that does not allocate memory
-	std::istringstream m_iss;
-	std::string m_token;
 };
 
 inline constexpr std::string_view scenario_serialize::get_dist_str(cost_type a) noexcept

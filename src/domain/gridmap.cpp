@@ -15,21 +15,45 @@ gridmap::gridmap(unsigned int h, unsigned int w) : header_(h, w, "octile")
 	this->init_db();
 }
 
-gridmap::gridmap(const char* filename)
+gridmap::gridmap(std::istream& input)
 {
-	strcpy(filename_, filename);
-	io::bittable_serialize parser;
+	setup_stream_(input);
+}
+
+gridmap::gridmap(std::filesystem::path&& filename)
+{
+	filename_ = std::move(filename);
 	std::ifstream in(filename_);
-	if(!parser.read_header(in))
+	setup_stream_(in);
+}
+
+gridmap::gridmap(const std::filesystem::path& filename) : gridmap(std::filesystem::path(filename))
+{ }
+
+gridmap::gridmap(const char* filename) : gridmap(std::filesystem::path(filename))
+{ }
+
+void
+gridmap::setup_stream_(std::istream& in)
+{
+	io::bittable_serialize parser;
+	parser.open_read(&in);
+	if(parser.read_header() != std::errc{})
 		throw std::runtime_error("invalid grid format");
-	if(parser.get_type() != io::bittable_type::OCTILE)
-		throw std::runtime_error("gridmap::gridmap must be OCTILE");
+	setup_ser_(parser);
+}
+
+void
+gridmap::setup_ser_(io::bittable_serialize& parser)
+{
+	if (parser.read_grid_header() != std::errc{})
+		throw std::runtime_error("invalid grid format");
 	this->header_.type_   = "octile";
 	this->header_.width_  = parser.get_dim().width;
 	this->header_.height_ = parser.get_dim().height;
 
 	init_db();
-	if(!parser.read_map(in, *this, 0, PADDED_ROWS))
+	if(parser.read_grid_data(*this, 0, PADDED_ROWS) != std::errc{})
 		throw std::runtime_error("invalid grid format");
 	// calculate traversable
 	num_traversable_ = static_cast<uint32_t>(std::transform_reduce(
@@ -44,7 +68,7 @@ gridmap::init_db()
 	// zeroes. this eliminates the need for bounds checking when
 	// fetching the neighbours of a node.
 	uint32_t store_width, store_height;
-	store_height = this->header_.height_ + PADDED_ROWS + PADDED_ROWS;
+	store_height = this->header_.height_ + 2 * PADDED_ROWS;
 
 	// calculate # of extra/redundant padding bits required,
 	// per row, to align map width with dbword size

@@ -12,107 +12,30 @@ namespace warthog::io
 {
 
 scenario_serialize::scenario_serialize()
-    : m_dyn_res(1024), m_string_res(256),
-	  m_line(static_cast<char*>(m_dyn_res.allocate(max_line_length + 2))),
-      m_unget_line(&m_dyn_res), m_dist_strings(&m_dyn_res),
+    : m_dyn_res(1024), m_string_res(256), m_dist_strings(&m_dyn_res),
       m_cost_type(&m_dyn_res), m_dist_value(&m_dyn_res)
-{
-	m_line[0] = '\0';
-}
+{ }
 scenario_serialize::~scenario_serialize() = default;
-
-std::errc
-scenario_serialize::open_read(std::istream* scenario)
-{
-	close();
-	if(scenario != nullptr) { m_scenario_in = scenario; }
-	else
-	{
-		auto stream   = std::make_unique<std::ifstream>(m_scenario_filename);
-		m_scenario_in = stream.get();
-		m_scenario_stream = std::move(stream);
-	}
-	if(!*m_scenario_in)
-	{
-		// bad stream
-		m_scenario_in     = nullptr;
-		m_scenario_stream = nullptr;
-		return std::errc::io_error;
-	}
-	return std::errc{};
-}
 
 void
 scenario_serialize::close()
 {
+	serialize_base::close();
 	m_state        = serialize_state::init;
 	m_version      = scenario_version::UNKNOWN;
-	m_scenario_in  = nullptr;
-	m_scenario_out = nullptr;
 	m_map_width  = 0;
 	m_map_height = 0;
 	m_query_at   = 0;
-	m_line_num   = -1;
-	if (m_line != nullptr)
-		m_line[0]    = '\0';
-	m_unget_line.clear();
 	m_dist_strings.clear();
 	m_cost_type.clear();
 	m_dist_value.clear();
-	m_scenario_stream = nullptr;
-}
-
-std::pair<std::string_view, std::errc>
-scenario_serialize::readline(std::istream* in)
-{
-	size_t len;
-	if(!m_unget_line.empty())
-	{
-		// return last unreadline
-		len = m_unget_line.length();
-		if(len > max_line_length - 1)
-		{
-			return {{}, std::errc::invalid_argument};
-		}
-		std::memcpy(m_line, m_unget_line.c_str(), len + 1);
-		m_unget_line.clear();
-	}
-	else
-	{
-		auto [s, err] = get_istream(in);
-		if(err != std::errc{}) { return {{}, err}; }
-		if(!s->getline(m_line, max_line_length))
-		{
-			if(s->eof())
-				return {{}, {}};
-			else
-				return {{}, std::errc::io_error};
-		}
-		len = strlen(m_line);
-		m_line_num += 1;
-	}
-	return {std::string_view(m_line, len), {}};
-}
-void
-scenario_serialize::unreadline(std::string_view line)
-{
-	m_unget_line = line;
 }
 
 void
 scenario_serialize::set_relative_map_filename(
     const std::filesystem::path& filename)
 {
-	m_map_filename = std::filesystem::proximate(filename, m_scenario_filename);
-}
-
-std::istream&
-scenario_serialize::line_stream(std::string_view line)
-{
-	m_iss.clear();
-	m_iss.str(std::string(line));
-	m_iss.seekg(0);
-	return m_iss;
+	m_map_filename = std::filesystem::proximate(filename, get_scenario_filename());
 }
 
 std::errc

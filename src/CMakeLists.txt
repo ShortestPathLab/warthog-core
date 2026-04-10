@@ -10,6 +10,7 @@ io/grid.cpp
 io/grid_trace.cpp
 io/log.cpp
 io/scenario.cpp
+io/serialize_base.cpp
 
 memory/node_pool.cpp
 
@@ -28,6 +29,5 @@ util/file_utils.cpp
 util/gm_parser.cpp
 util/helpers.cpp
 util/scenario_manager.cpp
-util/scenario_runner.cpp
 util/timer.cpp
 )

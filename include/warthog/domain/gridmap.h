@@ -19,6 +19,7 @@
 //
 
 #include "grid.h"
+#include <warthog/io/grid.h>
 #include <warthog/constants.h>
 #include <warthog/memory/bittable.h>
 #include <warthog/util/cast.h>
@@ -32,6 +33,8 @@
 #include <cstdint>
 #include <cstring>
 #include <limits>
+#include <filesystem>
+#include <istream>
 
 namespace warthog::domain
 {
@@ -45,6 +48,10 @@ public:
 	using bittable = gridmap::bittable; // inform of type existing
 	using bitarray = gridmap::bitarray; // inform of type existing
 	gridmap(uint32_t height, uint32_t width);
+	gridmap(std::istream& input);
+	gridmap(io::bittable_serialize& parser);
+	gridmap(std::filesystem::path&& filename);
+	gridmap(const std::filesystem::path& filename);
 	gridmap(const char* filename);
 	gridmap(const gridmap&) = delete;
 	~gridmap();
@@ -327,7 +334,7 @@ public:
 	const char*
 	filename() const noexcept
 	{
-		return this->filename_;
+		return this->filename_.c_str();
 	}
 
 	uint32_t
@@ -348,12 +355,15 @@ public:
 		return sizeof(*this) + sizeof(warthog::dbword) * db_size_;
 	}
 
-private:
+protected:
 	using bittable::setup;
+	void setup_stream_(std::istream& in);
+	void setup_ser_(io::bittable_serialize& parser);
 
+private:
 	warthog::util::gm_header header_;
 	warthog::dbword* db_;
-	char filename_[256];
+	std::filesystem::path filename_;
 
 	uint32_t dbwidth_;
 	uint32_t dbwidth64_;
