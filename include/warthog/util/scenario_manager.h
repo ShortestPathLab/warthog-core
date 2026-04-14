@@ -92,7 +92,7 @@ public:
 		return experiments_[which];
 	}
 
-	std::span<experiment*>
+	std::span<experiment* const>
 	get_experiments() noexcept
 	{
 		return experiments_;
@@ -158,6 +158,19 @@ public:
 	void
 	write_scenario(std::ostream& out);
 
+	std::string_view get_cost_type() const noexcept
+	{
+		return cost_type_;
+	}
+	void set_cost_type(std::string_view v) noexcept
+	{
+		cost_type_ = v;
+	}
+	void set_cost_type(io::cost_type c) noexcept
+	{
+		cost_type_ = io::scenario_serialize::get_dist_str(c);
+	}
+
 	bool is_static_scenario() const noexcept { return static_scenario_start_ >= 0; }
 	int32_t get_static_scenario_start() const noexcept { return static_scenario_start_; }
 
@@ -178,7 +191,10 @@ protected:
 	std::vector<uint32_t> patches_;
 	std::filesystem::path sfile_;
 	std::filesystem::path mfile_;
+	std::string cost_type_;
 	io::scenario_version version_ = io::scenario_version::UNKNOWN;
+	uint32_t scenario_width_ = 0;
+	uint32_t scenario_height_ = 0;
 	uint32_t query_count_ = 0;
 	uint32_t patch_count_ = 0;
 	int32_t static_scenario_start_ = -1; ///< >=0: is static scenario where query commands start at pos, else is dynamic scenario

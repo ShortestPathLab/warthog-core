@@ -84,21 +84,21 @@ class scenario_serialize : public serialize_base
 public:
 	enum class serialize_state : uint8_t
 	{
-		init,
-		version,
-		header,
-		query,
-		error,
+		INIT,
+		VERSION,
+		COMMAND,
+		END,
+		ERROR,
 	};
-	enum query_res : uint8_t
+	enum command_res : uint8_t
 	{
-		valid,
-		invalid,
-		final,
-		next_query,
-		next_patch
+		INVALID,
+		VALID,
+		FINAL,
+		CMD_QUERY,
+		CMD_PATCH,
+		CMD_UNKNOWN,
 	};
-	static constexpr size_t max_line_length = 2000;
 	scenario_serialize();
 	~scenario_serialize() override;
 
@@ -146,13 +146,11 @@ public:
 		return m_version;
 	}
 
-	/// @brief the types of dist used, only relivent for version2, otherwise
-	/// octile_ncc(0)
-	/// @return bitset<dist_count>
+	/// @brief the types of dist used, only relivent for version2
 	std::span<const std::string_view>
-	get_dist_strings() const noexcept
+	get_cost_strings() const noexcept
 	{
-		return m_dist_strings;
+		return m_cost_strings;
 	}
 	std::span<const cost_type>
 	get_cost_type() const noexcept
@@ -160,15 +158,21 @@ public:
 		return m_cost_type;
 	}
 	std::span<const double>
-	get_dist_value() const noexcept
+	get_cost_value() const noexcept
 	{
-		return m_dist_value;
+		return m_cost_value;
 	}
 	int
-	get_dist_index(cost_type d) const noexcept
+	find_cost_index(cost_type c) const noexcept
 	{
-		auto it = std::find(m_cost_type.begin(), m_cost_type.end(), d);
+		auto it = std::find(m_cost_type.begin(), m_cost_type.end(), c);
 		return it != m_cost_type.end() ? static_cast<int>(it - m_cost_type.begin()) : -1;
+	}
+	int
+	find_cost_index(std::string_view c) const noexcept
+	{
+		auto it = std::find(m_cost_strings.begin(), m_cost_strings.end(), c);
+		return it != m_cost_strings.end() ? static_cast<int>(it - m_cost_strings.begin()) : -1;
 	}
 
 	uint32_t
@@ -196,11 +200,14 @@ public:
 	void
 	close() override;
 
+	virtual int
+	last_command_type() const;
+
 	/// @brief reads in file version information, and sets version accessable
 	/// via get_version()
 	/// @param in optional stream to use, otherwise uses internal-set stream
 	/// @return success std::errc{} (0)
-	std::errc
+	virtual std::errc
 	read_version(std::istream* in = nullptr);
 	/// @brief with header (without version) information.
 	/// @param in optional stream to use, otherwise uses internal-set stream
@@ -209,7 +216,7 @@ public:
 	/// With VERSION1: peeks first query to gain map name
 	/// With version2: gets map width/height, available costs and patch
 	/// filename
-	std::errc
+	virtual std::errc
 	read_header(std::istream* in = nullptr);
 
 	std::errc
@@ -217,18 +224,30 @@ public:
 	std::errc
 	read_header_v2(std::istream* in = nullptr);
 
-	std::pair<query_res, std::errc>
+	std::pair<int, std::errc>
+	next_command_type(std::istream* in = nullptr);
+	std::errc
+	skip_commands(int count = 1, std::istream* in = nullptr);
+
+	virtual std::pair<int, std::errc>
 	read_query_line(scenario_query& query, std::istream* in = nullptr);
 
-	std::pair<query_res, std::errc>
+	std::pair<int, std::errc>
 	read_query_line_v1(scenario_query& query, std::istream* in = nullptr);
-	std::pair<query_res, std::errc>
+	std::pair<int, std::errc>
 	read_query_line_v2(scenario_query& query, std::istream* in = nullptr);
-	std::pair<query_res, std::errc>
+
+	virtual std::pair<int, std::errc>
+	read_patch_line(scenario_patch& query, std::istream* in = nullptr);
+
+	std::pair<int, std::errc>
 	read_patch_line_v2(scenario_patch& query, std::istream* in = nullptr);
 
+	std::string_view
+	copy_string(std::string_view str);
+
 protected:
-	serialize_state m_state    = serialize_state::init;
+	serialize_state m_state    = serialize_state::INIT;
 	scenario_version m_version = scenario_version::UNKNOWN;
 	bool m_force_int           = false;
 	std::filesystem::path m_map_filename;
@@ -240,9 +259,9 @@ protected:
 	std::pmr::monotonic_buffer_resource m_dyn_res;
 	std::pmr::monotonic_buffer_resource m_string_res;
 	// distance types
-	std::pmr::vector<std::string_view> m_dist_strings; ///< names read in
+	std::pmr::vector<std::string_view> m_cost_strings; ///< names read in
 	std::pmr::vector<cost_type> m_cost_type; ///< cost_type of index (corrisponding dist_strings and dist_value)
-	std::pmr::vector<double> m_dist_value; ///< distance value stored, will be placed in dynamic_scenario
+	std::pmr::vector<double> m_cost_value; ///< distance value stored, will be placed in dynamic_scenario
 };
 
 inline constexpr std::string_view scenario_serialize::get_dist_str(cost_type a) noexcept
@@ -277,6 +296,6 @@ inline constexpr cost_type scenario_serialize::get_cost_type(std::string_view a)
 	return cost_type::OTHER;
 }
 
-} // namespace warthog::util
+} // namespace warthog::io
 
 #endif // WARTHOG_IO_SCENARIO_H

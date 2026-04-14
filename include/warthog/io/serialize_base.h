@@ -79,6 +79,12 @@ public:
 		return out != nullptr && !out->bad();
 	}
 
+	std::string_view
+	get_last_token() const noexcept
+	{
+		return m_token;
+	}
+
 protected:
 	std::pair<std::istream*, std::errc>
 	get_istream(std::istream* in = nullptr) noexcept
@@ -95,21 +101,23 @@ protected:
 			return {nullptr, std::errc::io_error};
 		return {out, {}};
 	}
+	bool istream_eof(std::istream* in = nullptr);
+	std::pair<std::string_view, std::errc>
+	readline(std::istream* in, bool skip_blanks = false);
+	void
+	unreadline(std::string_view line);
+	bool is_line_blank(std::string_view line);
 	std::istream&
 	line_stream(std::string_view line);
 	bool
 	line_stream_eof();
-	std::pair<std::string_view, std::errc>
-	readline(std::istream* in);
-	void
-	unreadline(std::string_view line);
 
 protected:
 	std::filesystem::path m_filename;
 	std::unique_ptr<std::ios_base> m_stream;
 	std::istream* m_stream_in  = nullptr;
 	std::ostream* m_stream_out = nullptr;
-	int32_t m_line_num    = -1;
+	int32_t m_line_num    = 0;
 	std::unique_ptr<char[]> m_line_data;
 	std::string_view m_line;
 	std::string m_unget_line;

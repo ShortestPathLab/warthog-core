@@ -1,5 +1,5 @@
-#ifndef WARTHOG_UTIL_SCENARIO_RUNNER_H
-#define WARTHOG_UTIL_SCENARIO_RUNNER_H
+#ifndef WARTHOG_MANAGER_SCENARIO_RUNNER_H
+#define WARTHOG_MANAGER_SCENARIO_RUNNER_H
 
 // scenario_runner.h
 //
@@ -11,7 +11,7 @@
 
 #include "scenario_manager.h"
 
-namespace warthog::util
+namespace warthog::manager
 {
 
 class scenario_runner
@@ -103,4 +103,4 @@ protected:
 
 } // namespace warthog::util
 
-#endif // WARTHOG_UTIL_SCENARIO_RUNNER_H
+#endif // WARTHOG_MANAGER_SCENARIO_RUNNER_H

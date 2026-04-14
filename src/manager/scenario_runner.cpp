@@ -1,4 +1,4 @@
-#include <warthog/util/scenario_runner.h>
+#include <warthog/manager/scenario_runner.h>
 
 #include <warthog/io/log.h>
 #include <warthog/search/dummy_listener.h>
@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace warthog::util
+namespace warthog::manager
 {
 
 scenario_runner::scenario_runner() { }
@@ -26,11 +26,11 @@ std::pair<const experiment*, int> scenario_runner::experiment_next(uint32_t coun
 		auto cmd = commands[command_at_];
 		// command_at_ incremented in following fuction calls
 		switch (cmd.type) {
-		case scenario_command::SNAPSHOT:
-		case scenario_command::PATCH:
+		case util::scenario_command::SNAPSHOT:
+		case util::scenario_command::PATCH:
 			patch_count += snapshot_patches();
 			break;
-		case scenario_command::QUERY:
+		case util::scenario_command::QUERY:
 			if (const experiment* query = snapshot_query(); query != nullptr) {
 				if (--count == 0)
 					return {query, patch_count};
@@ -74,7 +74,7 @@ scenario_runner::snapshot_next(bool clear_patch)
 	while (command_at_ < commands.size()) {
 		auto cmd = commands[command_at_];
 		switch (cmd.type) {
-		case scenario_command::SNAPSHOT:
+		case util::scenario_command::SNAPSHOT:
 			if (cmd.id != snapshot_at_) {
 				// at new snapshot, return
 				snapshot_at_ = cmd.id;
@@ -82,10 +82,10 @@ scenario_runner::snapshot_next(bool clear_patch)
 			}
 			// current snapshot, goto next snapshot
 		[[fallthrough]];
-		case scenario_command::QUERY:
+		case util::scenario_command::QUERY:
 			++snapshot_at_;
 			break;
-		case scenario_command::PATCH:
+		case util::scenario_command::PATCH:
 			snapshot_patches(false);
 			// snapshot_patches increments snapshot_at_
 			break;
@@ -105,11 +105,11 @@ scenario_runner::snapshot_patches(bool clear_patch)
 		patches_.clear();
 	int count = 0;
 	// if start of snapshot, apply that snapshot patches
-	if (command_at_ < commands.size() && commands[command_at_].type == scenario_command::SNAPSHOT)
+	if (command_at_ < commands.size() && commands[command_at_].type == util::scenario_command::SNAPSHOT)
 		command_at_ += 1;
 	// while command_at_ is PATCH, add patch to applied list
 	while (command_at_ < commands.size()) {
-		if (auto cmd = commands[command_at_]; cmd.bucket == scenario_command::PATCH) {
+		if (auto cmd = commands[command_at_]; cmd.bucket == util::scenario_command::PATCH) {
 			command_at_ += 1;
 			count += 1;
 			patches_.push_back(cmd.id);
@@ -127,7 +127,7 @@ scenario_runner::snapshot_query()
 	if (command_at_ >= commands.size())
 		return nullptr;
 	auto cmd = commands[command_at_];
-	if (cmd.type != scenario_command::QUERY)
+	if (cmd.type != util::scenario_command::QUERY)
 		return nullptr;
 	command_at_ += 1;
 	experiment_at_ += 1;
@@ -148,7 +148,7 @@ scenario_runner::snapshot_query_all()
 	while (command_at_ < commands.size())
 	{
 		auto cmd = commands[command_at_];
-		if (cmd.type != scenario_command::QUERY)
+		if (cmd.type != util::scenario_command::QUERY)
 			break;
 		if (cmd.cmd.query.experiment_id >= exp.size() || cmd.cmd.query.experiment_id != (uint32_t)experiment_at_) {
 			WARTHOG_GERROR_FMT("scenario_runner::snapshot_query_all invalid experiment_id {} to experiment, expected {} (max {}) in {}", cmd.cmd.query.experiment_id, experiment_at_, exp.size(), WARTHOG_FILENAME_LINE);
