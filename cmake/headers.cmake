@@ -16,6 +16,7 @@ include/warthog/limits.h
 
 include/warthog/domain/grid.h
 include/warthog/domain/gridmap.h
+include/warthog/domain/grid_patches.h
 include/warthog/domain/labelled_gridmap.h
 
 include/warthog/geometry/geography.h
@@ -27,7 +28,18 @@ include/warthog/heuristic/octile_heuristic.h
 include/warthog/heuristic/zero_heuristic.h
 
 include/warthog/io/grid.h
+include/warthog/io/grid_trace.h
 include/warthog/io/log.h
+include/warthog/io/observer.h
+include/warthog/io/posthoc_trace.h
+include/warthog/io/scenario.h
+include/warthog/io/serialize_base.h
+include/warthog/io/stream_observer.h
+
+include/warthog/manager/experiment.h
+include/warthog/manager/grid_patch_set.h
+include/warthog/manager/scenario_manager.h
+include/warthog/manager/scenario_runner.h
 
 include/warthog/memory/arraylist.h
 include/warthog/memory/bittable.h
@@ -60,6 +72,7 @@ include/warthog/util/intrin.h
 include/warthog/util/macros.h
 include/warthog/util/pqueue.h
 include/warthog/util/scenario_manager.h
+include/warthog/util/string.h
 include/warthog/util/template.h
 include/warthog/util/timer.h
 include/warthog/util/vec_io.h

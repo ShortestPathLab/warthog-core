@@ -142,6 +142,8 @@ bittable_serialize::read_grid_data(
 		return err;
 	}
 	std::string_view line;
+	std::string_view token;
+
 	for(uint32_t y = 0; y < read_dim.height; ++y, bit_id += bit_row_offset)
 	{
 		// read row
@@ -150,17 +152,17 @@ bittable_serialize::read_grid_data(
 		{
 			return err;
 		}
-		auto& iss = line_stream(line);
-		if (!(iss >> m_token) || !line_stream_eof())
+		parser par(line);
+		if (!par.next(token).eof())
 		{
-			return std::errc::io_error;
+			return par.error();
 		}
-		if (m_token.size() != read_dim.width)
+		if (token.size() != read_dim.width)
 			return std::errc::argument_out_of_domain;
 		// copy row to table
 		for(uint32_t x = 0; x < read_dim.width; ++x, ++bit_id)
 		{
-			if (gridmap_cell_traversable(m_token[x]))
+			if (gridmap_cell_traversable(token[x]))
 				table.bit_or(static_cast<BitTable::id_type>(bit_id), 1);
 		}
 	}

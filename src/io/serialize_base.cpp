@@ -107,6 +107,7 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 			if(!s->getline(m_line_data.get(), max_line_length))
 			{
 				if (s->eof() && s->gcount() == 0) {
+					s->clear(std::ios::eofbit);
 					// extracted no characters and reached end of file, return no error
 					return {{}, {}};
 				} else {
@@ -115,14 +116,22 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 				}
 			}
 			// get length, if eof is set, is last line and no delimiter was extracted
-			len = static_cast<size_t>(s->gcount()) - static_cast<std::size_t>(s->eof());
+			len = static_cast<size_t>(s->gcount()) - (s->eof() ? 0 : 1);
+			if (len == 0) {
+				m_line = std::string_view();
+			} else {
+				if (std::iscntrl(m_line_data[len-1])) {
+					// mainly \r reading windows files in linux
+					m_line_data[--len] = '\0';
+				}
+				m_line = std::string_view(m_line_data.get(), len);
+			}
 			m_line_num += 1;
 		}
-		std::string_view line(m_line_data.get(), len);
-		if (skip_blanks && is_line_blank(line)) {
+		if (skip_blanks && is_line_blank(m_line)) {
 			continue; // blank line, repeat
 		}
-		return {line, {}};
+		return {m_line, {}};
 	}
 }
 void
@@ -140,23 +149,6 @@ bool serialize_base::is_line_blank(std::string_view line)
 	return std::all_of(line.begin(), line.end(), [](char c) {
 		return std::isspace((unsigned char)c);
 	});
-}
-
-std::istream&
-serialize_base::line_stream(std::string_view line)
-{
-	m_iss.str(std::string(line));
-	m_iss.seekg(0);
-	m_iss.clear();
-	return m_iss;
-}
-bool
-serialize_base::line_stream_eof()
-{
-	if (m_iss && !m_iss.eof()) {
-		m_iss >> std::ws;
-	}
-	return m_iss.eof();
 }
 
 } // namespace warthog::io

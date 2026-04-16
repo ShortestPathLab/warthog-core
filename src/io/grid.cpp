@@ -16,6 +16,8 @@ bittable_serialize::read_header(std::istream* in)
 		return err;
 	}
 	std::string_view line;
+	std::string_view token;
+
 	std::tie(line, err) = readline(in);
 	if(err != std::errc{})
 	{
@@ -23,18 +25,18 @@ bittable_serialize::read_header(std::istream* in)
 	}
 	bittable_type detected_type = bittable_type::NONE;
 	{
-	auto& iss = line_stream(line);
-	if (!(iss >> m_token) || m_token != "type") {
+	parser par(line);
+	if (!par.next(token) || token != "type") {
 		return std::errc::io_error;
 	}
-	if (!(iss >> m_token) || !line_stream_eof()) {
+	if (!par.next(token).eof()) {
 		return std::errc::io_error;
 	}
 	}
 
-	if(m_token == "octile")
+	if(token == "octile")
 		detected_type = bittable_type::OCTILE;
-	else if(m_token == "patch")
+	else if(token == "patch")
 		detected_type = bittable_type::PATCH;
 	else
 		detected_type = bittable_type::OTHER;
@@ -48,11 +50,11 @@ bittable_serialize::read_header(std::istream* in)
 		{
 			return err;
 		}
-		auto& iss = line_stream(line);
-		if (!(iss >> m_token >> m_patch_count) || !line_stream_eof()) {
+		parser par(line);
+		if (!par.next(token).next(m_patch_count).eof()) {
 			return std::errc::io_error;
 		}
-		if (m_token != "patches") {
+		if (token != "patches") {
 			return std::errc::argument_out_of_domain;
 		}
 	}
@@ -70,6 +72,7 @@ bittable_serialize::read_grid_header(std::istream* in)
 		return err;
 	}
 	std::string_view line;
+	std::string_view token;
 
 	// read height
 	std::tie(line, err) = readline(in);
@@ -78,12 +81,12 @@ bittable_serialize::read_grid_header(std::istream* in)
 		return err;
 	}
 	{
-		auto& iss = line_stream(line);
-		if (!(iss >> m_token >> m_dim.height) || !line_stream_eof())
+		parser par(line);
+		if (!par.next(token).next(m_dim.height).eof())
 		{
 			return std::errc::io_error;
 		}
-		if (m_token != "height" || m_dim.height > GRID_DIMENSION_MAX) {
+		if (token != "height" || m_dim.height > GRID_DIMENSION_MAX) {
 			return std::errc::argument_out_of_domain;
 		}
 	}
@@ -94,12 +97,12 @@ bittable_serialize::read_grid_header(std::istream* in)
 		return err;
 	}
 	{
-		auto& iss = line_stream(line);
-		if (!(iss >> m_token >> m_dim.width) || !line_stream_eof())
+		parser par(line);
+		if (!par.next(token).next(m_dim.width).eof())
 		{
 			return std::errc::io_error;
 		}
-		if (m_token != "width" || m_dim.width > GRID_DIMENSION_MAX) {
+		if (token != "width" || m_dim.width > GRID_DIMENSION_MAX) {
 			return std::errc::argument_out_of_domain;
 		}
 	}
@@ -110,12 +113,12 @@ bittable_serialize::read_grid_header(std::istream* in)
 		return err;
 	}
 	{
-		auto& iss = line_stream(line);
-		if (!(iss >> m_token) || !line_stream_eof())
+		parser par(line);
+		if (!par.next(token).eof())
 		{
 			return std::errc::io_error;
 		}
-		if (m_token != "map") {
+		if (token != "map") {
 			return std::errc::argument_out_of_domain;
 		}
 	}
@@ -130,6 +133,7 @@ bittable_serialize::read_grid_raw(
 	const memory::bittable_dimension read_dim = m_dim;
 	raw_data.resize(read_dim.width * read_dim.height);
 	char* data_at = raw_data.data();
+	std::string_view token;
 
 	std::errc err;
 	std::tie(in, err) = get_istream(in);
@@ -146,15 +150,15 @@ bittable_serialize::read_grid_raw(
 		{
 			return err;
 		}
-		auto& iss = line_stream(line);
-		if (!(iss >> m_token) || !line_stream_eof())
+		parser par(line);
+		if (!par.next(token).eof())
 		{
 			return std::errc::io_error;
 		}
-		if (m_token.size() != read_dim.width)
+		if (token.size() != read_dim.width)
 			return std::errc::argument_out_of_domain;
 		// copy row to table
-		std::memcpy(data_at, m_token.data(), read_dim.width);
+		token.copy(data_at, token.size());
 		data_at += read_dim.width;
 	}
 	return std::errc{};

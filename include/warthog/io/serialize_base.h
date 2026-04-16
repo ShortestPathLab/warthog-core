@@ -12,6 +12,8 @@
 // @created: 2026-04-10
 //
 
+#include <warthog/util/string.h>
+
 #include <cassert>
 #include <filesystem>
 #include <fstream>
@@ -24,6 +26,8 @@ namespace warthog::io
 class serialize_base
 {
 public:
+	using parser = util::string_parser;
+
 	static constexpr size_t max_line_length = 16 << 10; // 16kB
 	serialize_base();
 	virtual ~serialize_base();
@@ -69,20 +73,14 @@ public:
 	can_read(std::istream* in = nullptr)
 	{
 		if(in == nullptr) in = m_stream_in;
-		return in != nullptr && !in->bad();
+		return in != nullptr;
 	}
 	/// @return if scenario is open for writing
 	bool
 	can_write(std::ostream* out = nullptr)
 	{
 		if(out == nullptr) out = m_stream_out;
-		return out != nullptr && !out->bad();
-	}
-
-	std::string_view
-	get_last_token() const noexcept
-	{
-		return m_token;
+		return out != nullptr;
 	}
 
 protected:
@@ -90,7 +88,7 @@ protected:
 	get_istream(std::istream* in = nullptr) noexcept
 	{
 		if(in == nullptr) in = m_stream_in;
-		if(in == nullptr || !in->good()) return {nullptr, std::errc::io_error};
+		if(in == nullptr || !in) return {nullptr, std::errc::io_error};
 		return {in, {}};
 	}
 	std::pair<std::ostream*, std::errc>
@@ -107,10 +105,6 @@ protected:
 	void
 	unreadline(std::string_view line);
 	bool is_line_blank(std::string_view line);
-	std::istream&
-	line_stream(std::string_view line);
-	bool
-	line_stream_eof();
 
 protected:
 	std::filesystem::path m_filename;
@@ -121,10 +115,6 @@ protected:
 	std::unique_ptr<char[]> m_line_data;
 	std::string_view m_line;
 	std::string m_unget_line;
-
-	// shared temp parameter
-	std::istringstream m_iss;
-	std::string m_token;
 };
 
 } // namespace warthog::io

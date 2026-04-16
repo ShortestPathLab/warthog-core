@@ -262,6 +262,8 @@ protected:
 	std::pmr::vector<std::string_view> m_cost_strings; ///< names read in
 	std::pmr::vector<cost_type> m_cost_type; ///< cost_type of index (corrisponding dist_strings and dist_value)
 	std::pmr::vector<double> m_cost_value; ///< distance value stored, will be placed in dynamic_scenario
+	
+	std::string m_command_type; ///< last cost type
 };
 
 inline constexpr std::string_view scenario_serialize::get_dist_str(cost_type a) noexcept
