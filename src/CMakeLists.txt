@@ -12,6 +12,8 @@ io/log.cpp
 io/scenario.cpp
 io/serialize_base.cpp
 
+manager/scenario_runner.cpp
+
 memory/node_pool.cpp
 
 search/expansion_policy.cpp

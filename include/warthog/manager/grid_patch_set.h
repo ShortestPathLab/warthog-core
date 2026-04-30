@@ -25,13 +25,13 @@ class grid_patch_set
 {
 public:
 	using bittable = domain::gridmap::bittable;
-	static constexpr uint32_t npos = (uint32_t)-1u;
+	static constexpr uint16_t npos = (uint16_t)-1u;
 	grid_patch_set(std::pmr::memory_resource* upstream = nullptr) :
 		grid_res_(1024*4, upstream)
 	{ }
 
-	bool push_copy(bittable table, uint32_t offset_x = 0, uint32_t offset_y,
-		uint32_t width = npos, uint32_t height = npos)
+	bool push_copy(bittable table, uint16_t offset_x = 0, uint16_t offset_y = 0,
+		uint16_t width = npos, uint16_t height = npos)
 	{
 		if (table.size() == 0) {
 			return false;
@@ -53,7 +53,36 @@ public:
 			{
 				return false;
 			}
-			table.setup()
+			auto size = bittable::calc_array_size(width, height);
+			auto* grid_data = static_cast<bittable::value_type*>(grid_res_.allocate(size, alignof(bittable::value_type)));
+			patch = bittable(grid_data, table.width(), table.height());
+			table.copy(patch, pad_id::zero(), table.xy_to_id(offset_x, offset_y), width, height);
+		}
+		patches_.push_back(patch);
+	}
+	bool push_ref(bittable patch)
+	{
+		patches_.push_back(patch);
+		return true;
+	}
+
+	void reset()
+	{
+		patches_.clear();
+		grid_res_.release();
+	}
+
+	size_t size() const noexcept
+	{
+		return patches_.size();
+	}
+	bittable get_patch(size_t i) const
+	{
+		return patches_.at(i);
+	}
+	std::span<const bittable> get_patches() const noexcept
+	{
+		return patches_;
 	}
 
 protected:

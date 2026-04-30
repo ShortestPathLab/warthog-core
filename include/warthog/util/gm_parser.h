@@ -9,6 +9,7 @@
 // @created: 08/08/2012
 //
 
+#include <cstdint>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
@@ -20,31 +21,20 @@ namespace warthog::util
 class gm_header
 {
 public:
-	gm_header(unsigned int height, unsigned int width, const char* type)
+	gm_header(uint32_t height, uint32_t width, const char* type)
 	    : height_(height), width_(width), type_(type)
 	{ }
 
-	gm_header() : height_(0), width_(0), type_("") { }
+	gm_header() = default;
 
-	gm_header(const gm_header& other) { (*this) = other; }
+	~gm_header() { }
 
-	virtual ~gm_header() { }
-
-	gm_header&
-	operator=(const gm_header& other)
-	{
-		this->height_ = other.height_;
-		this->width_  = other.width_;
-		this->type_   = other.type_;
-		return *this;
-	}
-
-	unsigned int height_;
-	unsigned int width_;
+	uint32_t height_;
+	uint32_t width_;
 	std::string type_;
 };
 
-class gm_parser
+class [[deprecated]] gm_parser
 {
 public:
 	gm_parser(const char* filename);

@@ -112,7 +112,7 @@ scenario_runner::snapshot_patches(bool clear_patch)
 		if (auto cmd = commands[command_at_]; cmd.bucket == util::scenario_command::PATCH) {
 			command_at_ += 1;
 			count += 1;
-			patches_.push_back(cmd.id);
+			patches_.push_back({cmd.id, cmd.cmd.patch.topleft_x, cmd.cmd.patch.topleft_y});
 		}
 	}
 	// end at first non-PATCH command
@@ -159,6 +159,40 @@ scenario_runner::snapshot_query_all()
 		experiment_at_ += 1;
 	}
 	return experiments_;
+}
+
+bool scenario_runner::gridmap_init(domain::gridmap& grid, const grid_patch_set& patch_set, bool setup_grid)
+{
+	if (setup_grid) {
+		grid.setup(scenario_->get_scenario_height(), scenario_->get_scenario_width());
+	}
+	restart();
+	snapshot_patches();
+	return gridmap_apply_patches(grid, patch_set) < 0;
+}
+int scenario_runner::gridmap_apply_patches(domain::gridmap& grid, const grid_patch_set& patch_set)
+{
+	int count = 0;
+	for (auto& P : patches_) {
+		uint32_t x, y;
+		grid.to_padded_xy_from_unpadded(P.topleft_x, P.topleft_y, x, y);
+		if (girdmap_apply_patch(grid, patch_set.get_patch(P.patch_id), x, y)) {
+			count++;
+		} else {
+			return count;
+		}
+	}
+	return -1;
+}
+bool scenario_runner::girdmap_apply_patch(domain::gridmap& grid, domain::gridmap::bittable patch, uint32_t padded_x, uint32_t padded_y)
+{
+	if ((uint64_t)padded_x + patch.width() >= (uint64_t)grid.width() ||
+		(uint64_t)padded_y + patch.height() >= (uint64_t)grid.height())
+		return false;
+	
+	// apply patch
+	patch.copy(grid, grid.to_padded_id_from_padded(padded_x, padded_y), pad_id::zero(), patch.width(), patch.height());
+	return true;
 }
 
 } // namespace warthog::util

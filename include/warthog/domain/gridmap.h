@@ -47,6 +47,7 @@ class gridmap : public memory::bittable<pad_id, warthog::dbword>
 public:
 	using bittable = gridmap::bittable; // inform of type existing
 	using bitarray = gridmap::bitarray; // inform of type existing
+	gridmap();
 	gridmap(uint32_t height, uint32_t width);
 	gridmap(std::istream& input);
 	gridmap(io::bittable_serialize& parser);
@@ -62,6 +63,13 @@ public:
 	gridmap&
 	operator=(const gridmap&)
 	    = delete;
+
+	void setup(uint32_t height, uint32_t width);
+	void load(std::istream& input);
+	void load(io::bittable_serialize& parser);
+	void load(std::filesystem::path&& filename);
+	void load(const std::filesystem::path& filename);
+	void load(const char* filename);
 
 	// here we convert from the coordinate space of
 	// the original grid to the coordinate space of db_.
@@ -107,10 +115,26 @@ public:
 	}
 
 	void
+	to_unpadded_xy_from_padded(uint32_t padded_x, uint32_t padded_y, uint32_t& x, uint32_t& y) const noexcept
+	{
+		y = padded_y - PADDED_ROWS;
+		x = padded_x;
+		assert(x < header_.width_ && y < header_.height_);
+	}
+
+	void
 	to_padded_xy(pad_id grid_id, uint32_t& x, uint32_t& y) const noexcept
 	{
 		y = uint32_t{grid_id} / width();
 		x = uint32_t{grid_id} % width();
+		assert(x < width() && y < height());
+	}
+
+	void
+	to_padded_xy_from_unpadded(uint32_t unpadded_x, uint32_t unpadded_y, uint32_t& x, uint32_t& y) const noexcept
+	{
+		y = unpadded_y + PADDED_ROWS;
+		x = unpadded_x;
 		assert(x < width() && y < height());
 	}
 
@@ -356,7 +380,6 @@ public:
 	}
 
 protected:
-	using bittable::setup;
 	void setup_stream_(std::istream& in);
 	void setup_ser_(io::bittable_serialize& parser);
 

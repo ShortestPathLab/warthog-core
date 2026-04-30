@@ -1,12 +1,13 @@
 #ifndef WARTHOG_MEMORY_BITTABLE_H
 #define WARTHOG_MEMORY_BITTABLE_H
 
+#include <warthog/constants.h>
+
 #include <bit>
 #include <concepts>
 #include <cstdint>
 #include <cstring>
 #include <span>
-#include <warthog/constants.h>
 
 namespace warthog::memory
 {
@@ -53,8 +54,7 @@ struct bittable_span_type<Bits>
 
 /**
  * IdType: should be Identity, although integer is allowed.
- * ValueBits: size of bits stored for each value. Must be power of 2 and
- * smaller than BaseType.
+ * ValueBits: size of bits stored for each value. Must be power of 2 and <=8
  *
  * bittable does not own its own data.
  * copy results in sharing underlying table data.
@@ -65,7 +65,7 @@ struct bitarray
 {
 public:
 	static_assert(
-	    ValueBits <= sizeof(BaseType) * CHAR_BIT
+	    ValueBits <= CHAR_BIT
 	        && std::popcount(ValueBits) == 1,
 	    "ValueBits must be to power of 2 and fit inside BaseType bits.");
 	constexpr static size_t value_bits = ValueBits;
@@ -191,8 +191,8 @@ public:
 
 	// return id position split
 	// `m_data[first] >> second` will return the value as position id
-	constexpr std::pair<uint32_t, uint32_t>
-	id_split(id_type id) const noexcept
+	constexpr static std::pair<uint32_t, uint32_t>
+	id_split(id_type id) noexcept
 	{
 		id_value_type idval = id_value_type{id} << value_bit_width;
 		return {
@@ -238,17 +238,22 @@ public:
 		}
 	}
 
-	void copy(void* dest, uint8_t dest_bit, id_type pos = id_type(0), size_t count)
+	void copy_p(void* dest, uint8_t dest_bit, size_t count, id_type pos = id_type(0))
 	{
-		assert(dest_bit < CHAR_BIT);
+		// TODO: faster copy
+		assert(dest_bit < CHAR_BIT && (dest_bit & (ValueBits-1)) == 0);
 		// primative implemtation
-		bitarray<id_value_type>
-		id_value_type p = pos;
+		bitarray<id_value_type, uint8_t, ValueBits> dest_t(static_cast<uint8_t*>(dest));
+		id_value_type p(pos);
+		id_value_type d = dest_bit;
 		while (count > 0) {
-			bool c = get(id_type(pos++));
-			pos
-			std::byte 
+			dest_t.set(typename decltype(dest_t)::id_type(d++), get(id_type(p++)));
 		}
+	}
+	void copy(bitarray dest, id_type dest_pos, size_t count, id_type pos = id_type(0))
+	{
+		auto [byte, bit] = id_split(dest_pos);
+		copy_p(dest.data() + byte, bit, count, pos);
 	}
 
 	///
@@ -272,6 +277,7 @@ struct bittable : bitarray<IdType, BaseType, ValueBits>
 public:
 	using typename bittable::bitarray::id_type;
 	using typename bittable::bitarray::value_type;
+	using typename bittable::bitarray::id_value_type;
 
 	static constexpr size_t
 	calc_array_size(uint32_t width, uint32_t height) noexcept
@@ -321,7 +327,7 @@ public:
 	{
 		assert(m_dim.width != 0);
 		const auto value
-		    = static_cast<typename bittable::bitarray::id_value_type>(id);
+		    = static_cast<id_value_type>(id);
 		return {
 		    static_cast<uint32_t>(value % m_dim.width),
 		    static_cast<uint32_t>(value / m_dim.width)};
@@ -436,6 +442,23 @@ public:
 	{
 		assert(size() == 0 || static_cast<size_t>(id) < size());
 		return bittable::bitarray::id_split(id);
+	}
+
+	void copy(bittable dest, id_type dest_pos, id_type pos, uint32_t width, uint32_t height)
+	{
+		// TODO: faster copy
+		if (width == 0 || height == 0)
+			return;
+		
+		id_value_type d(dest_pos);
+		id_value_type dd = dest.m_dim.width;
+		id_value_type p(pos);
+		id_value_type pd = m_dim.width;
+		do {
+			bittable::bitarray::copy(dest, id_type(d), width, id_type(p));
+			d += dd;
+			p += pd;
+		} while (--height != 0);
 	}
 
 	///

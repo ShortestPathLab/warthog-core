@@ -10,7 +10,7 @@
 namespace warthog::domain
 {
 
-gridmap::gridmap(unsigned int h, unsigned int w) : header_(h, w, "octile")
+gridmap::gridmap(uint32_t h, uint32_t w) : header_(h, w, "octile")
 {
 	this->init_db();
 }
@@ -18,6 +18,11 @@ gridmap::gridmap(unsigned int h, unsigned int w) : header_(h, w, "octile")
 gridmap::gridmap(std::istream& input)
 {
 	setup_stream_(input);
+}
+
+gridmap::gridmap(io::bittable_serialize& parser)
+{
+	setup_ser_(parser);
 }
 
 gridmap::gridmap(std::filesystem::path&& filename)
@@ -32,6 +37,38 @@ gridmap::gridmap(const std::filesystem::path& filename) : gridmap(std::filesyste
 
 gridmap::gridmap(const char* filename) : gridmap(std::filesystem::path(filename))
 { }
+
+void gridmap::setup(uint32_t h, uint32_t w)
+{
+	header_.height_ = h;
+	header_.width_ = w;
+	this->init_db();
+}
+
+void gridmap::load(std::istream& input)
+{
+	setup_stream_(input);
+}
+void gridmap::load(io::bittable_serialize& parser)
+{
+	setup_ser_(parser);
+}
+void gridmap::load(std::filesystem::path&& filename)
+{
+	filename_ = std::move(filename);
+	std::ifstream in(filename_);
+	setup_stream_(in);
+}
+
+void gridmap::load(const std::filesystem::path& filename)
+{
+	load(std::filesystem::path(filename));
+}
+
+void gridmap::load(const char* filename)
+{
+	load(std::filesystem::path(filename));
+}
 
 void
 gridmap::setup_stream_(std::istream& in)

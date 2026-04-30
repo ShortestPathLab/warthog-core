@@ -174,6 +174,24 @@ public:
 	bool is_static_scenario() const noexcept { return static_scenario_start_ >= 0; }
 	int32_t get_static_scenario_start() const noexcept { return static_scenario_start_; }
 
+	uint32_t get_scenario_width() const noexcept
+	{
+		return scenario_width_;
+	}
+	void set_scenario_width(uint32_t width) noexcept
+	{
+		scenario_width_ = width;
+	}
+
+	uint32_t get_scenario_height() const noexcept
+	{
+		return scenario_height_;
+	}
+	void set_scenario_height(uint32_t height) noexcept
+	{
+		scenario_height_ = height;
+	}
+
 protected:
 	std::errc
 	load_gppc_scenario(std::istream& scenfile);

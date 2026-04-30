@@ -10,9 +10,18 @@
 //
 
 #include "scenario_manager.h"
+#include "grid_patch_set.h"
+#include <warthog/domain/gridmap.h>
 
 namespace warthog::manager
 {
+
+struct patch_loc
+{
+	uint32_t patch_id;
+	uint16_t topleft_x;
+	uint16_t topleft_y;
+};
 
 class scenario_runner
 {
@@ -79,7 +88,7 @@ public:
 
 	bool complete() const noexcept { return command_at_ >= command_size_; }
 	
-	std::span<const uint32_t>
+	std::span<const patch_loc>
 	get_patches() const noexcept
 	{
 		return patches_;
@@ -91,9 +100,30 @@ public:
 		return 0;
 	}
 
+	/// @brief setup grid and contain snapshot 0
+	/// @param grid the gridmap to setup
+	/// @param patch_set the patch set to 
+	/// @param setup_grid 
+	/// @return true if operation is successful
+	bool gridmap_init(domain::gridmap& grid, const grid_patch_set& patch_set, bool setup_grid = true);
+
+	/// @brief apply patches from patch_set in order by get_patches()
+	/// @param grid grid to apply to
+	/// @param patch_set patch_set to pull patch data from
+	/// @return -1 if successful, the failed patch application otherwise
+	int gridmap_apply_patches(domain::gridmap& grid, const grid_patch_set& patch_set);
+
+	/// @brief apply a single patch to a gridmap
+	/// @param grid grid to apply to
+	/// @param patch patch bittable to copy
+	/// @param padded_x the padded topleft on grid
+	/// @param padded_y the padded topleft on grid
+	/// @return true if apply is successful, false otherwise
+	bool girdmap_apply_patch(domain::gridmap& grid, domain::gridmap::bittable patch, uint32_t padded_x, uint32_t padded_y);
+
 protected:
 	const scenario_manager* scenario_ = nullptr;
-	std::vector<uint32_t> patches_;
+	std::vector<patch_loc> patches_;
 	std::vector<const experiment*> experiments_;
 	uint32_t command_at_ = 0; ///< command at, used for dynamic scenario
 	uint32_t command_size_ = 0;
