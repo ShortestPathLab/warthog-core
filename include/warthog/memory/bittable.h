@@ -238,6 +238,19 @@ public:
 		}
 	}
 
+	void copy(void* dest, uint8_t dest_bit, id_type pos = id_type(0), size_t count)
+	{
+		assert(dest_bit < CHAR_BIT);
+		// primative implemtation
+		bitarray<id_value_type>
+		id_value_type p = pos;
+		while (count > 0) {
+			bool c = get(id_type(pos++));
+			pos
+			std::byte 
+		}
+	}
+
 	///
 	/// struct data
 	///
@@ -332,7 +345,7 @@ public:
 	{
 		return m_dim.width;
 	}
-	/// @return width in bytes, rounded down
+	/// @return width in bytes
 	constexpr uint32_t
 	width_bytes() const noexcept
 	{
@@ -349,6 +362,11 @@ public:
 	size() const noexcept
 	{
 		return static_cast<size_t>(m_dim.width) * m_dim.height;
+	}
+	constexpr size_t
+	size_bytes() const noexcept
+	{
+		return sizeof(value_type) * data_elements();
 	}
 	constexpr bittable_dimension
 	dim() const noexcept

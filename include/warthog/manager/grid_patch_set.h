@@ -9,10 +9,11 @@
 // @created: 2026-04-10
 //
 
-#include "experiment.h"
-#include <warthog/util/scenario_manager.h>
 #include <warthog/memory/bittable.h>
 #include <warthog/domain/gridmap.h>
+
+#include <memory_resource>
+#include <cstring>
 
 namespace warthog::manager
 {
@@ -22,7 +23,42 @@ namespace warthog::manager
 /// Stores a list of patches at 
 class grid_patch_set
 {
+public:
+	using bittable = domain::gridmap::bittable;
+	static constexpr uint32_t npos = (uint32_t)-1u;
+	grid_patch_set(std::pmr::memory_resource* upstream = nullptr) :
+		grid_res_(1024*4, upstream)
+	{ }
 
+	bool push_copy(bittable table, uint32_t offset_x = 0, uint32_t offset_y,
+		uint32_t width = npos, uint32_t height = npos)
+	{
+		if (table.size() == 0) {
+			return false;
+		}
+		bittable patch;
+		if (offset_x == 0 && offset_y == 0 && width == npos && height == npos) {
+			// copy as is
+			auto size = table.size_bytes();
+			auto* grid_data = static_cast<bittable::value_type*>(grid_res_.allocate(size, alignof(bittable::value_type)));
+			std::memcpy(grid_data, table.data(), size);
+			patch = bittable(grid_data, table.width(), table.height());
+		} else {
+			// crop
+			if (offset_x >= table.width() || width > table.width() || offset_x + width > table.width())
+			{
+				return false;
+			}
+			if (offset_y >= table.height() || height > table.height() || offset_y + height > table.height())
+			{
+				return false;
+			}
+			table.setup()
+	}
+
+protected:
+	std::pmr::monotonic_buffer_resource grid_res_;
+	std::vector<bittable> patches_;
 };
 
 } // namespace warthog::manager

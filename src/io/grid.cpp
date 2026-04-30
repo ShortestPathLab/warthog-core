@@ -54,7 +54,8 @@ bittable_serialize::read_header(std::istream* in)
 		if (!par.next(token).next(m_patch_count).eof()) {
 			return std::errc::io_error;
 		}
-		if (token != "patches") {
+		if (token != "patches" || m_patch_count > PATCH_COUNT_LIMIT) {
+			m_patch_count = 0;
 			return std::errc::argument_out_of_domain;
 		}
 	}
@@ -79,6 +80,23 @@ bittable_serialize::read_grid_header(std::istream* in)
 	if(err != std::errc{})
 	{
 		return err;
+	}
+	if (m_type == bittable_type::PATCH) {
+		// get patch number
+		parser par(line);
+		if (!par.next(token).next(m_patch_num).eof())
+		{
+			return std::errc::io_error;
+		}
+		if (token != "patch") {
+			return std::errc::argument_out_of_domain;
+		}
+		
+		std::tie(line, err) = readline(in);
+		if(err != std::errc{})
+		{
+			return err;
+		}
 	}
 	{
 		parser par(line);
@@ -128,11 +146,14 @@ bittable_serialize::read_grid_header(std::istream* in)
 
 std::errc
 bittable_serialize::read_grid_raw(
-    std::vector<char>& raw_data, std::istream* in)
+    std::span<char> buffer, std::istream* in)
 {
 	const memory::bittable_dimension read_dim = m_dim;
-	raw_data.resize(read_dim.width * read_dim.height);
-	char* data_at = raw_data.data();
+	if (buffer.size() < (uint64_t)read_dim.width * (uint64_t)read_dim.height)
+	{
+		return std::errc::result_out_of_range;
+	}
+	char* data_at = buffer.data();
 	std::string_view token;
 
 	std::errc err;
