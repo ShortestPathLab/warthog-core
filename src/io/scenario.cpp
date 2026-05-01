@@ -579,7 +579,7 @@ scenario_serialize::read_query_line_v2(scenario_query& query, std::istream* in)
 std::pair<int, std::errc>
 scenario_serialize::read_patch_line(scenario_patch& patch, std::istream* in)
 {
-	if(!can_read(in) || m_state != serialize_state::VERSION)
+	if(!can_read(in) || m_state != serialize_state::COMMAND)
 	{
 		return {0, std::errc::state_not_recoverable};
 	}

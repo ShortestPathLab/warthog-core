@@ -10,7 +10,11 @@
 namespace warthog::manager
 {
 
-scenario_runner::scenario_runner() { }
+scenario_runner::scenario_runner() = default;
+
+scenario_runner::scenario_runner(const scenario_manager* scen)
+	: scenario_(scen)
+{ }
 
 scenario_runner::~scenario_runner() = default;
 
@@ -22,7 +26,7 @@ std::pair<const experiment*, int> scenario_runner::experiment_next(uint32_t coun
 	if (count == 0)
 		return {nullptr, 0};
 	int patch_count = 0;
-	while (command_at_ < command_size_) {
+	while (command_at_ < commands.size()) {
 		auto cmd = commands[command_at_];
 		// command_at_ incremented in following fuction calls
 		switch (cmd.type) {
@@ -109,10 +113,12 @@ scenario_runner::snapshot_patches(bool clear_patch)
 		command_at_ += 1;
 	// while command_at_ is PATCH, add patch to applied list
 	while (command_at_ < commands.size()) {
-		if (auto cmd = commands[command_at_]; cmd.bucket == util::scenario_command::PATCH) {
+		if (auto cmd = commands[command_at_]; cmd.type == util::scenario_command::PATCH) {
 			command_at_ += 1;
 			count += 1;
 			patches_.push_back({cmd.id, cmd.cmd.patch.topleft_x, cmd.cmd.patch.topleft_y});
+		} else {
+			break;
 		}
 	}
 	// end at first non-PATCH command
@@ -135,7 +141,7 @@ scenario_runner::snapshot_query()
 		WARTHOG_GERROR_FMT("scenario_runner::snapshot_query invalid experiment_id {} to experiment, expected {} (max {}) in {}", cmd.cmd.query.experiment_id, experiment_at_, scenario_->num_experiments(), WARTHOG_FILENAME_LINE);
 		return nullptr;
 	}
-	return experiments_[cmd.cmd.query.experiment_id];
+	return scenario_->get_experiment(cmd.cmd.query.experiment_id);
 }
 
 std::span<const experiment*>
@@ -168,21 +174,22 @@ bool scenario_runner::gridmap_init(domain::gridmap& grid, const grid_patch_set& 
 	}
 	restart();
 	snapshot_patches();
-	return gridmap_apply_patches(grid, patch_set) < 0;
+	return gridmap_apply_patches(grid, patch_set) >= 0;
 }
 int scenario_runner::gridmap_apply_patches(domain::gridmap& grid, const grid_patch_set& patch_set)
 {
 	int count = 0;
 	for (auto& P : patches_) {
+		++count;
+		if (P.patch_id >= patch_set.size())
+			return -count;
 		uint32_t x, y;
 		grid.to_padded_xy_from_unpadded(P.topleft_x, P.topleft_y, x, y);
-		if (girdmap_apply_patch(grid, patch_set.get_patch(P.patch_id), x, y)) {
-			count++;
-		} else {
-			return count;
+		if (!girdmap_apply_patch(grid, patch_set.get_patch(P.patch_id), x, y)) {
+			return -count;
 		}
 	}
-	return -1;
+	return count;
 }
 bool scenario_runner::girdmap_apply_patch(domain::gridmap& grid, domain::gridmap::bittable patch, uint32_t padded_x, uint32_t padded_y)
 {

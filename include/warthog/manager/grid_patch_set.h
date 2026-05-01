@@ -11,9 +11,11 @@
 
 #include <warthog/memory/bittable.h>
 #include <warthog/domain/gridmap.h>
+#include <warthog/io/fwd.h>
 
 #include <memory_resource>
 #include <cstring>
+#include <istream>
 
 namespace warthog::manager
 {
@@ -24,53 +26,42 @@ namespace warthog::manager
 class grid_patch_set
 {
 public:
+	enum flags : uint32_t {
+		DEFAULT = 0u, ///< default options
+		SKIP_HEADER = 1u << 0, ///< will not read header
+		FORCE_HEADER = 1u << 1, ///< must read header
+		IGNORE_INDEX = 1u << 2, ///< ignores patch read index
+	};
 	using bittable = domain::gridmap::bittable;
 	static constexpr uint16_t npos = (uint16_t)-1u;
 	grid_patch_set(std::pmr::memory_resource* upstream = nullptr) :
-		grid_res_(1024*4, upstream)
+		grid_res_(upstream != nullptr ? upstream : std::pmr::get_default_resource())
 	{ }
 
-	bool push_copy(bittable table, uint16_t offset_x = 0, uint16_t offset_y = 0,
-		uint16_t width = npos, uint16_t height = npos)
-	{
-		if (table.size() == 0) {
-			return false;
-		}
-		bittable patch;
-		if (offset_x == 0 && offset_y == 0 && width == npos && height == npos) {
-			// copy as is
-			auto size = table.size_bytes();
-			auto* grid_data = static_cast<bittable::value_type*>(grid_res_.allocate(size, alignof(bittable::value_type)));
-			std::memcpy(grid_data, table.data(), size);
-			patch = bittable(grid_data, table.width(), table.height());
-		} else {
-			// crop
-			if (offset_x >= table.width() || width > table.width() || offset_x + width > table.width())
-			{
-				return false;
-			}
-			if (offset_y >= table.height() || height > table.height() || offset_y + height > table.height())
-			{
-				return false;
-			}
-			auto size = bittable::calc_array_size(width, height);
-			auto* grid_data = static_cast<bittable::value_type*>(grid_res_.allocate(size, alignof(bittable::value_type)));
-			patch = bittable(grid_data, table.width(), table.height());
-			table.copy(patch, pad_id::zero(), table.xy_to_id(offset_x, offset_y), width, height);
-		}
-		patches_.push_back(patch);
-	}
-	bool push_ref(bittable patch)
-	{
-		patches_.push_back(patch);
-		return true;
-	}
+	bool load(std::istream& file);
+	bool load(const std::filesystem::path& maps);
 
-	void reset()
-	{
-		patches_.clear();
-		grid_res_.release();
-	}
+	/// @brief reads from a serialize, checking for errors.  Can read both type octile and patch files.
+	/// @param S the bittable_serialize, must be open
+	/// @param max_grids the max grids to read, or -1 for no limit
+	/// @param flags flags that control how to read, check enum flags
+	/// @return the number of grids read successfully, or <0 for negative index of patch that failed to be read successfully
+	///
+	/// This function will load from an established bittable_serialize, reading all grids and appending to existing patches.
+	/// If type octile, only one grid is read as the first patch, otherwise up to max_grids (default all) are read.
+	/// 
+	/// By DEFAULT, it will read the header if not already read and append all remaining grids to existing patches, but will error if the index in the file does not match the index in this class.
+	/// SKIP_HEADER requires that S have already read the header else errors.
+	/// FORCE_HEADER requires that S have not read the header else errors.
+	/// IGNORE_INDEX will not error if index in patch file does not match.
+	int deserialize(io::bittable_serialize& S, int max_grids = -1, uint32_t flags = DEFAULT);
+
+	bool push_copy(bittable table, uint16_t offset_x = 0, uint16_t offset_y = 0,
+		uint16_t width = npos, uint16_t height = npos);
+	
+	bool push_ref(bittable patch);
+
+	void reset();
 
 	size_t size() const noexcept
 	{

@@ -10,6 +10,8 @@
 #include <warthog/constants.h>
 #include <warthog/domain/gridmap.h>
 #include <warthog/domain/labelled_gridmap.h>
+#include <warthog/manager/scenario_runner.h>
+#include <warthog/manager/grid_patch_set.h>
 #include <warthog/heuristic/manhattan_heuristic.h>
 #include <warthog/heuristic/octile_heuristic.h>
 #include <warthog/heuristic/zero_heuristic.h>
@@ -93,7 +95,7 @@ help(std::ostream& out)
 
 bool
 check_optimality(
-    warthog::search::solution& sol, warthog::util::experiment* exp)
+    const warthog::search::solution& sol, const warthog::util::experiment* exp)
 {
 	uint32_t precision = 2;
 	double epsilon     = (1.0 / (int)pow(10, precision)) / 2;
@@ -129,11 +131,32 @@ check_optimality(
 #define WARTHOG_POSTHOC_DO(f)
 #endif
 
+struct gridmap_scenario
+{
+	const warthog::manager::scenario_manager* mgr;
+	warthog::manager::scenario_runner run;
+	warthog::domain::gridmap grid;
+	warthog::manager::grid_patch_set patches;
+
+	gridmap_scenario(const warthog::manager::scenario_manager& scen)
+		: mgr(&scen), run(&scen)
+	{ }
+
+	bool load_map(const std::filesystem::path map)
+	{
+		if (!patches.load(map)) {
+			return false;
+		}
+		return run.gridmap_init(grid, patches);
+	}
+};
+
 template<typename Search>
 int
 run_experiments(
     Search& algo, std::string alg_name,
-    warthog::util::scenario_manager& scenmgr, bool verbose, bool checkopt,
+    gridmap_scenario& scen,
+	bool verbose, bool checkopt,
     std::ostream& out)
 {
 	WARTHOG_GINFO_FMT("start search with algorithm {}", alg_name);
@@ -144,29 +167,43 @@ run_experiments(
 
 	out << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
 	    << "\tnanos\tplen\tpcost\tscost\tmap\n";
-	for(uint32_t i  = filter_id >= 0 ? static_cast<uint32_t>(filter_id) : 0,
-	             ie = filter_id >= 0
-	        ? i + 1
-	        : static_cast<uint32_t>(scenmgr.num_experiments());
-	    i < ie; i++)
+	
+	for (uint32_t i = 0; ; ++i)
 	{
 #ifdef WARTHOG_POSTHOC
 		std::optional<std::ofstream>
 		    trace_stream; // open and pass to trace if used
-		if constexpr(std::same_as<
-		                 listener_type,
-		                 std::remove_cvref_t<decltype(algo.get_listeners())>>)
-		{
-			if(i == filter_id && !trace_file.empty())
-			{
-				listener_grid& l
-				    = std::get<listener_grid>(algo.get_listeners());
-				trace_stream.emplace(trace_file);
-				l.open(*trace_stream);
+
+#endif
+		auto [exp, patch_count] = scen.run.experiment_next();
+		if (exp == nullptr) {
+			break;
+		}
+		if (patch_count != 0) {
+			if (scen.run.gridmap_apply_patches(scen.grid, scen.patches) < 0) {
+				// failed to apply patches, exit
+				WARTHOG_GCRIT("dynamic patch error: failed to apply patches");
+				return 5;
 			}
 		}
-#endif
-		warthog::util::experiment* exp = scenmgr.get_experiment(i);
+
+		if (filter_id >= 0 && i == filter_id) {
+			// trace
+			if constexpr(std::same_as<
+							listener_type,
+							std::remove_cvref_t<decltype(algo.get_listeners())>>)
+			{
+				if(!trace_file.empty())
+				{
+					listener_grid& l
+						= std::get<listener_grid>(algo.get_listeners());
+					trace_stream.emplace(trace_file);
+					l.open(*trace_stream);
+				}
+			}
+		} else if (filter_id >= 0) {
+			continue;
+		}
 
 		warthog::pack_id startid
 		    = expander->get_pack(exp->startx(), exp->starty());
@@ -197,7 +234,7 @@ run_experiments(
 		    << sol.met_.time_elapsed_nano_.count() << "\t"
 		    << (!sol.path_.empty() ? sol.path_.size() - 1 : 0) << "\t"
 		    << sol.sum_of_edge_costs_ << "\t" << exp->distance() << "\t"
-		    << scenmgr.last_file_loaded() << std::endl;
+		    << scen.mgr->last_file_loaded() << std::endl;
 
 		if(checkopt)
 		{
@@ -210,7 +247,7 @@ run_experiments(
 	}
 
 	WARTHOG_GINFO_FMT(
-	    "search complete; total memory: {}", algo.mem() + scenmgr.mem());
+	    "search complete; total memory: {}", algo.mem() + scen.mgr->mem());
 	return 0;
 }
 
@@ -219,16 +256,20 @@ run_astar(
     warthog::util::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name)
 {
-	warthog::domain::gridmap map(mapname.c_str());
-	warthog::search::gridmap_expansion_policy expander(&map);
-	warthog::heuristic::octile_heuristic heuristic(map.width(), map.height());
+	gridmap_scenario scen(scenmgr);
+	if (!scen.load_map(std::filesystem::path(mapname))) {
+		WARTHOG_GCRIT("failed to load map");
+		return 3;
+	}
+	warthog::search::gridmap_expansion_policy expander(&scen.grid);
+	warthog::heuristic::octile_heuristic heuristic(scen.grid.width(), scen.grid.height());
 	warthog::util::pqueue_min open;
 
 	warthog::search::unidirectional_search astar(
-	    &heuristic, &expander, &open, listener_type(WARTHOG_POSTHOC_DO(&map)));
+	    &heuristic, &expander, &open, listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
 
 	int ret = run_experiments(
-	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	    astar, alg_name, scen, verbose, checkopt, std::cout);
 	return ret;
 }
 
@@ -237,17 +278,21 @@ run_astar4c(
     warthog::util::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name)
 {
-	warthog::domain::gridmap map(mapname.c_str());
-	warthog::search::gridmap_expansion_policy expander(&map, true);
+	gridmap_scenario scen(scenmgr);
+	if (!scen.load_map(std::filesystem::path(mapname))) {
+		WARTHOG_GCRIT("failed to load map");
+		return 3;
+	}
+	warthog::search::gridmap_expansion_policy expander(&scen.grid, true);
 	warthog::heuristic::manhattan_heuristic heuristic(
-	    map.width(), map.height());
+	    scen.grid.width(), scen.grid.height());
 	warthog::util::pqueue_min open;
 
 	warthog::search::unidirectional_search astar(
-	    &heuristic, &expander, &open, listener_type(WARTHOG_POSTHOC_DO(&map)));
+	    &heuristic, &expander, &open, listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
 
 	int ret = run_experiments(
-	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	    astar, alg_name, scen, verbose, checkopt, std::cout);
 	return ret;
 }
 
@@ -256,16 +301,20 @@ run_dijkstra(
     warthog::util::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name)
 {
-	warthog::domain::gridmap map(mapname.c_str());
-	warthog::search::gridmap_expansion_policy expander(&map);
+	gridmap_scenario scen(scenmgr);
+	if (!scen.load_map(std::filesystem::path(mapname))) {
+		WARTHOG_GCRIT("failed to load map");
+		return 3;
+	}
+	warthog::search::gridmap_expansion_policy expander(&scen.grid);
 	warthog::heuristic::zero_heuristic heuristic;
 	warthog::util::pqueue_min open;
 
 	warthog::search::unidirectional_search astar(
-	    &heuristic, &expander, &open, listener_type(WARTHOG_POSTHOC_DO(&map)));
+	    &heuristic, &expander, &open, listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
 
 	int ret = run_experiments(
-	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	    astar, alg_name, scen, verbose, checkopt, std::cout);
 	return ret;
 }
 
@@ -274,6 +323,8 @@ run_wgm_astar(
     warthog::util::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name, std::string costfile)
 {
+	gridmap_scenario scen(scenmgr);
+	// do not load map here
 	warthog::util::cost_table costs(costfile.c_str());
 	warthog::domain::vl_gridmap map(mapname.c_str());
 	warthog::search::vl_gridmap_expansion_policy expander(&map, costs);
@@ -292,7 +343,7 @@ run_wgm_astar(
 	warthog::search::unidirectional_search astar(&heuristic, &expander, &open);
 
 	int ret = run_experiments(
-	    astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	    astar, alg_name, scen, verbose, checkopt, std::cout);
 	return ret;
 }
 

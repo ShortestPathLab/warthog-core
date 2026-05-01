@@ -12,6 +12,7 @@
 //
 
 #include "serialize_base.h"
+
 #include <warthog/limits.h>
 #include <warthog/memory/bittable.h>
 
@@ -109,17 +110,34 @@ public:
 		m_type = type;
 	}
 
-	uint32_t get_patch_count() const noexcept
+	/// @brief get the number of patches in file
+	uint32_t get_patch_amount() const noexcept
 	{
-		return m_patch_count;
+		return m_patch_amount;
 	}
-	void set_patch_count(uint32_t count)
+	/// @brief set the number of patches (for writing)
+	void set_patch_amount(uint32_t count)
 	{
 		if(count > PATCH_COUNT_LIMIT)
 		{
 			throw std::out_of_range("count");
 		}
-		m_patch_count = count;
+		m_patch_amount = count;
+	}
+	/// @brief gets the number of patches that have been read/write
+	uint32_t get_patch_count() const noexcept
+	{
+		return m_patch_count;
+	}
+	/// @brief gets the id of last patch (usually get_patch_count())
+	uint32_t get_patch_id() const noexcept
+	{
+		return m_patch_id;
+	}
+	/// @brief gets the number of patches that have been read
+	void set_patch_id(uint32_t id) noexcept
+	{
+		m_patch_id = id;
 	}
 
 	/// @brief Reads the map/patch file header, getting the type
@@ -168,9 +186,10 @@ public:
 
 protected:
 	memory::bittable_dimension m_dim = {};
-	bittable_type m_type             = bittable_type::OCTILE;
+	bittable_type m_type             = bittable_type::NONE;
+	uint32_t m_patch_amount          = 0;
 	uint32_t m_patch_count           = 0;
-	uint32_t m_patch_num             = 0;
+	uint32_t m_patch_id             = 0;
 };
 
 template<typename BitTable>

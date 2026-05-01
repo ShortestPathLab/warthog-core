@@ -133,17 +133,17 @@ public:
 	}
 
 	std::string
-	last_file_loaded() noexcept
+	last_file_loaded() const noexcept
 	{
 		return sfile_.string();
 	}
 	const std::filesystem::path&
-	scenario_filename() noexcept
+	scenario_filename() const noexcept
 	{
 		return sfile_;
 	}
 	const std::filesystem::path&
-	map_filename() noexcept
+	map_filename() const noexcept
 	{
 		return mfile_;
 	}

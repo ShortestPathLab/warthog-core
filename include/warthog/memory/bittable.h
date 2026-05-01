@@ -246,7 +246,7 @@ public:
 		bitarray<id_value_type, uint8_t, ValueBits> dest_t(static_cast<uint8_t*>(dest));
 		id_value_type p(pos);
 		id_value_type d = dest_bit;
-		while (count > 0) {
+		while (count-- > 0) {
 			dest_t.set(typename decltype(dest_t)::id_type(d++), get(id_type(p++)));
 		}
 	}

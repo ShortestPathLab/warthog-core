@@ -12,6 +12,8 @@
 // @created: 2026-04-10
 //
 
+#include "fwd.h"
+
 #include <warthog/util/string.h>
 
 #include <cassert>

@@ -86,7 +86,7 @@ public:
 	std::span<const experiment*>
 	snapshot_query_all();
 
-	bool complete() const noexcept { return command_at_ >= command_size_; }
+	bool complete() const noexcept { return command_at_ >= scenario_->get_commands().size(); }
 	
 	std::span<const patch_loc>
 	get_patches() const noexcept
@@ -110,7 +110,7 @@ public:
 	/// @brief apply patches from patch_set in order by get_patches()
 	/// @param grid grid to apply to
 	/// @param patch_set patch_set to pull patch data from
-	/// @return -1 if successful, the failed patch application otherwise
+	/// @return >=0 successful patches applied, <0 failed to apply negative id (from 1)
 	int gridmap_apply_patches(domain::gridmap& grid, const grid_patch_set& patch_set);
 
 	/// @brief apply a single patch to a gridmap
@@ -126,8 +126,7 @@ protected:
 	std::vector<patch_loc> patches_;
 	std::vector<const experiment*> experiments_;
 	uint32_t command_at_ = 0; ///< command at, used for dynamic scenario
-	uint32_t command_size_ = 0;
-	int32_t experiment_at_ = 0;
+	int32_t experiment_at_ = -1;
 	int32_t snapshot_at_ = -1;
 };
 

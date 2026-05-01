@@ -12,6 +12,7 @@ io/log.cpp
 io/scenario.cpp
 io/serialize_base.cpp
 
+manager/grid_patch_set.cpp
 manager/scenario_runner.cpp
 
 memory/node_pool.cpp

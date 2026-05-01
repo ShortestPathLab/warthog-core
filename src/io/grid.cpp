@@ -43,6 +43,9 @@ bittable_serialize::read_header(std::istream* in)
 	m_type = detected_type;
 
 	// read patch header before map header
+	if (detected_type == bittable_type::OCTILE) {
+		m_patch_amount = 1;
+	} else 
 	if(detected_type == bittable_type::PATCH)
 	{
 		std::tie(line, err) = readline(in);
@@ -51,14 +54,16 @@ bittable_serialize::read_header(std::istream* in)
 			return err;
 		}
 		parser par(line);
-		if (!par.next(token).next(m_patch_count).eof()) {
+		if (!par.next(token).next(m_patch_amount).eof()) {
 			return std::errc::io_error;
 		}
-		if (token != "patches" || m_patch_count > PATCH_COUNT_LIMIT) {
-			m_patch_count = 0;
+		if (token != "patches" || m_patch_amount > PATCH_COUNT_LIMIT) {
+			m_patch_amount = 0;
 			return std::errc::argument_out_of_domain;
 		}
 	}
+	m_patch_count = 0;
+	m_patch_id = 0;
 
 	return std::errc{};
 }
@@ -75,6 +80,8 @@ bittable_serialize::read_grid_header(std::istream* in)
 	std::string_view line;
 	std::string_view token;
 
+	m_patch_count += 1;
+
 	// read height
 	std::tie(line, err) = readline(in);
 	if(err != std::errc{})
@@ -84,7 +91,7 @@ bittable_serialize::read_grid_header(std::istream* in)
 	if (m_type == bittable_type::PATCH) {
 		// get patch number
 		parser par(line);
-		if (!par.next(token).next(m_patch_num).eof())
+		if (!par.next(token).next(m_patch_id).eof())
 		{
 			return std::errc::io_error;
 		}

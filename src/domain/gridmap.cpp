@@ -10,6 +10,8 @@
 namespace warthog::domain
 {
 
+gridmap::gridmap() = default;
+
 gridmap::gridmap(uint32_t h, uint32_t w) : header_(h, w, "octile")
 {
 	this->init_db();

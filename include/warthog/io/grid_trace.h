@@ -10,6 +10,7 @@
 //
 
 #include "posthoc_trace.h"
+
 #include <exception>
 #include <warthog/domain/gridmap.h>
 #include <warthog/search/problem_instance.h>

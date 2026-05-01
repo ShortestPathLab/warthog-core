@@ -93,7 +93,7 @@ inline token_return get_token_quoted(std::string_view str, char quote = '"', cha
 		}
 	} else {
 		// no delimiter, read as normal
-		auto endsp = std::find_if(str.begin(), str.end(), [](char c) { return isspace((unsigned char)c); }) - str.begin();
+		auto endsp = std::find_if(fstr.begin(), fstr.end(), [](char c) { return isspace((unsigned char)c); }) - fstr.begin();
 		ret.token = fstr.substr(0, endsp);
 	}
 	return ret;

@@ -36,22 +36,6 @@
 namespace warthog::io
 {
 
-enum class scenario_version : uint8_t
-{
-	UNKNOWN,
-	VERSION_1,
-	VERSION_2,
-};
-enum class cost_type : uint8_t
-{
-	G_8C_NCC,
-	G_8C_CC,
-	G_4C,
-	AA_NCC,
-	AA_CC,
-	OTHER,
-};
-
 struct scenario_query
 {
 	int64_t bucket;

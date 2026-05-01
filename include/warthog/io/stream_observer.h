@@ -17,6 +17,8 @@
 // @created: 2025-08-01
 //
 
+#include "fwd.h"
+
 #include "log.h"
 #include <warthog/constants.h>
 #include <warthog/forward.h>
