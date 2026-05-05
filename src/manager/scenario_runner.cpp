@@ -171,6 +171,13 @@ bool scenario_runner::gridmap_init(domain::gridmap& grid, const grid_patch_set& 
 {
 	if (setup_grid) {
 		grid.setup(scenario_->get_scenario_height(), scenario_->get_scenario_width());
+		// grid is 0 (non-traversable), make map area traversable but keep padding non-traversable
+		for (uint32_t y = 0, ye = grid.header_height(), xe = grid.header_width(); y < ye; ++y) {
+			pad_id row_id = grid.to_padded_id_from_unpadded(0, y);
+			for (uint32_t x = 0; x < xe; ++x, ++row_id.id) {
+				grid.set_label(row_id, true);
+			}
+		}
 	}
 	restart();
 	snapshot_patches();

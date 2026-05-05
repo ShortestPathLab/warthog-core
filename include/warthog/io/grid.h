@@ -236,8 +236,7 @@ bittable_serialize::read_grid_data(
 		// copy row to table
 		for(uint32_t x = 0; x < read_dim.width; ++x, ++bit_id)
 		{
-			if (gridmap_cell_traversable(token[x]))
-				table.bit_or(static_cast<BitTable::id_type>(bit_id), 1);
+			table.set(static_cast<BitTable::id_type>(bit_id), gridmap_cell_traversable(token[x]) ? 1 : 0);
 		}
 	}
 

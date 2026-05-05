@@ -15,6 +15,7 @@
 #include <warthog/heuristic/manhattan_heuristic.h>
 #include <warthog/heuristic/octile_heuristic.h>
 #include <warthog/heuristic/zero_heuristic.h>
+#include <warthog/io/scenario.h>
 #include <warthog/search/gridmap_expansion_policy.h>
 #include <warthog/search/search.h>
 #include <warthog/search/unidirectional_search.h>
@@ -52,6 +53,9 @@ int verbose = 0;
 int print_help = 0;
 // run only this query, or -1 for all
 int filter_id = -1;
+// dump map at id if set
+int dump_map_id = -1;
+std::string dump_map_file;
 #ifdef WARTHOG_POSTHOC
 // write trace to file, empty string to disable
 std::string trace_file;
@@ -78,11 +82,14 @@ help(std::ostream& out)
 	       "values in scen file) \n"
 	    << "\t--costs [costs file] (required if using a weighted "
 	       "terrain algorithm)\n"
+		<< "\t--v2-cost [type] (optional; change used cost type for v2 scen file dynamic)"
 	    << "\t--checkopt (optional; compare solution costs against "
 	       "values in the scen file)\n"
 	    << "\t--verbose (optional; prints debugging info when compiled "
 	       "with debug symbols)\n"
 	    << "\t--filter [id] (optional; run only query [id])\n"
+		<< "\t--dump-map [id] (optional; dump map at id to stderr)"
+		<< "\t--dump-map-file [filename] (optional; file to dump map to, default /dev/stderr)"
 #ifdef WARTHOG_POSTHOC
 	    << "\t--trace [.trace.yaml file] (optional; write posthoc trace for "
 	       "first query to [file])\n"
@@ -90,7 +97,10 @@ help(std::ostream& out)
 	    << "Invoking the program this way solves all instances in [scen "
 	       "file] with algorithm [alg]\n"
 	    << "Currently recognised values for [alg]:\n"
-	    << "\tastar, astar_wgm, astar4c, dijkstra\n";
+	    << "\tastar, astar_wgm, astar4c, dijkstra\n"
+		<< "Currently recognised values for [v2-cost]:\n"
+		<< "8c-ncc (default), 8c-cc, 4c, aa-ncc, aa-cc\n"
+		<< "8c = 8-connected, 4c = 4-connected, aa = anyangle, ncc = no-corner-cut, cc = corner-cut\n";
 }
 
 bool
@@ -103,20 +113,12 @@ check_optimality(
 
 	if(fabs(delta - epsilon) > epsilon)
 	{
-		std::stringstream strpathlen;
-		strpathlen << std::fixed << std::setprecision(exp->precision());
-		strpathlen << sol.sum_of_edge_costs_;
-
-		std::stringstream stroptlen;
-		stroptlen << std::fixed << std::setprecision(exp->precision());
-		stroptlen << exp->distance();
-
 		std::cerr << std::setprecision(exp->precision());
 		std::cerr << "optimality check failed!" << std::endl;
 		std::cerr << std::endl;
-		std::cerr << "optimal path length: " << stroptlen.str()
+		std::cerr << "optimal path length: " << sol.sum_of_edge_costs_
 		          << " computed length: ";
-		std::cerr << strpathlen.str() << std::endl;
+		std::cerr << exp->distance() << std::endl;
 		std::cerr << "precision: " << precision << " epsilon: " << epsilon
 		          << std::endl;
 		std::cerr << "delta: " << delta << std::endl;
@@ -187,8 +189,34 @@ run_experiments(
 			}
 		}
 
+		if (i == dump_map_id) {
+			// print map
+			std::optional<std::ofstream> outstream;
+			std::ostream* out = nullptr;
+			// convert dev to stream for cross-platform support
+			if (dump_map_file == "/dev/stderr") {
+				out = &std::cerr;
+			} else if (dump_map_file == "/dev/stdout") {
+				out = &std::cout;
+			} else {
+				out = &outstream.emplace(dump_map_file);
+				WARTHOG_GERROR_FMT_IF(!*out, "failed to open file to dump map {}\n", dump_map_file);
+			}
+			if (*out) {
+				// out is valid, print
+				std::string line(scen.grid.width()+1, '\n');
+				for (uint32_t y = 0, ye = scen.grid.height(), xe = scen.grid.width(); y < ye; ++y) {
+					for (uint32_t x = 0; x < xe; ++x) {
+						line[x] = "@."[(int)(scen.grid.get_label(scen.grid.to_padded_id_from_padded(x, y)) != 0)];
+					}
+					*out << line;
+				}
+			}
+		}
+
 		if (filter_id >= 0 && i == filter_id) {
 			// trace
+#ifdef WARTHOG_POSTHOC
 			if constexpr(std::same_as<
 							listener_type,
 							std::remove_cvref_t<decltype(algo.get_listeners())>>)
@@ -201,6 +229,7 @@ run_experiments(
 					l.open(*trace_stream);
 				}
 			}
+#endif
 		} else if (filter_id >= 0) {
 			continue;
 		}
@@ -362,10 +391,13 @@ main(int argc, char** argv)
 	       {"checkopt", no_argument, &checkopt, 1},
 	       {"verbose", no_argument, &verbose, 1},
 	       {"filter", required_argument, &filter_id, 1},
+		   {"dump-map", required_argument, &dump_map_id, 1},
+		   {"dump-map-file", required_argument, 0, 0},
 #ifdef WARTHOG_POSTHOC
 	       {"trace", required_argument, 0, 0},
 #endif
-	       {"costs", required_argument, 0, 1},
+	       {"costs", required_argument, 0, 0},
+		   {"v2-cost", required_argument, 0, 0},
 	       {0, 0, 0, 0}};
 
 	warthog::util::cfg cfg;
@@ -382,6 +414,8 @@ main(int argc, char** argv)
 	// std::string gen = cfg.get_param_value("gen");
 	std::string mapfile  = cfg.get_param_value("map");
 	std::string costfile = cfg.get_param_value("costs");
+	std::string v2cost = cfg.get_param_value("v2-cost");
+	dump_map_file = cfg.get_param_value("dump-map-file");
 
 	if(filter_id == 1)
 	{
@@ -398,8 +432,22 @@ main(int argc, char** argv)
 		return 0;
 	}
 
+	// check v2cost
+	if (v2cost.empty()) {
+		v2cost = "8c-ncc";
+	}
+
+	if(dump_map_id == 1)
+	{
+		dump_map_id = std::stoi(cfg.get_param_value("dump-map"));
+	}
+	if (dump_map_file.empty()) {
+		dump_map_file = "/dev/stderr";
+	}
+
 	// load up the instances
 	warthog::util::scenario_manager scenmgr;
+	scenmgr.set_cost_type(v2cost);
 	scenmgr.load_scenario(sfile.c_str());
 
 	if(scenmgr.num_experiments() == 0)

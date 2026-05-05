@@ -236,10 +236,10 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 				return std::errc::io_error;
 			}
 			if (last_type != io::scenario_serialize::CMD_PATCH || last_bucket != P.bucket) {
-				commands_.push_back(scenario_command::make_snapshot(Q.bucket, ++snapshot_count));
+				commands_.push_back(scenario_command::make_snapshot(P.bucket, ++snapshot_count));
 			}
 			last_type = io::scenario_serialize::CMD_PATCH;
-			last_bucket = Q.bucket;
+			last_bucket = P.bucket;
 
 			commands_.push_back(scenario_command::make_patch(P.bucket, P.patch_id, P.loc_x, P.loc_y));
 		} else if(con == io::scenario_serialize::FINAL) { break; }

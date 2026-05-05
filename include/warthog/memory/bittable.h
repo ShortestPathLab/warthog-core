@@ -247,7 +247,8 @@ public:
 		id_value_type p(pos);
 		id_value_type d = dest_bit;
 		while (count-- > 0) {
-			dest_t.set(typename decltype(dest_t)::id_type(d++), get(id_type(p++)));
+			auto v = get(id_type(p++));
+			dest_t.set(typename decltype(dest_t)::id_type(d++), v);
 		}
 	}
 	void copy(bitarray dest, id_type dest_pos, size_t count, id_type pos = id_type(0))
