@@ -65,8 +65,7 @@ struct bitarray
 {
 public:
 	static_assert(
-	    ValueBits <= CHAR_BIT
-	        && std::popcount(ValueBits) == 1,
+	    ValueBits <= CHAR_BIT && std::popcount(ValueBits) == 1,
 	    "ValueBits must be to power of 2 and fit inside BaseType bits.");
 	constexpr static size_t value_bits = ValueBits;
 	using id_type                      = IdType;
@@ -238,20 +237,27 @@ public:
 		}
 	}
 
-	void copy_p(void* dest, uint8_t dest_bit, size_t count, id_type pos = id_type(0))
+	void
+	copy_p(
+	    void* dest, uint8_t dest_bit, size_t count, id_type pos = id_type(0))
 	{
 		// TODO: faster copy
-		assert(dest_bit < CHAR_BIT && (dest_bit & (ValueBits-1)) == 0);
+		assert(dest_bit < CHAR_BIT && (dest_bit & (ValueBits - 1)) == 0);
 		// primative implemtation
-		bitarray<id_value_type, uint8_t, ValueBits> dest_t(static_cast<uint8_t*>(dest));
+		bitarray<id_value_type, uint8_t, ValueBits> dest_t(
+		    static_cast<uint8_t*>(dest));
 		id_value_type p(pos);
 		id_value_type d = dest_bit;
-		while (count-- > 0) {
+		while(count-- > 0)
+		{
 			auto v = get(id_type(p++));
 			dest_t.set(typename decltype(dest_t)::id_type(d++), v);
 		}
 	}
-	void copy(bitarray dest, id_type dest_pos, size_t count, id_type pos = id_type(0))
+	void
+	copy(
+	    bitarray dest, id_type dest_pos, size_t count,
+	    id_type pos = id_type(0))
 	{
 		auto [byte, bit] = id_split(dest_pos);
 		copy_p(dest.data() + byte, bit, count, pos);
@@ -277,8 +283,8 @@ struct bittable : bitarray<IdType, BaseType, ValueBits>
 {
 public:
 	using typename bittable::bitarray::id_type;
-	using typename bittable::bitarray::value_type;
 	using typename bittable::bitarray::id_value_type;
+	using typename bittable::bitarray::value_type;
 
 	static constexpr size_t
 	calc_array_size(uint32_t width, uint32_t height) noexcept
@@ -327,8 +333,7 @@ public:
 	id_to_xy(id_type id) const noexcept
 	{
 		assert(m_dim.width != 0);
-		const auto value
-		    = static_cast<id_value_type>(id);
+		const auto value = static_cast<id_value_type>(id);
 		return {
 		    static_cast<uint32_t>(value % m_dim.width),
 		    static_cast<uint32_t>(value / m_dim.width)};
@@ -445,21 +450,24 @@ public:
 		return bittable::bitarray::id_split(id);
 	}
 
-	void copy(bittable dest, id_type dest_pos, id_type pos, uint32_t width, uint32_t height)
+	void
+	copy(
+	    bittable dest, id_type dest_pos, id_type pos, uint32_t width,
+	    uint32_t height)
 	{
 		// TODO: faster copy
-		if (width == 0 || height == 0)
-			return;
-		
+		if(width == 0 || height == 0) return;
+
 		id_value_type d(dest_pos);
 		id_value_type dd = dest.m_dim.width;
 		id_value_type p(pos);
 		id_value_type pd = m_dim.width;
-		do {
+		do
+		{
 			bittable::bitarray::copy(dest, id_type(d), width, id_type(p));
 			d += dd;
 			p += pd;
-		} while (--height != 0);
+		} while(--height != 0);
 	}
 
 	///

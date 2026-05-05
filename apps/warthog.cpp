@@ -10,12 +10,12 @@
 #include <warthog/constants.h>
 #include <warthog/domain/gridmap.h>
 #include <warthog/domain/labelled_gridmap.h>
-#include <warthog/manager/scenario_runner.h>
-#include <warthog/manager/grid_patch_set.h>
 #include <warthog/heuristic/manhattan_heuristic.h>
 #include <warthog/heuristic/octile_heuristic.h>
 #include <warthog/heuristic/zero_heuristic.h>
 #include <warthog/io/scenario.h>
+#include <warthog/manager/grid_patch_set.h>
+#include <warthog/manager/scenario_runner.h>
 #include <warthog/search/gridmap_expansion_policy.h>
 #include <warthog/search/search.h>
 #include <warthog/search/unidirectional_search.h>
@@ -82,14 +82,16 @@ help(std::ostream& out)
 	       "values in scen file) \n"
 	    << "\t--costs [costs file] (required if using a weighted "
 	       "terrain algorithm)\n"
-		<< "\t--v2-cost [type] (optional; change used cost type for v2 scen file dynamic)"
+	    << "\t--v2-cost [type] (optional; change used cost type for v2 scen "
+	       "file dynamic)"
 	    << "\t--checkopt (optional; compare solution costs against "
 	       "values in the scen file)\n"
 	    << "\t--verbose (optional; prints debugging info when compiled "
 	       "with debug symbols)\n"
 	    << "\t--filter [id] (optional; run only query [id])\n"
-		<< "\t--dump-map [id] (optional; dump map at id to stderr)"
-		<< "\t--dump-map-file [filename] (optional; file to dump map to, default /dev/stderr)"
+	    << "\t--dump-map [id] (optional; dump map at id to stderr)"
+	    << "\t--dump-map-file [filename] (optional; file to dump map to, "
+	       "default /dev/stderr)"
 #ifdef WARTHOG_POSTHOC
 	    << "\t--trace [.trace.yaml file] (optional; write posthoc trace for "
 	       "first query to [file])\n"
@@ -98,9 +100,10 @@ help(std::ostream& out)
 	       "file] with algorithm [alg]\n"
 	    << "Currently recognised values for [alg]:\n"
 	    << "\tastar, astar_wgm, astar4c, dijkstra\n"
-		<< "Currently recognised values for [v2-cost]:\n"
-		<< "8c-ncc (default), 8c-cc, 4c, aa-ncc, aa-cc\n"
-		<< "8c = 8-connected, 4c = 4-connected, aa = anyangle, ncc = no-corner-cut, cc = corner-cut\n";
+	    << "Currently recognised values for [v2-cost]:\n"
+	    << "8c-ncc (default), 8c-cc, 4c, aa-ncc, aa-cc\n"
+	    << "8c = 8-connected, 4c = 4-connected, aa = anyangle, ncc = "
+	       "no-corner-cut, cc = corner-cut\n";
 }
 
 bool
@@ -141,14 +144,13 @@ struct gridmap_scenario
 	warthog::manager::grid_patch_set patches;
 
 	gridmap_scenario(const warthog::manager::scenario_manager& scen)
-		: mgr(&scen), run(&scen)
+	    : mgr(&scen), run(&scen)
 	{ }
 
-	bool load_map(const std::filesystem::path map)
+	bool
+	load_map(const std::filesystem::path map)
 	{
-		if (!patches.load(map)) {
-			return false;
-		}
+		if(!patches.load(map)) { return false; }
 		return run.gridmap_init(grid, patches);
 	}
 };
@@ -156,10 +158,8 @@ struct gridmap_scenario
 template<typename Search>
 int
 run_experiments(
-    Search& algo, std::string alg_name,
-    gridmap_scenario& scen,
-	bool verbose, bool checkopt,
-    std::ostream& out)
+    Search& algo, std::string alg_name, gridmap_scenario& scen, bool verbose,
+    bool checkopt, std::ostream& out)
 {
 	WARTHOG_GINFO_FMT("start search with algorithm {}", alg_name);
 	warthog::search::search_parameters par;
@@ -169,8 +169,8 @@ run_experiments(
 
 	out << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
 	    << "\tnanos\tplen\tpcost\tscost\tmap\n";
-	
-	for (uint32_t i = 0; ; ++i)
+
+	for(uint32_t i = 0;; ++i)
 	{
 #ifdef WARTHOG_POSTHOC
 		std::optional<std::ofstream>
@@ -178,61 +178,72 @@ run_experiments(
 
 #endif
 		auto [exp, patch_count] = scen.run.experiment_next();
-		if (exp == nullptr) {
-			break;
-		}
-		if (patch_count != 0) {
-			if (scen.run.gridmap_apply_patches(scen.grid, scen.patches) < 0) {
+		if(exp == nullptr) { break; }
+		if(patch_count != 0)
+		{
+			if(scen.run.gridmap_apply_patches(scen.grid, scen.patches) < 0)
+			{
 				// failed to apply patches, exit
 				WARTHOG_GCRIT("dynamic patch error: failed to apply patches");
 				return 5;
 			}
 		}
 
-		if (i == dump_map_id) {
+		if(i == dump_map_id)
+		{
 			// print map
 			std::optional<std::ofstream> outstream;
 			std::ostream* out = nullptr;
 			// convert dev to stream for cross-platform support
-			if (dump_map_file == "/dev/stderr") {
-				out = &std::cerr;
-			} else if (dump_map_file == "/dev/stdout") {
-				out = &std::cout;
-			} else {
+			if(dump_map_file == "/dev/stderr") { out = &std::cerr; }
+			else if(dump_map_file == "/dev/stdout") { out = &std::cout; }
+			else
+			{
 				out = &outstream.emplace(dump_map_file);
-				WARTHOG_GERROR_FMT_IF(!*out, "failed to open file to dump map {}\n", dump_map_file);
+				WARTHOG_GERROR_FMT_IF(
+				    !*out, "failed to open file to dump map {}\n",
+				    dump_map_file);
 			}
-			if (*out) {
+			if(*out)
+			{
 				// out is valid, print
-				std::string line(scen.grid.width()+1, '\n');
-				for (uint32_t y = 0, ye = scen.grid.height(), xe = scen.grid.width(); y < ye; ++y) {
-					for (uint32_t x = 0; x < xe; ++x) {
-						line[x] = "@."[(int)(scen.grid.get_label(scen.grid.to_padded_id_from_padded(x, y)) != 0)];
+				std::string line(scen.grid.width() + 1, '\n');
+				for(uint32_t y = 0, ye = scen.grid.height(),
+				             xe = scen.grid.width();
+				    y < ye; ++y)
+				{
+					for(uint32_t x = 0; x < xe; ++x)
+					{
+						line[x] = "@."[(
+						    int)(scen.grid.get_label(
+						             scen.grid.to_padded_id_from_padded(x, y))
+						         != 0)];
 					}
 					*out << line;
 				}
 			}
 		}
 
-		if (filter_id >= 0 && i == filter_id) {
+		if(filter_id >= 0 && i == filter_id)
+		{
 			// trace
 #ifdef WARTHOG_POSTHOC
 			if constexpr(std::same_as<
-							listener_type,
-							std::remove_cvref_t<decltype(algo.get_listeners())>>)
+			                 listener_type,
+			                 std::remove_cvref_t<
+			                     decltype(algo.get_listeners())>>)
 			{
 				if(!trace_file.empty())
 				{
 					listener_grid& l
-						= std::get<listener_grid>(algo.get_listeners());
+					    = std::get<listener_grid>(algo.get_listeners());
 					trace_stream.emplace(trace_file);
 					l.open(*trace_stream);
 				}
 			}
 #endif
-		} else if (filter_id >= 0) {
-			continue;
 		}
+		else if(filter_id >= 0) { continue; }
 
 		warthog::pack_id startid
 		    = expander->get_pack(exp->startx(), exp->starty());
@@ -286,19 +297,22 @@ run_astar(
     std::string alg_name)
 {
 	gridmap_scenario scen(scenmgr);
-	if (!scen.load_map(std::filesystem::path(mapname))) {
+	if(!scen.load_map(std::filesystem::path(mapname)))
+	{
 		WARTHOG_GCRIT("failed to load map");
 		return 3;
 	}
 	warthog::search::gridmap_expansion_policy expander(&scen.grid);
-	warthog::heuristic::octile_heuristic heuristic(scen.grid.width(), scen.grid.height());
+	warthog::heuristic::octile_heuristic heuristic(
+	    scen.grid.width(), scen.grid.height());
 	warthog::util::pqueue_min open;
 
 	warthog::search::unidirectional_search astar(
-	    &heuristic, &expander, &open, listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
+	    &heuristic, &expander, &open,
+	    listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
 
-	int ret = run_experiments(
-	    astar, alg_name, scen, verbose, checkopt, std::cout);
+	int ret
+	    = run_experiments(astar, alg_name, scen, verbose, checkopt, std::cout);
 	return ret;
 }
 
@@ -308,7 +322,8 @@ run_astar4c(
     std::string alg_name)
 {
 	gridmap_scenario scen(scenmgr);
-	if (!scen.load_map(std::filesystem::path(mapname))) {
+	if(!scen.load_map(std::filesystem::path(mapname)))
+	{
 		WARTHOG_GCRIT("failed to load map");
 		return 3;
 	}
@@ -318,10 +333,11 @@ run_astar4c(
 	warthog::util::pqueue_min open;
 
 	warthog::search::unidirectional_search astar(
-	    &heuristic, &expander, &open, listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
+	    &heuristic, &expander, &open,
+	    listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
 
-	int ret = run_experiments(
-	    astar, alg_name, scen, verbose, checkopt, std::cout);
+	int ret
+	    = run_experiments(astar, alg_name, scen, verbose, checkopt, std::cout);
 	return ret;
 }
 
@@ -331,7 +347,8 @@ run_dijkstra(
     std::string alg_name)
 {
 	gridmap_scenario scen(scenmgr);
-	if (!scen.load_map(std::filesystem::path(mapname))) {
+	if(!scen.load_map(std::filesystem::path(mapname)))
+	{
 		WARTHOG_GCRIT("failed to load map");
 		return 3;
 	}
@@ -340,10 +357,11 @@ run_dijkstra(
 	warthog::util::pqueue_min open;
 
 	warthog::search::unidirectional_search astar(
-	    &heuristic, &expander, &open, listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
+	    &heuristic, &expander, &open,
+	    listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
 
-	int ret = run_experiments(
-	    astar, alg_name, scen, verbose, checkopt, std::cout);
+	int ret
+	    = run_experiments(astar, alg_name, scen, verbose, checkopt, std::cout);
 	return ret;
 }
 
@@ -371,8 +389,8 @@ run_wgm_astar(
 
 	warthog::search::unidirectional_search astar(&heuristic, &expander, &open);
 
-	int ret = run_experiments(
-	    astar, alg_name, scen, verbose, checkopt, std::cout);
+	int ret
+	    = run_experiments(astar, alg_name, scen, verbose, checkopt, std::cout);
 	return ret;
 }
 
@@ -391,13 +409,13 @@ main(int argc, char** argv)
 	       {"checkopt", no_argument, &checkopt, 1},
 	       {"verbose", no_argument, &verbose, 1},
 	       {"filter", required_argument, &filter_id, 1},
-		   {"dump-map", required_argument, &dump_map_id, 1},
-		   {"dump-map-file", required_argument, 0, 0},
+	       {"dump-map", required_argument, &dump_map_id, 1},
+	       {"dump-map-file", required_argument, 0, 0},
 #ifdef WARTHOG_POSTHOC
 	       {"trace", required_argument, 0, 0},
 #endif
 	       {"costs", required_argument, 0, 0},
-		   {"v2-cost", required_argument, 0, 0},
+	       {"v2-cost", required_argument, 0, 0},
 	       {0, 0, 0, 0}};
 
 	warthog::util::cfg cfg;
@@ -414,8 +432,8 @@ main(int argc, char** argv)
 	// std::string gen = cfg.get_param_value("gen");
 	std::string mapfile  = cfg.get_param_value("map");
 	std::string costfile = cfg.get_param_value("costs");
-	std::string v2cost = cfg.get_param_value("v2-cost");
-	dump_map_file = cfg.get_param_value("dump-map-file");
+	std::string v2cost   = cfg.get_param_value("v2-cost");
+	dump_map_file        = cfg.get_param_value("dump-map-file");
 
 	if(filter_id == 1)
 	{
@@ -433,17 +451,13 @@ main(int argc, char** argv)
 	}
 
 	// check v2cost
-	if (v2cost.empty()) {
-		v2cost = "8c-ncc";
-	}
+	if(v2cost.empty()) { v2cost = "8c-ncc"; }
 
 	if(dump_map_id == 1)
 	{
 		dump_map_id = std::stoi(cfg.get_param_value("dump-map"));
 	}
-	if (dump_map_file.empty()) {
-		dump_map_file = "/dev/stderr";
-	}
+	if(dump_map_file.empty()) { dump_map_file = "/dev/stderr"; }
 
 	// load up the instances
 	warthog::util::scenario_manager scenmgr;

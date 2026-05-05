@@ -34,36 +34,50 @@ namespace warthog::util
 
 struct scenario_command
 {
-	enum type_ : uint8_t {
+	enum type_ : uint8_t
+	{
 		SNAPSHOT,
 		PATCH,
 		QUERY
 	};
-	int type; ///< command type
+	int type;       ///< command type
 	int32_t bucket; ///< bucket id number (meta), snapshot id for dynamic
-	uint32_t id; ///< SNAPSHOT: snapshot num, PATCH: patch to apply, QUERY: query id
-	union cmd_ {
-		struct snapshot_ { } snapshot;
-		struct patch_ {
+	uint32_t
+	    id; ///< SNAPSHOT: snapshot num, PATCH: patch to apply, QUERY: query id
+	union cmd_
+	{
+		struct snapshot_
+		{
+		} snapshot;
+		struct patch_
+		{
 			uint16_t topleft_x;
 			uint16_t topleft_y;
 		} patch;
-		struct query_ {
+		struct query_
+		{
 			uint32_t experiment_id; ///< experiment number
 		} query;
 	} cmd; ///< command union based on type
 
-	static constexpr scenario_command make_snapshot(int32_t bucket_id, uint32_t snapshot_id) noexcept
+	static constexpr scenario_command
+	make_snapshot(int32_t bucket_id, uint32_t snapshot_id) noexcept
 	{
-		return scenario_command{SNAPSHOT, bucket_id, snapshot_id, {.snapshot={}}};
+		return scenario_command{
+		    SNAPSHOT, bucket_id, snapshot_id, {.snapshot = {}}};
 	}
-	static constexpr scenario_command make_patch(int32_t bucket_id, uint32_t patch_id, uint16_t x, uint16_t y) noexcept
+	static constexpr scenario_command
+	make_patch(
+	    int32_t bucket_id, uint32_t patch_id, uint16_t x, uint16_t y) noexcept
 	{
-		return scenario_command{PATCH, bucket_id, patch_id, {.patch={x,y}}};
+		return scenario_command{PATCH, bucket_id, patch_id, {.patch = {x, y}}};
 	}
-	static constexpr scenario_command make_query(int32_t bucket_id, uint32_t query_id, uint32_t experiment_id) noexcept
+	static constexpr scenario_command
+	make_query(
+	    int32_t bucket_id, uint32_t query_id, uint32_t experiment_id) noexcept
 	{
-		return scenario_command{QUERY, bucket_id, query_id, {.query={experiment_id}}};
+		return scenario_command{
+		    QUERY, bucket_id, query_id, {.query = {experiment_id}}};
 	}
 };
 
@@ -76,8 +90,11 @@ public:
 	experiment*
 	get_experiment(uint32_t which)
 	{
-		if(which >= experiments_.size()) {
-			WARTHOG_GWARN_FMT("scenario has max {} experiments, cannot retrive {}", experiments_.size(), which);
+		if(which >= experiments_.size())
+		{
+			WARTHOG_GWARN_FMT(
+			    "scenario has max {} experiments, cannot retrive {}",
+			    experiments_.size(), which);
 			return nullptr;
 		}
 		return experiments_[which];
@@ -85,8 +102,11 @@ public:
 	const experiment*
 	get_experiment(uint32_t which) const
 	{
-		if(which >= experiments_.size()) {
-			WARTHOG_GWARN_FMT("scenario has max {} experiments, cannot retrive {}", experiments_.size(), which);
+		if(which >= experiments_.size())
+		{
+			WARTHOG_GWARN_FMT(
+			    "scenario has max {} experiments, cannot retrive {}",
+			    experiments_.size(), which);
 			return nullptr;
 		}
 		return experiments_[which];
@@ -158,36 +178,51 @@ public:
 	void
 	write_scenario(std::ostream& out);
 
-	std::string_view get_cost_type() const noexcept
+	std::string_view
+	get_cost_type() const noexcept
 	{
 		return cost_type_;
 	}
-	void set_cost_type(std::string_view v) noexcept
+	void
+	set_cost_type(std::string_view v) noexcept
 	{
 		cost_type_ = v;
 	}
-	void set_cost_type(io::cost_type c) noexcept
+	void
+	set_cost_type(io::cost_type c) noexcept
 	{
 		cost_type_ = io::scenario_serialize::get_dist_str(c);
 	}
 
-	bool is_static_scenario() const noexcept { return static_scenario_start_ >= 0; }
-	int32_t get_static_scenario_start() const noexcept { return static_scenario_start_; }
+	bool
+	is_static_scenario() const noexcept
+	{
+		return static_scenario_start_ >= 0;
+	}
+	int32_t
+	get_static_scenario_start() const noexcept
+	{
+		return static_scenario_start_;
+	}
 
-	uint32_t get_scenario_width() const noexcept
+	uint32_t
+	get_scenario_width() const noexcept
 	{
 		return scenario_width_;
 	}
-	void set_scenario_width(uint32_t width) noexcept
+	void
+	set_scenario_width(uint32_t width) noexcept
 	{
 		scenario_width_ = width;
 	}
 
-	uint32_t get_scenario_height() const noexcept
+	uint32_t
+	get_scenario_height() const noexcept
 	{
 		return scenario_height_;
 	}
-	void set_scenario_height(uint32_t height) noexcept
+	void
+	set_scenario_height(uint32_t height) noexcept
 	{
 		scenario_height_ = height;
 	}
@@ -201,7 +236,8 @@ protected:
 	std::errc
 	load_gppc_scenario_body_v2(io::scenario_serialize& si);
 
-	std::string_view copy_string(std::string_view str);
+	std::string_view
+	copy_string(std::string_view str);
 
 	std::pmr::monotonic_buffer_resource experiments_res_;
 	std::vector<experiment*> experiments_;
@@ -211,11 +247,13 @@ protected:
 	std::filesystem::path mfile_;
 	std::string cost_type_;
 	io::scenario_version version_ = io::scenario_version::UNKNOWN;
-	uint32_t scenario_width_ = 0;
-	uint32_t scenario_height_ = 0;
-	uint32_t query_count_ = 0;
-	uint32_t patch_count_ = 0;
-	int32_t static_scenario_start_ = -1; ///< >=0: is static scenario where query commands start at pos, else is dynamic scenario
+	uint32_t scenario_width_      = 0;
+	uint32_t scenario_height_     = 0;
+	uint32_t query_count_         = 0;
+	uint32_t patch_count_         = 0;
+	int32_t static_scenario_start_
+	    = -1; ///< >=0: is static scenario where query commands start at pos,
+	          ///< else is dynamic scenario
 };
 
 std::filesystem::path

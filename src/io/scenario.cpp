@@ -21,8 +21,8 @@ void
 scenario_serialize::close()
 {
 	serialize_base::close();
-	m_state        = serialize_state::INIT;
-	m_version      = scenario_version::UNKNOWN;
+	m_state      = serialize_state::INIT;
+	m_version    = scenario_version::UNKNOWN;
 	m_map_width  = 0;
 	m_map_height = 0;
 	m_query_at   = 0;
@@ -35,16 +35,15 @@ void
 scenario_serialize::set_relative_map_filename(
     const std::filesystem::path& filename)
 {
-	m_map_filename = std::filesystem::proximate(filename, get_scenario_filename());
+	m_map_filename
+	    = std::filesystem::proximate(filename, get_scenario_filename());
 }
 
 int
 scenario_serialize::last_command_type() const
 {
-	if (m_command_type == "Q")
-		return CMD_QUERY;
-	if (m_command_type == "P")
-		return CMD_PATCH;
+	if(m_command_type == "Q") return CMD_QUERY;
+	if(m_command_type == "P") return CMD_PATCH;
 	return CMD_UNKNOWN;
 }
 
@@ -127,8 +126,8 @@ scenario_serialize::read_header_v1(std::istream* in)
 	m_cost_type.resize(1);
 	m_cost_value.resize(1);
 	m_cost_strings[0] = get_dist_str(cost_type::G_8C_NCC);
-	m_cost_type[0] = cost_type::G_8C_NCC;
-	m_cost_value[0] = -1;
+	m_cost_type[0]    = cost_type::G_8C_NCC;
+	m_cost_value[0]   = -1;
 
 	// read first query line to get map
 	auto [line, err] = readline(in);
@@ -155,7 +154,7 @@ scenario_serialize::read_header_v1(std::istream* in)
 		return ec;
 	}
 	if(m_map_width <= 0 || m_map_width > GRID_MAX_SIZE || m_map_height <= 0
-		|| m_map_height > GRID_MAX_SIZE)
+	   || m_map_height > GRID_MAX_SIZE)
 	{
 		m_state = serialize_state::ERROR;
 		return std::errc::invalid_argument;
@@ -194,7 +193,8 @@ scenario_serialize::read_header_v2(std::istream* in)
 			m_state = serialize_state::ERROR;
 			return par.error();
 		}
-		if(token != "height" || m_map_height < 1 || m_map_height > GRID_MAX_SIZE)
+		if(token != "height" || m_map_height < 1
+		   || m_map_height > GRID_MAX_SIZE)
 		{
 			m_state = serialize_state::ERROR;
 			return std::errc::invalid_argument;
@@ -237,7 +237,7 @@ scenario_serialize::read_header_v2(std::istream* in)
 			m_state = serialize_state::ERROR;
 			return par.error();
 		}
-		if (token != "cost" || cost_count < 0 || cost_count > 128)
+		if(token != "cost" || cost_count < 0 || cost_count > 128)
 		{
 			// limit cost_count to be within reason
 			m_state = serialize_state::ERROR;
@@ -246,18 +246,21 @@ scenario_serialize::read_header_v2(std::istream* in)
 		m_cost_strings.resize(cost_count);
 		m_cost_type.resize(cost_count);
 		m_cost_value.resize(cost_count);
-		for (int i = 0; i < cost_count; ++i) {
-			if (!par.next(token)) {
+		for(int i = 0; i < cost_count; ++i)
+		{
+			if(!par.next(token))
+			{
 				m_state = serialize_state::ERROR;
 				return par.error();
 			}
 			std::string_view ctype = copy_string(token);
-			m_cost_strings[i] = ctype;
-			m_cost_type[i] = get_cost_type(ctype);
-			m_cost_value[i] = -1;
+			m_cost_strings[i]      = ctype;
+			m_cost_type[i]         = get_cost_type(ctype);
+			m_cost_value[i]        = -1;
 		}
 		// end of line
-		if (!par.eof()) {
+		if(!par.eof())
+		{
 			m_state = serialize_state::ERROR;
 			return par.error();
 		}
@@ -329,33 +332,37 @@ scenario_serialize::next_command_type(std::istream* in)
 
 	switch(m_version)
 	{
-	case scenario_version::VERSION_1: {
-		auto [line,ec] = readline(in, true);
-		if(ec != std::errc{}) {
+	case scenario_version::VERSION_1:
+	{
+		auto [line, ec] = readline(in, true);
+		if(ec != std::errc{})
+		{
 			m_state = serialize_state::ERROR;
 			return {INVALID, ec};
 		}
-		if(istream_eof(in)) {
+		if(istream_eof(in))
+		{
 			m_state = serialize_state::END;
 			return {FINAL, {}};
 		}
 		unreadline(line);
 		return {CMD_QUERY, {}};
 	}
-	case scenario_version::VERSION_2: {
-		auto [line,ec] = readline(in, true);
-		if(ec != std::errc{}) {
+	case scenario_version::VERSION_2:
+	{
+		auto [line, ec] = readline(in, true);
+		if(ec != std::errc{})
+		{
 			m_state = serialize_state::ERROR;
 			return {INVALID, ec};
 		}
-		if(istream_eof(in)) {
+		if(istream_eof(in))
+		{
 			m_state = serialize_state::END;
 			return {FINAL, {}};
 		}
 		parser par(line);
-		if (!par.next(m_command_type)) {
-			return {INVALID, par.error()};
-		}
+		if(!par.next(m_command_type)) { return {INVALID, par.error()}; }
 		auto cmd_type = last_command_type();
 		unreadline(line);
 		return {cmd_type, {}};
@@ -368,10 +375,7 @@ scenario_serialize::next_command_type(std::istream* in)
 std::errc
 scenario_serialize::skip_commands(int count, std::istream* in)
 {
-	if (m_state == serialize_state::END)
-	{
-		return {};
-	}
+	if(m_state == serialize_state::END) { return {}; }
 	if(!can_read(in) || m_state != serialize_state::COMMAND)
 	{
 		return std::errc::state_not_recoverable;
@@ -380,18 +384,22 @@ scenario_serialize::skip_commands(int count, std::istream* in)
 	std::errc ec;
 	std::string_view line;
 	std::tie(in, ec) = get_istream(in);
-	if(ec != std::errc{}) {
+	if(ec != std::errc{})
+	{
 		m_state = serialize_state::ERROR;
 		return ec;
 	}
-	while (count > 0) {
+	while(count > 0)
+	{
 		--count;
 		std::tie(line, ec) = readline(in, true);
-		if(ec != std::errc{}) {
+		if(ec != std::errc{})
+		{
 			m_state = serialize_state::ERROR;
 			return ec;
 		}
-		if(istream_eof(in)) {
+		if(istream_eof(in))
+		{
 			m_state = serialize_state::END;
 			break;
 		}
@@ -402,16 +410,14 @@ scenario_serialize::skip_commands(int count, std::istream* in)
 std::pair<int, std::errc>
 scenario_serialize::read_query_line(scenario_query& query, std::istream* in)
 {
-	if (m_state == serialize_state::END)
-	{
-		return {FINAL, {}};
-	}
+	if(m_state == serialize_state::END) { return {FINAL, {}}; }
 	if(!can_read(in) || m_state != serialize_state::COMMAND)
 	{
 		return {0, std::errc::state_not_recoverable};
 	}
 
-	switch (m_version) {
+	switch(m_version)
+	{
 	case scenario_version::VERSION_1:
 		return read_query_line_v1(query, in);
 	case scenario_version::VERSION_2:
@@ -431,28 +437,38 @@ scenario_serialize::read_query_line_v1(scenario_query& query, std::istream* in)
 	std::string_view token;
 
 	std::tie(in, ec) = get_istream(in);
-	if(ec != std::errc{}) {
+	if(ec != std::errc{})
+	{
 		m_state = serialize_state::ERROR;
 		return {INVALID, ec};
 	}
 	std::tie(line, ec) = readline(in, true);
-	if(ec != std::errc{}) {
+	if(ec != std::errc{})
+	{
 		m_state = serialize_state::ERROR;
 		return {INVALID, ec};
 	}
-	if(istream_eof(in)) {
+	if(istream_eof(in))
+	{
 		m_state = serialize_state::END;
 		return {FINAL, std::errc{}};
 	}
 	parser par(line);
-	if(!par.next(query.bucket).next(token).next(query.width).next(query.height)
-		.next(query.start_x).next(query.start_y).next(query.goal_x).next(query.goal_y)
-		.next(m_cost_value.at(0)).eof())
+	if(!par.next(query.bucket)
+	        .next(token)
+	        .next(query.width)
+	        .next(query.height)
+	        .next(query.start_x)
+	        .next(query.start_y)
+	        .next(query.goal_x)
+	        .next(query.goal_y)
+	        .next(m_cost_value.at(0))
+	        .eof())
 	{
 		// state not set to error, up to user
 		return {INVALID, par.error()};
 	}
-	query.map = token;
+	query.map  = token;
 	query.dist = m_cost_value;
 	if(!std::isfinite(query.start_x) || !std::isfinite(query.start_y)
 	   || !std::isfinite(query.goal_x) || !std::isfinite(query.goal_y)
@@ -502,30 +518,36 @@ scenario_serialize::read_query_line_v2(scenario_query& query, std::istream* in)
 	std::string_view token;
 
 	std::tie(in, ec) = get_istream(in);
-	if(ec != std::errc{}) {
+	if(ec != std::errc{})
+	{
 		m_state = serialize_state::ERROR;
 		return {INVALID, ec};
 	}
 	std::tie(line, ec) = readline(in, true);
-	if(ec != std::errc{}) {
+	if(ec != std::errc{})
+	{
 		m_state = serialize_state::ERROR;
 		return {INVALID, ec};
 	}
-	if(istream_eof(in)) {
+	if(istream_eof(in))
+	{
 		m_state = serialize_state::END;
 		return {FINAL, std::errc{}};
 	}
 
 	parser par(line);
-	if (!par.next(m_command_type)) {
-		return {INVALID, par.error()};
-	}
+	if(!par.next(m_command_type)) { return {INVALID, par.error()}; }
 	auto cmd_type = last_command_type();
-	if (cmd_type != CMD_QUERY) {
+	if(cmd_type != CMD_QUERY)
+	{
 		unreadline(line);
 		return {cmd_type, std::errc{}};
 	}
-	if(!par.next(query.bucket).next(query.start_x).next(query.start_y).next(query.goal_x).next(query.goal_y))
+	if(!par.next(query.bucket)
+	        .next(query.start_x)
+	        .next(query.start_y)
+	        .next(query.goal_x)
+	        .next(query.goal_y))
 	{
 		return {INVALID, par.error()};
 	}
@@ -535,17 +557,17 @@ scenario_serialize::read_query_line_v2(scenario_query& query, std::istream* in)
 		return {INVALID, std::errc::invalid_argument};
 	}
 	query.width = query.height = 0;
-	for (auto& cost : m_cost_value) {
-		if (!par.next(cost)) {
-			return {INVALID, par.error()};
-		}
-		if (!std::isfinite(cost))
+	for(auto& cost : m_cost_value)
+	{
+		if(!par.next(cost)) { return {INVALID, par.error()}; }
+		if(!std::isfinite(cost))
 		{
 			return {INVALID, std::errc::invalid_argument};
 		}
 	}
 	query.dist = m_cost_value;
-	if (!par.eof()) {
+	if(!par.eof())
+	{
 		// unexpected number of paramters
 		return {INVALID, par.error()};
 	}
@@ -604,31 +626,37 @@ scenario_serialize::read_patch_line_v2(scenario_patch& patch, std::istream* in)
 	std::string_view token;
 
 	std::tie(in, ec) = get_istream(in);
-	if(ec != std::errc{}) {
+	if(ec != std::errc{})
+	{
 		m_state = serialize_state::ERROR;
 		return {INVALID, ec};
 	}
 	std::tie(line, ec) = readline(in, true);
-	if(ec != std::errc{}) {
+	if(ec != std::errc{})
+	{
 		m_state = serialize_state::ERROR;
 		return {INVALID, ec};
 	}
-	if(istream_eof(in)) {
+	if(istream_eof(in))
+	{
 		m_state = serialize_state::END;
 		return {FINAL, std::errc{}};
 	}
 
 	parser par(line);
-	if (!par.next(token)) {
-		return {INVALID, par.error()};
-	}
+	if(!par.next(token)) { return {INVALID, par.error()}; }
 	auto cmd_type = last_command_type();
-	if (cmd_type != CMD_PATCH) {
+	if(cmd_type != CMD_PATCH)
+	{
 		unreadline(line);
 		return {cmd_type, std::errc{}};
 	}
 
-	if(!par.next(patch.bucket).next(patch.patch_id).next(patch.loc_x).next(patch.loc_y).eof())
+	if(!par.next(patch.bucket)
+	        .next(patch.patch_id)
+	        .next(patch.loc_x)
+	        .next(patch.loc_y)
+	        .eof())
 	{
 		return {INVALID, par.error()};
 	}
@@ -644,9 +672,8 @@ std::string_view
 scenario_serialize::copy_string(std::string_view str)
 {
 	size_t len = str.size();
-	if (len == 0)
-		return std::string_view();
-	char* data = static_cast<char*>(m_string_res.allocate(len+1, 8));
+	if(len == 0) return std::string_view();
+	char* data = static_cast<char*>(m_string_res.allocate(len + 1, 8));
 	std::memcpy(data, str.data(), len);
 	data[len] = '\0';
 	return std::string_view(data, len);

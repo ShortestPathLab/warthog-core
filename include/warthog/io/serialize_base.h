@@ -4,9 +4,9 @@
 // io/serialize_base.h
 //
 // Read/write base class for serialize classes.
-// Adds a uniform low-level interface for reading from a file, one-line at a time.
-// Support for both file or just from a istream/ostream object.
-// Tracking of line number for user-level error reporting and debugging.
+// Adds a uniform low-level interface for reading from a file, one-line at a
+// time. Support for both file or just from a istream/ostream object. Tracking
+// of line number for user-level error reporting and debugging.
 //
 // @author: Ryan Hechenberger
 // @created: 2026-04-10
@@ -19,8 +19,8 @@
 #include <cassert>
 #include <filesystem>
 #include <fstream>
-#include <sstream>
 #include <memory>
+#include <sstream>
 
 namespace warthog::io
 {
@@ -101,19 +101,21 @@ protected:
 			return {nullptr, std::errc::io_error};
 		return {out, {}};
 	}
-	bool istream_eof(std::istream* in = nullptr);
+	bool
+	istream_eof(std::istream* in = nullptr);
 	std::pair<std::string_view, std::errc>
 	readline(std::istream* in, bool skip_blanks = false);
 	void
 	unreadline(std::string_view line);
-	bool is_line_blank(std::string_view line);
+	bool
+	is_line_blank(std::string_view line);
 
 protected:
 	std::filesystem::path m_filename;
 	std::unique_ptr<std::ios_base> m_stream;
 	std::istream* m_stream_in  = nullptr;
 	std::ostream* m_stream_out = nullptr;
-	int32_t m_line_num    = 0;
+	int32_t m_line_num         = 0;
 	std::unique_ptr<char[]> m_line_data;
 	std::string_view m_line;
 	std::string m_unget_line;

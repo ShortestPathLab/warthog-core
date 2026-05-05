@@ -5,16 +5,16 @@
 // grid_patches primailry holds an array of bittable, handles reading from file
 // and efficent memory storage.
 //
-// Look at utilities in manager/dynamic_gridmap.h for automatic translation to gridmap
-// in a dynamic scenario.
+// Look at utilities in manager/dynamic_gridmap.h for automatic translation to
+// gridmap in a dynamic scenario.
 //
 // @author: Ryan Hechenberger
 // @created: 2026-04-10
 //
 
 #include "grid.h"
-#include <warthog/memory/bittable.h>
 #include <filesystem>
+#include <warthog/memory/bittable.h>
 
 namespace warthog::domain
 {

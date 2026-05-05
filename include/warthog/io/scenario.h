@@ -21,17 +21,17 @@
 
 #include "serialize_base.h"
 
+#include <algorithm>
 #include <array>
 #include <bitset>
 #include <cassert>
+#include <compare>
 #include <cstdint>
 #include <filesystem>
 #include <memory_resource>
+#include <span>
 #include <sstream>
 #include <vector>
-#include <span>
-#include <compare>
-#include <algorithm>
 
 namespace warthog::io
 {
@@ -86,8 +86,10 @@ public:
 	scenario_serialize();
 	~scenario_serialize() override;
 
-	static constexpr std::string_view get_dist_str(cost_type a) noexcept;
-	static constexpr cost_type get_cost_type(std::string_view a) noexcept;
+	static constexpr std::string_view
+	get_dist_str(cost_type a) noexcept;
+	static constexpr cost_type
+	get_cost_type(std::string_view a) noexcept;
 
 	/// @brief Resets class, including memory.  Must use between seperate
 	/// read/writes, needed for memory managment.
@@ -150,13 +152,17 @@ public:
 	find_cost_index(cost_type c) const noexcept
 	{
 		auto it = std::find(m_cost_type.begin(), m_cost_type.end(), c);
-		return it != m_cost_type.end() ? static_cast<int>(it - m_cost_type.begin()) : -1;
+		return it != m_cost_type.end()
+		    ? static_cast<int>(it - m_cost_type.begin())
+		    : -1;
 	}
 	int
 	find_cost_index(std::string_view c) const noexcept
 	{
 		auto it = std::find(m_cost_strings.begin(), m_cost_strings.end(), c);
-		return it != m_cost_strings.end() ? static_cast<int>(it - m_cost_strings.begin()) : -1;
+		return it != m_cost_strings.end()
+		    ? static_cast<int>(it - m_cost_strings.begin())
+		    : -1;
 	}
 
 	uint32_t
@@ -244,15 +250,20 @@ protected:
 	std::pmr::monotonic_buffer_resource m_string_res;
 	// distance types
 	std::pmr::vector<std::string_view> m_cost_strings; ///< names read in
-	std::pmr::vector<cost_type> m_cost_type; ///< cost_type of index (corrisponding dist_strings and dist_value)
-	std::pmr::vector<double> m_cost_value; ///< distance value stored, will be placed in dynamic_scenario
-	
+	std::pmr::vector<cost_type>
+	    m_cost_type; ///< cost_type of index (corrisponding dist_strings and
+	                 ///< dist_value)
+	std::pmr::vector<double> m_cost_value; ///< distance value stored, will be
+	                                       ///< placed in dynamic_scenario
+
 	std::string m_command_type; ///< last cost type
 };
 
-inline constexpr std::string_view scenario_serialize::get_dist_str(cost_type a) noexcept
+inline constexpr std::string_view
+scenario_serialize::get_dist_str(cost_type a) noexcept
 {
-	switch(a) {
+	switch(a)
+	{
 	case cost_type::G_8C_NCC:
 		return "8c-ncc";
 	case cost_type::G_8C_CC:
@@ -267,18 +278,14 @@ inline constexpr std::string_view scenario_serialize::get_dist_str(cost_type a) 
 		return std::string_view();
 	}
 }
-inline constexpr cost_type scenario_serialize::get_cost_type(std::string_view a) noexcept
+inline constexpr cost_type
+scenario_serialize::get_cost_type(std::string_view a) noexcept
 {
-	if (a == "8c-ncc")
-		return cost_type::G_8C_NCC;
-	if (a == "8c-cc")
-		return cost_type::G_8C_CC;
-	if (a == "4c")
-		return cost_type::G_4C;
-	if (a == "aa-ncc")
-		return cost_type::AA_NCC;
-	if (a == "aa-cc")
-		return cost_type::AA_CC;
+	if(a == "8c-ncc") return cost_type::G_8C_NCC;
+	if(a == "8c-cc") return cost_type::G_8C_CC;
+	if(a == "4c") return cost_type::G_4C;
+	if(a == "aa-ncc") return cost_type::AA_NCC;
+	if(a == "aa-cc") return cost_type::AA_CC;
 	return cost_type::OTHER;
 }
 

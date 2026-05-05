@@ -34,40 +34,48 @@ gridmap::gridmap(std::filesystem::path&& filename)
 	setup_stream_(in);
 }
 
-gridmap::gridmap(const std::filesystem::path& filename) : gridmap(std::filesystem::path(filename))
+gridmap::gridmap(const std::filesystem::path& filename)
+    : gridmap(std::filesystem::path(filename))
 { }
 
-gridmap::gridmap(const char* filename) : gridmap(std::filesystem::path(filename))
+gridmap::gridmap(const char* filename)
+    : gridmap(std::filesystem::path(filename))
 { }
 
-void gridmap::setup(uint32_t h, uint32_t w)
+void
+gridmap::setup(uint32_t h, uint32_t w)
 {
 	header_.height_ = h;
-	header_.width_ = w;
+	header_.width_  = w;
 	this->init_db();
 }
 
-void gridmap::load(std::istream& input)
+void
+gridmap::load(std::istream& input)
 {
 	setup_stream_(input);
 }
-void gridmap::load(io::bittable_serialize& parser)
+void
+gridmap::load(io::bittable_serialize& parser)
 {
 	setup_ser_(parser);
 }
-void gridmap::load(std::filesystem::path&& filename)
+void
+gridmap::load(std::filesystem::path&& filename)
 {
 	filename_ = std::move(filename);
 	std::ifstream in(filename_);
 	setup_stream_(in);
 }
 
-void gridmap::load(const std::filesystem::path& filename)
+void
+gridmap::load(const std::filesystem::path& filename)
 {
 	load(std::filesystem::path(filename));
 }
 
-void gridmap::load(const char* filename)
+void
+gridmap::load(const char* filename)
 {
 	load(std::filesystem::path(filename));
 }
@@ -85,7 +93,7 @@ gridmap::setup_stream_(std::istream& in)
 void
 gridmap::setup_ser_(io::bittable_serialize& parser)
 {
-	if (parser.read_grid_header() != std::errc{})
+	if(parser.read_grid_header() != std::errc{})
 		throw std::runtime_error("invalid grid format");
 	this->header_.type_   = "octile";
 	this->header_.width_  = parser.get_dim().width;

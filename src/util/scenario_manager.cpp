@@ -14,7 +14,8 @@ scenario_manager::scenario_manager() { }
 
 scenario_manager::~scenario_manager() = default;
 
-void scenario_manager::clear()
+void
+scenario_manager::clear()
 {
 	experiments_.clear();
 	experiments_res_.release();
@@ -72,12 +73,16 @@ scenario_manager::load_gppc_scenario(std::istream& scenfile)
 		return std::errc::io_error;
 	}
 	auto version = si.get_version();
-	if (version == io::scenario_version::VERSION_1) {
+	if(version == io::scenario_version::VERSION_1)
+	{
 		return load_gppc_scenario_body_v1(si);
-	} else if(version == io::scenario_version::VERSION_2)
+	}
+	else if(version == io::scenario_version::VERSION_2)
 	{
 		return load_gppc_scenario_body_v2(si);
-	} else {
+	}
+	else
+	{
 		WARTHOG_GERROR("scenario_manager reading unsupported version");
 		return std::errc::invalid_argument;
 	}
@@ -122,14 +127,16 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 		if(con == io::scenario_serialize::VALID)
 		{
 			std::string_view current_map(Q.map);
-			if (current_map.size() > 2048) // limit string size
+			if(current_map.size() > 2048) // limit string size
 			{
 				WARTHOG_GERROR_FMT(
-					"scenario_manager v1 query line map exceeds 2048 chars on line: {}",
-					si.get_line_num());
+				    "scenario_manager v1 query line map exceeds 2048 chars on "
+				    "line: {}",
+				    si.get_line_num());
 				return std::errc::argument_out_of_domain;
 			}
-			if (map_string != current_map) {
+			if(map_string != current_map)
+			{
 				map_string = copy_string(current_map);
 			}
 			experiment* ex = std::construct_at(
@@ -137,10 +144,11 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 			        sizeof(experiment), alignof(experiment))),
 			    (uint32_t)Q.start_x, (uint32_t)Q.start_y, (uint32_t)Q.goal_x,
 			    (uint32_t)Q.goal_y, si.get_map_width(), si.get_map_height(),
-			    Q.dist[(int)0],
-			   	map_string);
+			    Q.dist[(int)0], map_string);
 			experiments_.push_back(ex);
-			commands_.push_back(scenario_command::make_query(Q.bucket, query_count_++, (uint32_t)(experiments_.size()-1)));
+			commands_.push_back(scenario_command::make_query(
+			    Q.bucket, query_count_++,
+			    (uint32_t)(experiments_.size() - 1)));
 		}
 		else if(con == io::scenario_serialize::FINAL) { break; }
 	}
@@ -161,30 +169,36 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 	mfile_ = si.get_map_filename();
 	experiments_.reserve(1024);
 	commands_.reserve(1024);
-	scenario_width_  = si.get_map_width();
-	scenario_height_ = si.get_map_height();
+	scenario_width_        = si.get_map_width();
+	scenario_height_       = si.get_map_height();
 	static_scenario_start_ = -1; // init dynamic scenario
 
 	// set map filename
 	std::string_view map_string = copy_string(si.get_map_filename().string());
-	if (map_string.size() > 2048) // limit string size
+	if(map_string.size() > 2048) // limit string size
 	{
-		WARTHOG_GERROR(
-			"scenario_manager v2 map exceeds 2048 chars");
+		WARTHOG_GERROR("scenario_manager v2 map exceeds 2048 chars");
 		return std::errc::argument_out_of_domain;
 	}
 
 	// get cost index
 	int cost_index = si.get_cost_type().size() != 0 ? 0 : -1;
-	if (!cost_type_.empty()) {
+	if(!cost_type_.empty())
+	{
 		// user-provided cost index
 		cost_index = si.find_cost_index(cost_type_);
-		if (cost_index < 0) {
-			WARTHOG_GWARN_FMT("scenario_manager v2 failed to find user-provided cost: {}", cost_type_);
+		if(cost_index < 0)
+		{
+			WARTHOG_GWARN_FMT(
+			    "scenario_manager v2 failed to find user-provided cost: {}",
+			    cost_type_);
 		}
-	} else {
+	}
+	else
+	{
 		// try to use grid if exist
-		if (int ci = si.find_cost_index(io::cost_type::G_8C_NCC); ci >= 0) {
+		if(int ci = si.find_cost_index(io::cost_type::G_8C_NCC); ci >= 0)
+		{
 			cost_index = ci;
 		}
 	}
@@ -192,8 +206,8 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 	// read queries until done
 	io::scenario_query Q;
 	io::scenario_patch P;
-	int last_type = -1;
-	int last_bucket = -1;
+	int last_type      = -1;
+	int last_bucket    = -1;
 	int snapshot_count = -1;
 	while(true)
 	{
@@ -210,58 +224,72 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 		}
 		if(con == io::scenario_serialize::VALID)
 		{
-			if (last_type == -1) {
+			if(last_type == -1)
+			{
 				// only used if first command is a query
-				commands_.push_back(scenario_command::make_snapshot(Q.bucket, ++snapshot_count));
+				commands_.push_back(scenario_command::make_snapshot(
+				    Q.bucket, ++snapshot_count));
 			}
-			last_type = io::scenario_serialize::CMD_QUERY;
+			last_type   = io::scenario_serialize::CMD_QUERY;
 			last_bucket = Q.bucket;
 
 			experiment* ex = std::construct_at(
 			    static_cast<experiment*>(experiments_res_.allocate(
 			        sizeof(experiment), alignof(experiment))),
-			    Q.start_x, Q.start_y, Q.goal_x,
-			    Q.goal_y, si.get_map_width(), si.get_map_height(),
-			    Q.dist[(int)io::cost_type::G_8C_NCC],
-			   	map_string);
+			    Q.start_x, Q.start_y, Q.goal_x, Q.goal_y, si.get_map_width(),
+			    si.get_map_height(), Q.dist[(int)io::cost_type::G_8C_NCC],
+			    map_string);
 			experiments_.push_back(ex);
-			commands_.push_back(scenario_command::make_query(Q.bucket, query_count_++, (uint32_t)(experiments_.size()-1)));
-		} else if (con == io::scenario_serialize::CMD_PATCH) {
+			commands_.push_back(scenario_command::make_query(
+			    Q.bucket, query_count_++,
+			    (uint32_t)(experiments_.size() - 1)));
+		}
+		else if(con == io::scenario_serialize::CMD_PATCH)
+		{
 			std::tie(con, ec) = si.read_patch_line(P);
 			if(ec != std::errc{} || con != io::scenario_serialize::VALID)
 			{
 				WARTHOG_GERROR_FMT(
-					"scenario_manager failed to read command on line: {}",
-					si.get_line_num());
+				    "scenario_manager failed to read command on line: {}",
+				    si.get_line_num());
 				return std::errc::io_error;
 			}
-			if (last_type != io::scenario_serialize::CMD_PATCH || last_bucket != P.bucket) {
-				commands_.push_back(scenario_command::make_snapshot(P.bucket, ++snapshot_count));
+			if(last_type != io::scenario_serialize::CMD_PATCH
+			   || last_bucket != P.bucket)
+			{
+				commands_.push_back(scenario_command::make_snapshot(
+				    P.bucket, ++snapshot_count));
 			}
-			last_type = io::scenario_serialize::CMD_PATCH;
+			last_type   = io::scenario_serialize::CMD_PATCH;
 			last_bucket = P.bucket;
 
-			commands_.push_back(scenario_command::make_patch(P.bucket, P.patch_id, P.loc_x, P.loc_y));
-		} else if(con == io::scenario_serialize::FINAL) { break; }
-		else if(con == io::scenario_serialize::CMD_UNKNOWN) {
+			commands_.push_back(scenario_command::make_patch(
+			    P.bucket, P.patch_id, P.loc_x, P.loc_y));
+		}
+		else if(con == io::scenario_serialize::FINAL) { break; }
+		else if(con == io::scenario_serialize::CMD_UNKNOWN)
+		{
 			// ignore
 			si.skip_commands();
-		} else {
+		}
+		else
+		{
 			// error, invalid query
 			WARTHOG_GERROR_FMT(
-				"scenario_manager failed to read command on line: {}",
-				si.get_line_num());
+			    "scenario_manager failed to read command on line: {}",
+			    si.get_line_num());
 			return std::errc::io_error;
 		}
 	}
 	return std::errc{};
 }
 
-std::string_view scenario_manager::copy_string(std::string_view str)
+std::string_view
+scenario_manager::copy_string(std::string_view str)
 {
-	if (str.empty())
-		return std::string_view();
-	char* mapchars = static_cast<char*>(experiments_res_.allocate(str.size() + 1));
+	if(str.empty()) return std::string_view();
+	char* mapchars
+	    = static_cast<char*>(experiments_res_.allocate(str.size() + 1));
 	std::memcpy(mapchars, str.data(), str.size());
 	mapchars[str.size()] = '\0';
 	return std::string_view(mapchars, str.size());

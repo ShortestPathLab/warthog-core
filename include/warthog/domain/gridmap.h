@@ -19,8 +19,8 @@
 //
 
 #include "grid.h"
-#include <warthog/io/grid.h>
 #include <warthog/constants.h>
+#include <warthog/io/grid.h>
 #include <warthog/memory/bittable.h>
 #include <warthog/util/cast.h>
 #include <warthog/util/gm_parser.h>
@@ -32,9 +32,9 @@
 #include <climits>
 #include <cstdint>
 #include <cstring>
-#include <limits>
 #include <filesystem>
 #include <istream>
+#include <limits>
 
 namespace warthog::domain
 {
@@ -64,12 +64,18 @@ public:
 	operator=(const gridmap&)
 	    = delete;
 
-	void setup(uint32_t height, uint32_t width);
-	void load(std::istream& input);
-	void load(io::bittable_serialize& parser);
-	void load(std::filesystem::path&& filename);
-	void load(const std::filesystem::path& filename);
-	void load(const char* filename);
+	void
+	setup(uint32_t height, uint32_t width);
+	void
+	load(std::istream& input);
+	void
+	load(io::bittable_serialize& parser);
+	void
+	load(std::filesystem::path&& filename);
+	void
+	load(const std::filesystem::path& filename);
+	void
+	load(const char* filename);
 
 	// here we convert from the coordinate space of
 	// the original grid to the coordinate space of db_.
@@ -115,7 +121,9 @@ public:
 	}
 
 	void
-	to_unpadded_xy_from_padded(uint32_t padded_x, uint32_t padded_y, uint32_t& x, uint32_t& y) const noexcept
+	to_unpadded_xy_from_padded(
+	    uint32_t padded_x, uint32_t padded_y, uint32_t& x,
+	    uint32_t& y) const noexcept
 	{
 		y = padded_y - PADDED_ROWS;
 		x = padded_x;
@@ -131,7 +139,9 @@ public:
 	}
 
 	void
-	to_padded_xy_from_unpadded(uint32_t unpadded_x, uint32_t unpadded_y, uint32_t& x, uint32_t& y) const noexcept
+	to_padded_xy_from_unpadded(
+	    uint32_t unpadded_x, uint32_t unpadded_y, uint32_t& x,
+	    uint32_t& y) const noexcept
 	{
 		y = unpadded_y + PADDED_ROWS;
 		x = unpadded_x;
@@ -380,8 +390,10 @@ public:
 	}
 
 protected:
-	void setup_stream_(std::istream& in);
-	void setup_ser_(io::bittable_serialize& parser);
+	void
+	setup_stream_(std::istream& in);
+	void
+	setup_ser_(io::bittable_serialize& parser);
 
 private:
 	warthog::util::gm_header header_;

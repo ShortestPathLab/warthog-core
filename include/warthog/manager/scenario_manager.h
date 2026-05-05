@@ -9,8 +9,8 @@
 // @created: 2026-04-10
 //
 
-#include <warthog/util/scenario_manager.h>
 #include "experiment.h"
+#include <warthog/util/scenario_manager.h>
 
 namespace warthog::manager
 {
