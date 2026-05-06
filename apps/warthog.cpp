@@ -253,6 +253,10 @@ run_experiments(
 		sol.reset();
 
 		algo.get_path(&pi, &par, &sol);
+		// check for no solution
+		if (sol.sum_of_edge_costs_ >= warthog::COST_MAX) {
+			sol.sum_of_edge_costs_ = -1;
+		}
 
 #ifdef WARTHOG_POSTHOC
 		if constexpr(std::same_as<
