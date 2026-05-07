@@ -111,16 +111,16 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 	static_scenario_start_ = (int32_t)commands_.size();
 	// read queries until done
 	bool first = true;
-	io::scenario_query Q;
+	io::scenario_instance Q;
 	std::string_view map_string;
 	while(true)
 	{
 		Q.reset();
-		auto [con, ec] = si.read_query_line(Q);
+		auto [con, ec] = si.read_instance_line(Q);
 		if(ec != std::errc{})
 		{
 			WARTHOG_GERROR_FMT(
-			    "scenario_manager failed to read query on line: {}",
+			    "scenario_manager failed to read inst on line: {}",
 			    si.get_line_num());
 			return std::errc::io_error;
 		}
@@ -130,7 +130,7 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 			if(current_map.size() > 2048) // limit string size
 			{
 				WARTHOG_GERROR_FMT(
-				    "scenario_manager v1 query line map exceeds 2048 chars on "
+				    "scenario_manager v1 inst line map exceeds 2048 chars on "
 				    "line: {}",
 				    si.get_line_num());
 				return std::errc::argument_out_of_domain;
@@ -144,10 +144,10 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 			        sizeof(experiment), alignof(experiment))),
 			    (uint32_t)Q.start_x, (uint32_t)Q.start_y, (uint32_t)Q.goal_x,
 			    (uint32_t)Q.goal_y, si.get_map_width(), si.get_map_height(),
-			    Q.dist[(int)0], map_string);
+			    Q.cost[(int)0], map_string);
 			experiments_.push_back(ex);
-			commands_.push_back(scenario_command::make_query(
-			    Q.bucket, query_count_++,
+			commands_.push_back(scenario_command::make_inst(
+			    Q.bucket, inst_count_++,
 			    (uint32_t)(experiments_.size() - 1)));
 		}
 		else if(con == io::scenario_serialize::FINAL) { break; }
@@ -204,17 +204,17 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 	}
 
 	// read queries until done
-	io::scenario_query Q;
+	io::scenario_instance Q;
 	io::scenario_patch P;
 	int last_type      = -1;
 	int last_bucket    = -1;
 	int snapshot_count = -1;
 	while(true)
 	{
-		// try reading a query line
+		// try reading a inst line
 		int con;
 		std::errc ec;
-		std::tie(con, ec) = si.read_query_line(Q);
+		std::tie(con, ec) = si.read_instance_line(Q);
 		if(ec != std::errc{})
 		{
 			WARTHOG_GERROR_FMT(
@@ -226,22 +226,22 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 		{
 			if(last_type == -1)
 			{
-				// only used if first command is a query
+				// only used if first command is a inst
 				commands_.push_back(scenario_command::make_snapshot(
 				    Q.bucket, ++snapshot_count));
 			}
-			last_type   = io::scenario_serialize::CMD_QUERY;
+			last_type   = io::scenario_serialize::CMD_INST;
 			last_bucket = Q.bucket;
 
 			experiment* ex = std::construct_at(
 			    static_cast<experiment*>(experiments_res_.allocate(
 			        sizeof(experiment), alignof(experiment))),
 			    Q.start_x, Q.start_y, Q.goal_x, Q.goal_y, si.get_map_width(),
-			    si.get_map_height(), Q.dist[(int)io::cost_type::G_8C_NCC],
+			    si.get_map_height(), Q.cost[(int)io::cost_type::G_8C_NCC],
 			    map_string);
 			experiments_.push_back(ex);
-			commands_.push_back(scenario_command::make_query(
-			    Q.bucket, query_count_++,
+			commands_.push_back(scenario_command::make_inst(
+			    Q.bucket, inst_count_++,
 			    (uint32_t)(experiments_.size() - 1)));
 		}
 		else if(con == io::scenario_serialize::CMD_PATCH)
@@ -274,7 +274,7 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 		}
 		else
 		{
-			// error, invalid query
+			// error, invalid inst
 			WARTHOG_GERROR_FMT(
 			    "scenario_manager failed to read command on line: {}",
 			    si.get_line_num());

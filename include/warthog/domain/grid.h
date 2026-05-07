@@ -1,13 +1,18 @@
 #ifndef WARTHOG_DOMAIN_GRID_H
 #define WARTHOG_DOMAIN_GRID_H
 
-// domains/grid.h
-//
-// A place for grid-related curios
-//
-// @author: dharabor
-// @created: 2018-11-03
-//
+/// @file domains/grid.h
+///
+/// A place for grid-related features.
+/// Includes the grid identifier (id), direction (and direction_id),
+/// point (coordinate) and utilities.
+///
+/// These utilities include conversion between direction/direction_id, rotation,
+/// direction to point and inverse, helpers for grid traversal, etc.
+///
+/// @author: dharabor & Ryan Hechenberger
+/// @created: 2018-11-03
+///
 
 #include <bit>
 #include <bitset>
@@ -19,8 +24,6 @@
 
 namespace warthog::grid
 {
-
-// TODO: document
 
 using grid_id = pad32_id;
 
@@ -71,25 +74,25 @@ template<direction_id D>
 concept SecInterCardinalID = static_cast<uint8_t>(D) >= 8;
 
 /// @return is NORTH_ID/SOUTH_ID/EAST_ID/WEST_ID
-constexpr inline bool
+constexpr bool
 is_cardinal_id(direction_id d) noexcept
 {
 	return static_cast<uint8_t>(d) < 4;
 }
 /// @return is NORTHEAST_ID/NORTHWEST_ID/SOUTHEAST_ID/SOUTHWEST_ID
-constexpr inline bool
+constexpr bool
 is_intercardinal_id(direction_id d) noexcept
 {
 	return static_cast<uint8_t>(d - 4) < 4;
 }
 /// @return is a intercardinal+cardinal combined direction
-constexpr inline bool
+constexpr bool
 is_secic_id(direction_id d) noexcept
 {
 	return static_cast<uint8_t>(d) >= 8;
 }
 /// @return get the cardinal id from a combined direction
-constexpr inline direction_id
+constexpr direction_id
 secic_cardinal(direction_id d) noexcept
 {
 	direction_id c
@@ -98,7 +101,7 @@ secic_cardinal(direction_id d) noexcept
 	return c;
 }
 /// @return get the intercardinal id from a combined direction
-constexpr inline direction_id
+constexpr direction_id
 secic_intercardinal(direction_id d) noexcept
 {
 	direction_id c = static_cast<direction_id>(static_cast<uint8_t>(d) >> 3);
@@ -519,7 +522,7 @@ operator==(spoint a, spoint b)
 	return std::bit_cast<uint32_t>(a) == std::bit_cast<uint32_t>(b);
 }
 
-constexpr inline std::pair<int32_t, int32_t>
+constexpr std::pair<int32_t, int32_t>
 point_signed_diff(point a, point b) noexcept
 {
 	return {
@@ -529,20 +532,20 @@ point_signed_diff(point a, point b) noexcept
 	        static_cast<int32_t>(b.y) - static_cast<int32_t>(a.y))};
 }
 
-constexpr inline point
+constexpr point
 operator+(point a, spoint b) noexcept
 {
 	return point{
 	    static_cast<uint16_t>(a.x + static_cast<uint16_t>(b.x)),
 	    static_cast<uint16_t>(a.y + static_cast<uint16_t>(b.y))};
 }
-constexpr inline spoint
+constexpr spoint
 operator+(spoint a, spoint b) noexcept
 {
 	return spoint{
 	    static_cast<int16_t>(a.x + b.x), static_cast<int16_t>(a.y + b.y)};
 }
-constexpr inline spoint
+constexpr spoint
 operator*(int16_t a, spoint b) noexcept
 {
 	return spoint{
@@ -552,7 +555,7 @@ operator*(int16_t a, spoint b) noexcept
 /// @brief gets a unit signed-point in direction
 /// @param d the direction for the unit-distance
 /// @return the unit spoint
-constexpr inline spoint
+constexpr spoint
 dir_unit_point(direction_id d) noexcept
 {
 	assert(static_cast<uint8_t>(d) < 8);
@@ -582,7 +585,7 @@ dir_unit_point(direction_id d) noexcept
 /// @param d the direction for unit-point, if a secic will use the
 /// intercardinal component
 /// @return the unit spoint
-constexpr inline spoint
+constexpr spoint
 dir_unit_point_secic(direction_id d) noexcept
 {
 	assert(static_cast<uint8_t>(d) < 8);
@@ -614,7 +617,7 @@ dir_unit_point_secic(direction_id d) noexcept
 
 /// @return the direction from p1 to p2.  If diff x or diff y is zero, will be
 /// cardinal, otherwise is intercardinal direction.
-constexpr inline direction_id
+constexpr direction_id
 point_to_direction_id(point p1, point p2) noexcept
 {
 	union

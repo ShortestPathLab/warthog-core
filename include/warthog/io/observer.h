@@ -1,28 +1,27 @@
 #ifndef WARTHOG_IO_OBSERVER_H
 #define WARTHOG_IO_OBSERVER_H
 
-// io/observer.h
-//
-// Defines use of an observer pattern, in which observer object is registered
-// to an observable, and the observable will trigger events to all relevant
-// observers.
-// The observer is passed to an observable as a list of tuples,
-// and when triggering an event will notify all observers by function call of
-// the event name that is callable to the observer.
-// Observer are either stored as value in the tuple or pointer to an observer.
-//
-// These function names must be registered before use, common ones registered
-// here.
-//
-// To register a new function name, use WARTHOG_OBSERVER_DEFINE([function]).
-// Invoke event with observer_[function](listeners, args...) where listeners
-// are tuple of observers. This will run through each element in tuple (i) and
-// call i.[function](args...) if able. If i.event([function],args...) is a
-// valid callable, calls this function first, also tries i.event([function]).
-//
-// @author: Ryan Hechenberger
-// @created: 2025-08-06
-//
+/// @file io/observer.h
+///
+/// Defines use of an observer pattern, in which observer object is registered
+/// to an observable, and the observable will trigger events to all relevant
+/// observers.
+/// The observer is` passed to an observable as a list of tuples,
+/// and when triggering an event will notify all observers by function call of
+/// the event name that is callable to the observer.
+/// Observer are either stored as value in the tuple or pointer to an observer.
+///
+/// These function names must be registered before use, common ones registered
+/// here.
+///
+/// To register a new function name, use WARTHOG_OBSERVER_DEFINE([function]).
+/// Invoke event with observer_[function](listeners, args...) where listeners
+/// are tuple of observers. This will run through each element in tuple (i) and
+/// call i.[function](args...) if able. If i.event([function],args...) is a
+/// valid callable, calls this function first, also tries i.event([function]).
+///
+/// @author: Ryan Hechenberger
+/// @created: 2025-08-06
 
 #include <warthog/constants.h>
 

@@ -36,10 +36,10 @@ scenario_runner::experiment_next(uint32_t count)
 		case util::scenario_command::PATCH:
 			patch_count += snapshot_patches();
 			break;
-		case util::scenario_command::QUERY:
-			if(const experiment* query = snapshot_query(); query != nullptr)
+		case util::scenario_command::INST:
+			if(const experiment* inst = snapshot_inst(); inst != nullptr)
 			{
-				if(--count == 0) return {query, patch_count};
+				if(--count == 0) return {inst, patch_count};
 			}
 			break;
 		default:
@@ -91,7 +91,7 @@ scenario_runner::snapshot_next(bool clear_patch)
 			}
 			// current snapshot, goto next snapshot
 			[[fallthrough]];
-		case util::scenario_command::QUERY:
+		case util::scenario_command::INST:
 			++snapshot_at_;
 			break;
 		case util::scenario_command::PATCH:
@@ -135,30 +135,30 @@ scenario_runner::snapshot_patches(bool clear_patch)
 }
 
 const experiment*
-scenario_runner::snapshot_query()
+scenario_runner::snapshot_inst()
 {
 	assert(scenario_ != nullptr);
 	auto commands = scenario_->get_commands();
 	if(command_at_ >= commands.size()) return nullptr;
 	auto cmd = commands[command_at_];
-	if(cmd.type != util::scenario_command::QUERY) return nullptr;
+	if(cmd.type != util::scenario_command::INST) return nullptr;
 	command_at_    += 1;
 	experiment_at_ += 1;
-	if(cmd.cmd.query.experiment_id >= scenario_->num_experiments()
-	   || cmd.cmd.query.experiment_id != (uint32_t)experiment_at_)
+	if(cmd.cmd.inst.experiment_id >= scenario_->num_experiments()
+	   || cmd.cmd.inst.experiment_id != (uint32_t)experiment_at_)
 	{
 		WARTHOG_GERROR_FMT(
-		    "scenario_runner::snapshot_query invalid experiment_id {} to "
+		    "scenario_runner::snapshot_inst invalid experiment_id {} to "
 		    "experiment, expected {} (max {}) in {}",
-		    cmd.cmd.query.experiment_id, experiment_at_,
+		    cmd.cmd.inst.experiment_id, experiment_at_,
 		    scenario_->num_experiments(), WARTHOG_FILENAME_LINE);
 		return nullptr;
 	}
-	return scenario_->get_experiment(cmd.cmd.query.experiment_id);
+	return scenario_->get_experiment(cmd.cmd.inst.experiment_id);
 }
 
 std::span<const experiment*>
-scenario_runner::snapshot_query_all()
+scenario_runner::snapshot_inst_all()
 {
 	assert(scenario_ != nullptr);
 	experiments_.clear();
@@ -167,18 +167,18 @@ scenario_runner::snapshot_query_all()
 	while(command_at_ < commands.size())
 	{
 		auto cmd = commands[command_at_];
-		if(cmd.type != util::scenario_command::QUERY) break;
-		if(cmd.cmd.query.experiment_id >= exp.size()
-		   || cmd.cmd.query.experiment_id != (uint32_t)experiment_at_)
+		if(cmd.type != util::scenario_command::INST) break;
+		if(cmd.cmd.inst.experiment_id >= exp.size()
+		   || cmd.cmd.inst.experiment_id != (uint32_t)experiment_at_)
 		{
 			WARTHOG_GERROR_FMT(
-			    "scenario_runner::snapshot_query_all invalid experiment_id {} "
+			    "scenario_runner::snapshot_inst_all invalid experiment_id {} "
 			    "to experiment, expected {} (max {}) in {}",
-			    cmd.cmd.query.experiment_id, experiment_at_, exp.size(),
+			    cmd.cmd.inst.experiment_id, experiment_at_, exp.size(),
 			    WARTHOG_FILENAME_LINE);
 			return {};
 		}
-		experiments_.push_back(exp[cmd.cmd.query.experiment_id]);
+		experiments_.push_back(exp[cmd.cmd.inst.experiment_id]);
 		command_at_    += 1;
 		experiment_at_ += 1;
 	}

@@ -1,14 +1,14 @@
 #ifndef WARTHOG_MANAGER_GRID_PATCH_SET_H
 #define WARTHOG_MANAGER_GRID_PATCH_SET_H
 
-// scenario_runner.h
-//
-// Take a scenario_manager object and be able to progress through a dynamic
-// scenario.
-//
-// @author: Ryan Hechenberger
-// @created: 2026-04-10
-//
+/// @file grid_patch_set.h
+///
+/// Utility to store grid map/patches.
+/// Can read with some flexibility and be used with scenario_runner to update a gridmap.
+///
+/// @author: Ryan Hechenberger
+/// @created: 2026-04-10
+///
 
 #include <warthog/domain/gridmap.h>
 #include <warthog/io/fwd.h>
@@ -23,7 +23,9 @@ namespace warthog::manager
 
 /// @brief a class for managing a set of patches
 ///
-/// Stores a list of patches at
+/// Stores a list of patches in a vector.
+/// Supports loading of patches from a file/stream with flags to control this.
+/// User can also add their own patches.
 class grid_patch_set
 {
 public:
@@ -36,16 +38,26 @@ public:
 	};
 	using bittable                 = domain::gridmap::bittable;
 	static constexpr uint16_t npos = (uint16_t)-1u;
+
 	grid_patch_set(std::pmr::memory_resource* upstream = nullptr)
 	    : grid_res_(
 	          upstream != nullptr ? upstream
 	                              : std::pmr::get_default_resource())
 	{ }
 
+	/// @brief read istream as whole patch set
+	/// @param file open text istream
+	/// @param max_grids maximum number of grids to read
+	/// @return true if success, false otherwise
 	bool
-	load(std::istream& file);
+	load(std::istream& file, int max_grids = -1);
+
+	/// @brief opens file and read as whole patch set
+	/// @param maps the filename to open
+	/// @param max_grids maximum number of grids to read
+	/// @return true if success, false otherwise
 	bool
-	load(const std::filesystem::path& maps);
+	load(const std::filesystem::path& maps, int max_grids = -1);
 
 	/// @brief reads from a serialize, checking for errors.  Can read both type
 	/// octile and patch files.
@@ -71,11 +83,23 @@ public:
 	    io::bittable_serialize& S, int max_grids = -1,
 	    uint32_t flags = DEFAULT);
 
+	/// @brief copies a user-provided bittable, subregion from offset with width/height
+	/// @param table the base table to push
+	/// @return true on success, false otherwise
+	/// @pre (offset_x == 0 && offset_y == 0 && width == npos && height == npos) || (width != npos && height != npos)
+	///
+	/// Will copy from (offset_x,offset_y) table of width by height.
+	/// Subtable must fully fit within table or fail.
+	/// Defaults will copy whole bittable, if any arguments are changed then width/height
+	/// must be specified (i.e. cannot be npos).
 	bool
 	push_copy(
 	    bittable table, uint16_t offset_x = 0, uint16_t offset_y = 0,
 	    uint16_t width = npos, uint16_t height = npos);
 
+	/// @brief pushes a bittable to set, not copying contents, does not own table memory
+	/// @param patch the patch to push
+	/// @return true on success, false otherwise
 	bool
 	push_ref(bittable patch);
 

@@ -25,7 +25,7 @@ scenario_serialize::close()
 	m_version    = scenario_version::UNKNOWN;
 	m_map_width  = 0;
 	m_map_height = 0;
-	m_query_at   = 0;
+	m_inst_at   = 0;
 	m_cost_strings.clear();
 	m_cost_type.clear();
 	m_cost_value.clear();
@@ -42,7 +42,7 @@ scenario_serialize::set_relative_map_filename(
 int
 scenario_serialize::last_command_type() const
 {
-	if(m_command_type == "Q") return CMD_QUERY;
+	if(m_command_type == "Q") return CMD_INST;
 	if(m_command_type == "P") return CMD_PATCH;
 	return CMD_UNKNOWN;
 }
@@ -121,15 +121,15 @@ scenario_serialize::read_header_v1(std::istream* in)
 			return ec;
 		}
 	}
-	// setup distance types
+	// setup cost types
 	m_cost_strings.resize(1);
 	m_cost_type.resize(1);
 	m_cost_value.resize(1);
-	m_cost_strings[0] = get_dist_str(cost_type::G_8C_NCC);
+	m_cost_strings[0] = get_cost_str(cost_type::G_8C_NCC);
 	m_cost_type[0]    = cost_type::G_8C_NCC;
 	m_cost_value[0]   = -1;
 
-	// read first query line to get map
+	// read first inst line to get map
 	auto [line, err] = readline(in);
 	if(err != std::errc{})
 	{
@@ -175,7 +175,7 @@ scenario_serialize::read_header_v2(std::istream* in)
 		m_state = serialize_state::ERROR;
 		return err;
 	}
-	// read first query line to get map
+	// read first inst line to get map
 	std::string_view line;
 	std::string_view token;
 
@@ -310,7 +310,7 @@ scenario_serialize::read_header_v2(std::istream* in)
 		}
 	}
 
-	// set_relative_map_filename(m_query.map);
+	// set_relative_map_filename(m_inst.map);
 	m_state = serialize_state::COMMAND;
 	return std::errc{};
 }
@@ -346,7 +346,7 @@ scenario_serialize::next_command_type(std::istream* in)
 			return {FINAL, {}};
 		}
 		unreadline(line);
-		return {CMD_QUERY, {}};
+		return {CMD_INST, {}};
 	}
 	case scenario_version::VERSION_2:
 	{
@@ -408,7 +408,7 @@ scenario_serialize::skip_commands(int count, std::istream* in)
 }
 
 std::pair<int, std::errc>
-scenario_serialize::read_query_line(scenario_query& query, std::istream* in)
+scenario_serialize::read_instance_line(scenario_instance& inst, std::istream* in)
 {
 	if(m_state == serialize_state::END) { return {FINAL, {}}; }
 	if(!can_read(in) || m_state != serialize_state::COMMAND)
@@ -419,16 +419,16 @@ scenario_serialize::read_query_line(scenario_query& query, std::istream* in)
 	switch(m_version)
 	{
 	case scenario_version::VERSION_1:
-		return read_query_line_v1(query, in);
+		return read_instance_line_v1(inst, in);
 	case scenario_version::VERSION_2:
-		return read_query_line_v2(query, in);
+		return read_instance_line_v2(inst, in);
 	default:
 		return {INVALID, std::errc::state_not_recoverable};
 	}
 }
 
 std::pair<int, std::errc>
-scenario_serialize::read_query_line_v1(scenario_query& query, std::istream* in)
+scenario_serialize::read_instance_line_v1(scenario_instance& inst, std::istream* in)
 {
 	assert(can_read(in));
 	// move to start of read
@@ -454,53 +454,53 @@ scenario_serialize::read_query_line_v1(scenario_query& query, std::istream* in)
 		return {FINAL, std::errc{}};
 	}
 	parser par(line);
-	if(!par.next(query.bucket)
+	if(!par.next(inst.bucket)
 	        .next(token)
-	        .next(query.width)
-	        .next(query.height)
-	        .next(query.start_x)
-	        .next(query.start_y)
-	        .next(query.goal_x)
-	        .next(query.goal_y)
+	        .next(inst.width)
+	        .next(inst.height)
+	        .next(inst.start_x)
+	        .next(inst.start_y)
+	        .next(inst.goal_x)
+	        .next(inst.goal_y)
 	        .next(m_cost_value.at(0))
 	        .eof())
 	{
 		// state not set to error, up to user
 		return {INVALID, par.error()};
 	}
-	query.map  = token;
-	query.dist = m_cost_value;
-	if(!std::isfinite(query.start_x) || !std::isfinite(query.start_y)
-	   || !std::isfinite(query.goal_x) || !std::isfinite(query.goal_y)
-	   || !std::isfinite(query.dist[0]))
+	inst.map  = token;
+	inst.cost = m_cost_value;
+	if(!std::isfinite(inst.start_x) || !std::isfinite(inst.start_y)
+	   || !std::isfinite(inst.goal_x) || !std::isfinite(inst.goal_y)
+	   || !std::isfinite(inst.cost[0]))
 	{
-		return {INVALID, std::errc::invalid_argument};
+		return {INVALID, std::errc{}};
 	}
 	// perform checking of values, but do not return as error if fail
-	if(query.width != m_map_width || query.height != m_map_height)
+	if(inst.width != m_map_width || inst.height != m_map_height)
 	{
 		return {INVALID, std::errc{}};
 	}
 	if(m_force_int)
 	{
 		// check integer bounds
-		if(rint(query.start_x) != query.start_x
-		   || rint(query.start_y) != query.start_y
-		   || rint(query.goal_x) != query.goal_x
-		   || rint(query.goal_y) != query.goal_y)
+		if(rint(inst.start_x) != inst.start_x
+		   || rint(inst.start_y) != inst.start_y
+		   || rint(inst.goal_x) != inst.goal_x
+		   || rint(inst.goal_y) != inst.goal_y)
 		{
 			return {INVALID, std::errc{}};
 		}
-		if(query.start_x < 0 || query.start_y >= m_map_width
-		   || query.goal_x < 0 || query.goal_y >= m_map_height)
+		if(inst.start_x < 0 || inst.start_y >= m_map_width
+		   || inst.goal_x < 0 || inst.goal_y >= m_map_height)
 		{
 			return {INVALID, std::errc{}};
 		}
 	}
 	else
 	{
-		if(query.start_x < 0 || query.start_y > m_map_width || query.goal_x < 0
-		   || query.goal_y > m_map_height)
+		if(inst.start_x < 0 || inst.start_y > m_map_width || inst.goal_x < 0
+		   || inst.goal_y > m_map_height)
 		{
 			return {INVALID, std::errc{}};
 		}
@@ -509,7 +509,7 @@ scenario_serialize::read_query_line_v1(scenario_query& query, std::istream* in)
 }
 
 std::pair<int, std::errc>
-scenario_serialize::read_query_line_v2(scenario_query& query, std::istream* in)
+scenario_serialize::read_instance_line_v2(scenario_instance& inst, std::istream* in)
 {
 	assert(can_read(in));
 	// move to start of read
@@ -538,25 +538,25 @@ scenario_serialize::read_query_line_v2(scenario_query& query, std::istream* in)
 	parser par(line);
 	if(!par.next(m_command_type)) { return {INVALID, par.error()}; }
 	auto cmd_type = last_command_type();
-	if(cmd_type != CMD_QUERY)
+	if(cmd_type != CMD_INST)
 	{
 		unreadline(line);
 		return {cmd_type, std::errc{}};
 	}
-	if(!par.next(query.bucket)
-	        .next(query.start_x)
-	        .next(query.start_y)
-	        .next(query.goal_x)
-	        .next(query.goal_y))
+	if(!par.next(inst.bucket)
+	        .next(inst.start_x)
+	        .next(inst.start_y)
+	        .next(inst.goal_x)
+	        .next(inst.goal_y))
 	{
 		return {INVALID, par.error()};
 	}
-	if(!std::isfinite(query.start_x) || !std::isfinite(query.start_y)
-	   || !std::isfinite(query.goal_x) || !std::isfinite(query.goal_y))
+	if(!std::isfinite(inst.start_x) || !std::isfinite(inst.start_y)
+	   || !std::isfinite(inst.goal_x) || !std::isfinite(inst.goal_y))
 	{
 		return {INVALID, std::errc::invalid_argument};
 	}
-	query.width = query.height = 0;
+	inst.width = inst.height = 0;
 	for(auto& cost : m_cost_value)
 	{
 		if(!par.next(cost)) { return {INVALID, par.error()}; }
@@ -565,7 +565,7 @@ scenario_serialize::read_query_line_v2(scenario_query& query, std::istream* in)
 			return {INVALID, std::errc::invalid_argument};
 		}
 	}
-	query.dist = m_cost_value;
+	inst.cost = m_cost_value;
 	if(!par.eof())
 	{
 		// unexpected number of paramters
@@ -574,23 +574,23 @@ scenario_serialize::read_query_line_v2(scenario_query& query, std::istream* in)
 	if(m_force_int)
 	{
 		// check integer bounds
-		if(rint(query.start_x) != query.start_x
-		   || rint(query.start_y) != query.start_y
-		   || rint(query.goal_x) != query.goal_x
-		   || rint(query.goal_y) != query.goal_y)
+		if(rint(inst.start_x) != inst.start_x
+		   || rint(inst.start_y) != inst.start_y
+		   || rint(inst.goal_x) != inst.goal_x
+		   || rint(inst.goal_y) != inst.goal_y)
 		{
 			return {INVALID, std::errc{}};
 		}
-		if(query.start_x < 0 || query.start_y >= m_map_width
-		   || query.goal_x < 0 || query.goal_y >= m_map_height)
+		if(inst.start_x < 0 || inst.start_y >= m_map_width
+		   || inst.goal_x < 0 || inst.goal_y >= m_map_height)
 		{
 			return {INVALID, std::errc{}};
 		}
 	}
 	else
 	{
-		if(query.start_x < 0 || query.start_y > m_map_width || query.goal_x < 0
-		   || query.goal_y > m_map_height)
+		if(inst.start_x < 0 || inst.start_y > m_map_width || inst.goal_x < 0
+		   || inst.goal_y > m_map_height)
 		{
 			return {INVALID, std::errc{}};
 		}

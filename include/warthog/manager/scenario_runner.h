@@ -1,14 +1,14 @@
 #ifndef WARTHOG_MANAGER_SCENARIO_RUNNER_H
 #define WARTHOG_MANAGER_SCENARIO_RUNNER_H
 
-// scenario_runner.h
-//
-// Take a scenario_manager object and be able to progress through a dynamic
-// scenario.
-//
-// @author: Ryan Hechenberger
-// @created: 2026-04-09
-//
+/// @file scenario_runner.h
+///
+/// Take a scenario_manager object and be able to progress through a dynamic
+/// scenario.
+///
+/// @author: Ryan Hechenberger
+/// @created: 2026-04-09
+///
 
 #include "grid_patch_set.h"
 #include "scenario_manager.h"
@@ -41,10 +41,10 @@ public:
 
 	/// @brief progress from current to count experiment away and return it
 	/// @param count
-	/// @return pair of the reached query and snapshot id.
+	/// @return pair of the reached inst and snapshot id.
 	///
 	/// Will progress through commands until count queries are encounted,
-	/// returning the final query. When count == 1, is exactly the next query.
+	/// returning the final inst. When count == 1, is exactly the next inst.
 	/// All patches required
 	std::pair<const experiment*, int>
 	experiment_next(uint32_t count = 1);
@@ -61,7 +61,7 @@ public:
 	snapshot_next(bool clear_patch = true);
 
 	/// @brief starting at SNAPSHOT or current PATCH, apply all patches until
-	/// reaching SNAPSHOT or QUERY
+	/// reaching SNAPSHOT or INST
 	/// @param clear_patch clears get_patches()
 	/// @return the number of patches, patch id are retrivable from
 	/// get_patches()
@@ -72,26 +72,26 @@ public:
 	int
 	snapshot_patches(bool clear_patch = true);
 
-	/// @brief returns the current query experiment if at query and progress to
+	/// @brief returns the current inst experiment if at inst and progress to
 	/// next command
-	/// @return the current query experiment if command is query, otherwise
+	/// @return the current inst experiment if command is inst, otherwise
 	/// nullptr
 	///
-	/// Requires to be on QUERY, otherwise return nullptr and do nothing.
-	/// If QUERY, returns corrisponding experiment and goto next command.
+	/// Requires to be on INST, otherwise return nullptr and do nothing.
+	/// If INST, returns corrisponding experiment and goto next command.
 	/// Does not affect get_patches().
 	const experiment*
-	snapshot_query();
+	snapshot_inst();
 
 	/// @brief progress from current to count experiment away and return it
 	/// @param clear_patch clears get_patches()
-	/// @return pair of the reached query and snapshot id.
+	/// @return pair of the reached inst and snapshot id.
 	///
 	/// Will progress through commands until count queries are encounted,
-	/// returning the final query. When count == 1, is exactly the next query.
+	/// returning the final inst. When count == 1, is exactly the next inst.
 	/// All patches required
 	std::span<const experiment*>
-	snapshot_query_all();
+	snapshot_inst_all();
 
 	bool
 	complete() const noexcept

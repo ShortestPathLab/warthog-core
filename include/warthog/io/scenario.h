@@ -1,23 +1,24 @@
 #ifndef WARTHOG_IO_SCENARIO_H
 #define WARTHOG_IO_SCENARIO_H
 
-// io/scenario.h
-//
-// Read/write utilities for scenario files.
-//
-//	Supported formats for read:
-//	    - GPPC 1.0 format (as at 2012 Grid-based Path Planning Competition)
-//		  (fields: bucket,map,mapwidth,mapheight,sx,sy,gx,gy,distance)
-//	    - DIMACS format (as at the 9th DIMACS Implementation Challenge)
-//	      (fields: q [source-id] [target-id])
-//
-//	Supported formats for generate/write:
-//	    - GPPC 1.0 format (as at 2012 Grid-based Path Planning Competition)
-//      - Dynamic format (tbd link)
-//
-// @author: dharabor & Ryan Hechenberger
-// @created: 2025-12-04
-//
+/// @file scenario.h
+///
+/// Read/write utilities for scenario files.
+///
+///	Supported formats for read:
+///	    - GPPC 1.0 format (as at 2012 Grid-based Path Planning Competition)
+///		  (fields: bucket,map,mapwidth,mapheight,sx,sy,gx,gy,distance)
+///	    - DIMACS format (as at the 9th DIMACS Implementation Challenge)
+///	      (fields: q [source-id] [target-id])
+///     - Dynamic format (tbd link)
+///
+///	Supported formats for generate/write:
+///	    - GPPC 1.0 format (as at 2012 Grid-based Path Planning Competition)
+///      - Dynamic format (tbd link)
+///
+/// @author: dharabor & Ryan Hechenberger
+/// @created: 2025-12-04
+///
 
 #include "serialize_base.h"
 
@@ -36,7 +37,8 @@
 namespace warthog::io
 {
 
-struct scenario_query
+/// @brief scenario instance struct, reusable with fields set by scenario_serialize
+struct scenario_instance
 {
 	int64_t bucket;
 	std::string_view map;
@@ -46,7 +48,8 @@ struct scenario_query
 	double start_y;
 	double goal_x;
 	double goal_y;
-	std::span<double> dist;
+	std::span<double> cost;
+	void* extra_data; ///< holds extra data that a user may require (not used by default)
 
 	void
 	reset()
@@ -79,7 +82,7 @@ public:
 		INVALID,
 		VALID,
 		FINAL,
-		CMD_QUERY,
+		CMD_INST,
 		CMD_PATCH,
 		CMD_UNKNOWN,
 	};
@@ -87,7 +90,7 @@ public:
 	~scenario_serialize() override;
 
 	static constexpr std::string_view
-	get_dist_str(cost_type a) noexcept;
+	get_cost_str(cost_type a) noexcept;
 	static constexpr cost_type
 	get_cost_type(std::string_view a) noexcept;
 
@@ -95,6 +98,12 @@ public:
 	/// read/writes, needed for memory managment.
 	void
 	reset();
+
+	/// @return the current state of scenario read/write
+	serialize_state state() const noexcept
+	{
+		return m_state;
+	}
 
 	void
 	set_scenario_filename(std::filesystem::path&& filename)
@@ -193,46 +202,98 @@ public:
 	virtual int
 	last_command_type() const;
 
-	/// @brief reads in file version information, and sets version accessable
-	/// via get_version()
-	/// @param in optional stream to use, otherwise uses internal-set stream
-	/// @return success std::errc{} (0)
+    /// @brief reads in file version information, and sets version (accessible via get_version())
+    /// @param in optional stream to use, otherwise uses internal-set stream
+    /// @return success std::errc{}, else failure
+	/// @pre state() == serialize_state::INIT (returns errc otherwise)
 	virtual std::errc
 	read_version(std::istream* in = nullptr);
-	/// @brief with header (without version) information.
+	/// @brief read header (without version) information.
 	/// @param in optional stream to use, otherwise uses internal-set stream
-	/// @return success std::errc{} (0)
+	/// @return success std::errc{}, else failure
+	/// @pre state() == serialize_state::VERSION (returns errc otherwise)
 	///
-	/// With VERSION1: peeks first query to gain map name
-	/// With version2: gets map width/height, available costs and patch
+	/// With VERSION1: peeks first instance to gain map name
+	/// With VERSION2: gets map width/height, available costs and patch
 	/// filename
 	virtual std::errc
 	read_header(std::istream* in = nullptr);
 
+	/// @brief read header as VERSION_1, does not consider the state or version. use read_header for checks instead.
 	std::errc
 	read_header_v1(std::istream* in = nullptr);
+	/// @brief read header as VERSION_2, does not consider the state or version. use read_header for checks instead.
 	std::errc
 	read_header_v2(std::istream* in = nullptr);
 
+	/// @brief gets the next command type
+	/// @param in optional stream to use, otherwise uses internal-set stream
+	/// @return a pair with a value from command_res and std::errc for success (else error)
+	/// @pre state() == serialize_state::COMMAND (returns error otherwise)
+	///
+	/// With VERSION_1:
+	///   Returns CMD_INST or FINAL if no more commands are present
+	/// With VERSION_2:
+	///   Returns command based on last_command_type(), or FINAL if not present.
+	///   Default expects CMD_INST or CMD_PATCH.
 	std::pair<int, std::errc>
 	next_command_type(std::istream* in = nullptr);
+	/// @brief skips the next count number of commands
+	/// @param count number of commands to skip
+	/// @param in optional stream to use, otherwise uses internal-set stream
+	/// @return success std::errc{}, else failure
+	/// @pre state() == serialize_state::COMMAND (returns errc otherwise)
 	std::errc
 	skip_commands(int count = 1, std::istream* in = nullptr);
 
+	/// @brief reads an instance line and stores results in scenario_instance
+	/// @param inst where to store the instance data read in
+	/// @param in optional stream to use, otherwise uses internal-set stream
+	/// @return a pair with a value from command_res and std::errc for success (else error)
+	/// @pre state() == serialize_state::COMMAND (returns error otherwise)
+	///
+	/// if next_command_type().first == CMD_INST, then reads the instance, otherwise
+	/// returns CMD_? dependent on the type of command, or FINAL.
+	/// With get_version() == VERSION_1:
+	///   Returns VALID for success, FINAL for no more commands, and INVALID for invalid instance.
+	/// With get_version() == VERSION_2:
+	///   Returns VALID for success, FINAL for no more commands, and INVALID for invalid instance,
+	///   or last_command_type() (only CMD_PATCH for standard v2 scenario) of type of command.
+	///
+    /// INVALID return without error code means success in reading command, but command has invalid parameters.
+    /// Main checks are non-finite floats (start/goal/cost), mismatch width/height, or out of bounds
+    /// start/goal.  If get_force_int() == true, also checks start/goal are integers within the grid,
+    /// otherwise allows float also within the grid (allows x == width() or y == height()).
 	virtual std::pair<int, std::errc>
-	read_query_line(scenario_query& query, std::istream* in = nullptr);
+	read_instance_line(scenario_instance& inst, std::istream* in = nullptr);
 
+	/// @brief as VERSION_1 with read_instance_line, does not check pre-conditions
 	std::pair<int, std::errc>
-	read_query_line_v1(scenario_query& query, std::istream* in = nullptr);
+	read_instance_line_v1(scenario_instance& inst, std::istream* in = nullptr);
+	/// @brief as VERSION_2 with read_instance_line, does not check pre-conditions
 	std::pair<int, std::errc>
-	read_query_line_v2(scenario_query& query, std::istream* in = nullptr);
+	read_instance_line_v2(scenario_instance& inst, std::istream* in = nullptr);
 
+	/// @brief reads a patch line and stores results in scenario_patch
+	/// @param patch where to store the patch data read in (not grid)
+	/// @param in optional stream to use, otherwise uses internal-set stream
+	/// @return a pair with a value from command_res and std::errc for success (else error)
+	/// @pre state() == serialize_state::COMMAND (returns error otherwise)
+	///
+	/// if next_command_type().first == CMD_PATCH, then reads the instance, otherwise
+	/// returns CMD_? dependent on the type of command, or FINAL.
+	/// With get_version() == VERSION_2:
+	///   Returns VALID for success, FINAL for no more commands, INVALID if location is out of grid bounds,
+	///   or last_command_type() (only CMD_INST for standard v2 scenario) of type of command.
 	virtual std::pair<int, std::errc>
-	read_patch_line(scenario_patch& query, std::istream* in = nullptr);
+	read_patch_line(scenario_patch& patch, std::istream* in = nullptr);
 
+	/// @brief as VERSION_2 with read_patch_line, does not check pre-conditions
 	std::pair<int, std::errc>
-	read_patch_line_v2(scenario_patch& query, std::istream* in = nullptr);
+	read_patch_line_v2(scenario_patch& patch, std::istream* in = nullptr);
 
+protected:
+	/// @return a owned version of str
 	std::string_view
 	copy_string(std::string_view str);
 
@@ -243,7 +304,7 @@ protected:
 	std::filesystem::path m_map_filename;
 	uint32_t m_map_width  = 0;
 	uint32_t m_map_height = 0;
-	int32_t m_query_at    = 0;
+	int32_t m_inst_at    = 0;
 
 	// dynamic data
 	std::pmr::monotonic_buffer_resource m_dyn_res;
@@ -259,8 +320,8 @@ protected:
 	std::string m_command_type; ///< last cost type
 };
 
-inline constexpr std::string_view
-scenario_serialize::get_dist_str(cost_type a) noexcept
+constexpr std::string_view
+scenario_serialize::get_cost_str(cost_type a) noexcept
 {
 	switch(a)
 	{
@@ -278,7 +339,7 @@ scenario_serialize::get_dist_str(cost_type a) noexcept
 		return std::string_view();
 	}
 }
-inline constexpr cost_type
+constexpr cost_type
 scenario_serialize::get_cost_type(std::string_view a) noexcept
 {
 	if(a == "8c-ncc") return cost_type::G_8C_NCC;

@@ -10,7 +10,6 @@ namespace warthog::io
 {
 
 serialize_base::serialize_base()
-    : m_line_data(std::make_unique<char[]>(max_line_length))
 { }
 serialize_base::~serialize_base() = default;
 
@@ -80,12 +79,16 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 {
 	size_t len;
 	auto [s, err] = get_istream(in);
+	if (!m_line_data) {
+		m_max_line_length = m_max_line_length > 0 ? m_max_line_length : max_line_length;
+		m_line_data = std::make_unique<char[]>(m_max_line_length);
+	}
 	while(true)
 	{
 		if(len = m_unget_line.size(); len != 0)
 		{
 			// return last unreadline
-			if(len > max_line_length - 1)
+			if(len > m_max_line_length - 1)
 			{
 				return {{}, std::errc::invalid_argument};
 			}
@@ -106,7 +109,7 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 		{
 			if(err != std::errc{}) { return {{}, err}; }
 			if(s->eof()) { return {{}, std::errc::io_error}; }
-			if(!s->getline(m_line_data.get(), max_line_length))
+			if(!s->getline(m_line_data.get(), m_max_line_length))
 			{
 				if(s->eof() && s->gcount() == 0)
 				{

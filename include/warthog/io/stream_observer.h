@@ -1,20 +1,20 @@
 #ifndef WARTHOG_IO_STEAM_OBSERVER_H
 #define WARTHOG_IO_STEAM_OBSERVER_H
 
-// io/stream_observer.h
-//
-// The stream observer is a base class for observers that can open and own a
-// filestream, or pass another filestream.
-// This is designed as a many-to-one observers to stream.
-// No inbuilt support for multi-threading, use locks in the observer function.
-//
-// Is designed to be used with observer tuples.
-// Inherited class will call stream() to get the current stream for output.
-// Using the observer methodology, event functions will be given that will
-// write to output in certain ways.
-//
-// @author: Ryan Hechenberger
-// @created: 2025-08-01
+/// @file stream_observer.h
+///
+/// The stream observer is a base class for observers that can open and own a
+/// filestream, or pass another filestream.
+/// This is designed as a many-to-one observers to stream.
+/// No inbuilt support for multi-threading, use locks in the observer function.
+///
+/// Is designed to be used with observer tuples.
+/// Inherited class will call stream() to get the current stream for output.
+/// Using the observer methodology, event functions will be given that will
+/// write to output in certain ways.
+///
+/// @author: Ryan Hechenberger
+/// @created: 2025-08-01
 //
 
 #include "fwd.h"

@@ -9,7 +9,7 @@ namespace warthog::manager
 {
 
 bool
-grid_patch_set::load(std::istream& file)
+grid_patch_set::load(std::istream& file, int max_grids)
 {
 	io::bittable_serialize S;
 	if(auto ec = S.open_read(&file); ec != std::errc{})
@@ -17,7 +17,7 @@ grid_patch_set::load(std::istream& file)
 		WARTHOG_GWARN_FMT("grid patch failed to open file code={}", (int)ec);
 		return false;
 	}
-	if(int r = deserialize(S); r < 0)
+	if(int r = deserialize(S, max_grids); r < 0)
 	{
 		WARTHOG_GWARN_FMT("grid patch failed to read patch {}", -r - 1);
 		return false;
@@ -26,7 +26,7 @@ grid_patch_set::load(std::istream& file)
 }
 
 bool
-grid_patch_set::load(const std::filesystem::path& maps)
+grid_patch_set::load(const std::filesystem::path& maps, int max_grids)
 {
 	io::bittable_serialize S;
 	S.set_filename(std::filesystem::path(maps));

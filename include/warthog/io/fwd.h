@@ -1,13 +1,12 @@
 #ifndef WARTHOG_IO_FWD_H
 #define WARTHOG_IO_FWD_H
 
-// io/fwd.h
-//
-// Forward class definitions and store global enums.
-//
-// @author: Ryan Hechenberger
-// @created: 2026-05-01
-//
+/// @file fwd.h
+///
+/// Forward class definitions and store global enums.
+///
+/// @author: Ryan Hechenberger
+/// @created: 2026-05-01
 
 #include <cstdint>
 

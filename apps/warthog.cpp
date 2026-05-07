@@ -51,7 +51,7 @@ int checkopt = 0;
 int verbose = 0;
 // display program help on startup
 int print_help = 0;
-// run only this query, or -1 for all
+// run only this inst, or -1 for all
 int filter_id = -1;
 // dump map at id if set
 int dump_map_id = -1;
@@ -88,13 +88,13 @@ help(std::ostream& out)
 	       "values in the scen file)\n"
 	    << "\t--verbose (optional; prints debugging info when compiled "
 	       "with debug symbols)\n"
-	    << "\t--filter [id] (optional; run only query [id])\n"
+	    << "\t--filter [id] (optional; run only inst [id])\n"
 	    << "\t--dump-map [id] (optional; dump map at id to stderr)"
 	    << "\t--dump-map-file [filename] (optional; file to dump map to, "
 	       "default /dev/stderr)"
 #ifdef WARTHOG_POSTHOC
 	    << "\t--trace [.trace.yaml file] (optional; write posthoc trace for "
-	       "first query to [file])\n"
+	       "first instance to [file])\n"
 #endif
 	    << "Invoking the program this way solves all instances in [scen "
 	       "file] with algorithm [alg]\n"

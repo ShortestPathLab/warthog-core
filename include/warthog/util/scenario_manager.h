@@ -10,11 +10,9 @@
 //		  (fields: bucket,map,mapwidth,mapheight,sx,sy,gx,gy,distance)
 //	    - DIMACS format (as at the 9th DIMACS Implementation Challenge)
 //	      (fields: q [source-id] [target-id])
+//      - Dynamic format (tbd)
 //
-//	Supported formats for generate/write:
-//	    - GPPC 1.0 format (as at 2012 Grid-based Path Planning Competition)
-//
-// @author: dharabor
+// @author: dharabor & Ryan Hechenberger
 // @created: 21/08/2012
 //
 
@@ -38,12 +36,12 @@ struct scenario_command
 	{
 		SNAPSHOT,
 		PATCH,
-		QUERY
+		INST
 	};
 	int type;       ///< command type
 	int32_t bucket; ///< bucket id number (meta), snapshot id for dynamic
 	uint32_t
-	    id; ///< SNAPSHOT: snapshot num, PATCH: patch to apply, QUERY: query id
+	    id; ///< SNAPSHOT: snapshot num, PATCH: patch to apply, INST: inst id
 	union cmd_
 	{
 		struct snapshot_
@@ -54,10 +52,10 @@ struct scenario_command
 			uint16_t topleft_x;
 			uint16_t topleft_y;
 		} patch;
-		struct query_
+		struct inst_
 		{
 			uint32_t experiment_id; ///< experiment number
-		} query;
+		} inst;
 	} cmd; ///< command union based on type
 
 	static constexpr scenario_command
@@ -73,11 +71,11 @@ struct scenario_command
 		return scenario_command{PATCH, bucket_id, patch_id, {.patch = {x, y}}};
 	}
 	static constexpr scenario_command
-	make_query(
-	    int32_t bucket_id, uint32_t query_id, uint32_t experiment_id) noexcept
+	make_inst(
+	    int32_t bucket_id, uint32_t inst_id, uint32_t experiment_id) noexcept
 	{
 		return scenario_command{
-		    QUERY, bucket_id, query_id, {.query = {experiment_id}}};
+		    INST, bucket_id, inst_id, {.inst = {experiment_id}}};
 	}
 };
 
@@ -191,7 +189,7 @@ public:
 	void
 	set_cost_type(io::cost_type c) noexcept
 	{
-		cost_type_ = io::scenario_serialize::get_dist_str(c);
+		cost_type_ = io::scenario_serialize::get_cost_str(c);
 	}
 
 	bool
@@ -249,10 +247,10 @@ protected:
 	io::scenario_version version_ = io::scenario_version::UNKNOWN;
 	uint32_t scenario_width_      = 0;
 	uint32_t scenario_height_     = 0;
-	uint32_t query_count_         = 0;
+	uint32_t inst_count_         = 0;
 	uint32_t patch_count_         = 0;
 	int32_t static_scenario_start_
-	    = -1; ///< >=0: is static scenario where query commands start at pos,
+	    = -1; ///< >=0: is static scenario where inst commands start at pos,
 	          ///< else is dynamic scenario
 };
 

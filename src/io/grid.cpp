@@ -6,6 +6,12 @@
 namespace warthog::io
 {
 
+bittable_serialize::bittable_serialize()
+{
+	// increase max line length for larger grids
+	set_max_line_length(20 << 10);
+}
+
 std::errc
 bittable_serialize::read_header(std::istream* in)
 {

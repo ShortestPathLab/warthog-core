@@ -1,16 +1,15 @@
 #ifndef WARTHOG_IO_GRID_H
 #define WARTHOG_IO_GRID_H
 
-// io/grid.h
-//
-// Read utility for gridmap.
-//
-// Supported MovingAI map format.  Read format spec:
-// https://movingai.com/benchmarks/formats.html
-//
-// @author: Ryan Hechenberger
-// @created: 2025-06-01
-//
+/// @file io/grid.h
+///
+/// Read utility for gridmap.
+///
+/// Supported MovingAI map format.  Read format spec:
+/// https://movingai.com/benchmarks/formats.html
+///
+/// @author: Ryan Hechenberger
+/// @created: 2025-06-01
 
 #include "serialize_base.h"
 
@@ -24,14 +23,16 @@
 namespace warthog::io
 {
 
+/// @brief the type of bittable to (de)serialize
 enum class bittable_type : uint8_t
 {
-	OCTILE,
-	PATCH,
-	OTHER,
-	NONE,
+    OCTILE, ///< original MovingAI format
+    PATCH, ///< patch format, grouping multiple octiles
+    OTHER, ///< unknown format
+    NONE, ///< no format specified
 };
 
+/// @brief the cell character, as specified by MovingAI
 enum class gridmap_cell : char
 {
 	TERRAIN         = '.',
@@ -65,18 +66,19 @@ gridmap_cell_traversable(char c) noexcept
 	return gridmap_cell_traversable(static_cast<gridmap_cell>(c));
 }
 
-/// @brief Max grid size
+/// @brief max grid size
 inline constexpr uint32_t GRID_MAX_SIZE = 15'000;
 
-/// @brief Limit on max number of patches
+/// @brief limit on max number of patches
 inline constexpr uint32_t PATCH_COUNT_LIMIT = 10'000'000;
 
-/// @brief The bittable serialize class, flexable read/write of
-/// bittable/gridmap or
-///        similiar datatypes
+/// @brief the bittable serialize class, flexable read/write of
+/// bittable/gridmap or similiar datatypes, see serialize_base for
+/// how files are read.
 class bittable_serialize : public serialize_base
 {
 public:
+	bittable_serialize();
 	/// @return the grid dimension, either as last read grid from file or set
 	/// by user for writing
 	memory::bittable_dimension
@@ -104,17 +106,18 @@ public:
 	{
 		return m_type;
 	}
-	/// @brief Sets the type/version to write to the file header, supported is
+	/// @brief sets the type/version to write to the file header, supported is
 	/// octile/patch.
-	///        Throws on unsupported type.
-	void
+	/// @return std::errc{} for success, otherwise failure
+	std::errc
 	set_type(bittable_type type)
 	{
 		if(type != bittable_type::OCTILE && type != bittable_type::PATCH)
 		{
-			throw std::out_of_range("type");
+			return std::errc::argument_out_of_domain;
 		}
 		m_type = type;
+		return std::errc{};
 	}
 
 	/// @brief get the number of patches in file
@@ -124,11 +127,16 @@ public:
 		return m_patch_amount;
 	}
 	/// @brief set the number of patches (for writing)
-	void
+	/// @return std::errc{} for success, otherwise failure
+	std::errc
 	set_patch_amount(uint32_t count)
 	{
-		if(count > PATCH_COUNT_LIMIT) { throw std::out_of_range("count"); }
+		if(count > PATCH_COUNT_LIMIT)
+		{
+			return std::errc::argument_out_of_domain;
+		}
 		m_patch_amount = count;
+		return std::errc{};
 	}
 	/// @brief gets the number of patches that have been read/write
 	uint32_t
@@ -143,27 +151,29 @@ public:
 		return m_patch_id;
 	}
 	/// @brief gets the number of patches that have been read
-	void
+	/// @return std::errc{} for success, otherwise failure
+	std::errc
 	set_patch_id(uint32_t id) noexcept
 	{
 		m_patch_id = id;
+		return std::errc{};
 	}
 
-	/// @brief Reads the map/patch file header, getting the type
-	/// @param in alternative filestream to read from
-	/// @return value init on success, error code on failure
-	///
-	/// Reads the header line, `type octile` for bittable_type::OCTILE or
-	/// `type patch` for bittable_type::PATCH, retrivable by get_type().
-	/// For PATCH type, also reads following line for number of patches in
-	/// file.
+    /// @brief reads the map/patch file header, getting the type
+    /// @param in alternative file stream to read from
+    /// @return value init on success, error code on failure
+    ///
+    /// Reads the header line, `type octile` for bittable_type::OCTILE or
+    /// `type patch` for bittable_type::PATCH, retrievable by get_type().
+    /// For PATCH type, also reads following line for number of patches in
+    /// file.
 	std::errc
 	read_header(std::istream* in = nullptr);
 
-	/// @brief Reads the grids header, getting width/height up to the map data.
-	/// @param in alternative filestream to read from
-	/// @return value init on success, error code on failure
-	/// @pre get_type() matches the format of file.
+    /// @brief Reads the grids' header, getting width/height up to the map data.
+    /// @param in alternative filestream to read from
+    /// @return value init on success, error code on failure
+    /// @pre get_type() matches the format of file.
 	std::errc
 	read_grid_header(std::istream* in = nullptr);
 
