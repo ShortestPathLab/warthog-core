@@ -272,12 +272,11 @@ run_experiments(
 		}
 #endif
 
-		out << i << "\t" << scen.run.get_snapshot_at() << "\t" 
-			<< alg_name << "\t" << sol.met_.nodes_expanded_
-		    << "\t" << sol.met_.nodes_generated_ << "\t"
-		    << sol.met_.nodes_reopen_ << "\t" << sol.met_.nodes_surplus_
-		    << "\t" << sol.met_.heap_ops_ << "\t"
-		    << sol.met_.time_elapsed_nano_.count() << "\t"
+		out << i << "\t" << scen.run.get_snapshot_at() << "\t" << alg_name
+		    << "\t" << sol.met_.nodes_expanded_ << "\t"
+		    << sol.met_.nodes_generated_ << "\t" << sol.met_.nodes_reopen_
+		    << "\t" << sol.met_.nodes_surplus_ << "\t" << sol.met_.heap_ops_
+		    << "\t" << sol.met_.time_elapsed_nano_.count() << "\t"
 		    << (!sol.path_.empty() ? sol.path_.size() - 1 : 0) << "\t"
 		    << sol.sum_of_edge_costs_ << "\t" << exp->distance() << "\t"
 		    << scen.mgr->last_file_loaded() << std::endl;
