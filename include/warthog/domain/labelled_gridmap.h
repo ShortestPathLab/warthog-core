@@ -18,14 +18,14 @@
 
 #include "grid.h"
 #include <warthog/constants.h>
+#include <warthog/io/grid.h>
 #include <warthog/util/gm_parser.h>
 #include <warthog/util/helpers.h>
-#include <warthog/io/grid.h>
 
 #include <cassert>
 #include <climits>
-#include <cstring>
 #include <cstdint>
+#include <cstring>
 #include <span>
 
 namespace warthog::domain
@@ -40,28 +40,22 @@ public:
 	{
 		this->init_db();
 	}
-	labelled_gridmap(std::istream& input)
-{
-	setup_stream_(input);
-}
-	labelled_gridmap(io::bittable_serialize& parser)
-{
-	setup_ser_(parser);
-}
+	labelled_gridmap(std::istream& input) { setup_stream_(input); }
+	labelled_gridmap(io::bittable_serialize& parser) { setup_ser_(parser); }
 	labelled_gridmap(std::filesystem::path&& filename)
-{
-	filename_ = std::move(filename);
-	std::ifstream in(filename_);
-	setup_stream_(in);
-}
+	{
+		filename_ = std::move(filename);
+		std::ifstream in(filename_);
+		setup_stream_(in);
+	}
 	labelled_gridmap(const std::filesystem::path& filename)
-    : labelled_gridmap(std::filesystem::path(filename))
-{ }
+	    : labelled_gridmap(std::filesystem::path(filename))
+	{ }
 	labelled_gridmap(const char* filename)
-    : labelled_gridmap(std::filesystem::path(filename))
-{ }
+	    : labelled_gridmap(std::filesystem::path(filename))
+	{ }
 	labelled_gridmap(const labelled_gridmap&) = delete;
-	~labelled_gridmap() = default;
+	~labelled_gridmap()                       = default;
 
 	/// The number of padded rows before and after
 	static constexpr uint32_t PADDED_ROWS = 3;
@@ -265,18 +259,18 @@ protected:
 	std::unique_ptr<CELL[]> db_;
 	std::filesystem::path filename_;
 
-	uint32_t db_size_ = 0;
-	uint32_t padding_per_row_ = 0;
+	uint32_t db_size_                      = 0;
+	uint32_t padding_per_row_              = 0;
 	uint32_t padded_rows_before_first_row_ = 0;
-	uint32_t padded_rows_after_last_row_ = 0;
-	uint32_t padded_width_ = 0;
-	uint32_t padded_height_ = 0;
+	uint32_t padded_rows_after_last_row_   = 0;
+	uint32_t padded_width_                 = 0;
+	uint32_t padded_height_                = 0;
 
 	void
 	init_db();
 };
 
-template <typename CELL>
+template<typename CELL>
 inline void
 labelled_gridmap<CELL>::setup_stream_(std::istream& in)
 {
@@ -287,7 +281,7 @@ labelled_gridmap<CELL>::setup_stream_(std::istream& in)
 	setup_ser_(parser);
 }
 
-template <typename CELL>
+template<typename CELL>
 inline void
 labelled_gridmap<CELL>::setup_ser_(io::bittable_serialize& parser)
 {
@@ -299,7 +293,8 @@ labelled_gridmap<CELL>::setup_ser_(io::bittable_serialize& parser)
 
 	init_db();
 	// read raw data to buffer
-	std::unique_ptr<char[]> buffer_v = std::make_unique<char[]>(this->db_size_);
+	std::unique_ptr<char[]> buffer_v
+	    = std::make_unique<char[]>(this->db_size_);
 	std::span<char> buffer(buffer_v.get(), this->db_size_);
 	if(auto ec = parser.read_grid_raw(buffer); ec != std::errc{})
 		throw std::runtime_error("invalid grid format");
@@ -307,7 +302,7 @@ labelled_gridmap<CELL>::setup_ser_(io::bittable_serialize& parser)
 	std::copy_n(buffer.data(), buffer.size(), this->db_.get());
 }
 
-template <typename CELL>
+template<typename CELL>
 inline void
 labelled_gridmap<CELL>::init_db()
 {
@@ -324,13 +319,13 @@ labelled_gridmap<CELL>::init_db()
 	{
 		store_width = (this->header_.width_ / 8 + 1) * 8;
 	}
-	this->padded_width_ = store_width;
-	this->padded_height_ = store_height;
+	this->padded_width_                 = store_width;
+	this->padded_height_                = store_height;
 	this->padded_rows_before_first_row_ = PADDED_ROWS;
 	this->padded_rows_after_last_row_   = PADDED_ROWS;
-	this->padding_per_row_ = store_width - this->header_.width_;
+	this->padding_per_row_              = store_width - this->header_.width_;
 
-	this->db_size_  = store_width * store_height;
+	this->db_size_ = store_width * store_height;
 
 	// create a one dimensional dbword array to store the grid
 	this->db_ = std::make_unique<warthog::dbword[]>(db_size_);

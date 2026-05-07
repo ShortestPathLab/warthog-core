@@ -331,9 +331,8 @@ class unidirectional_search
 {
 public:
 	using unidirectional_search_full = unidirectional_search_full<
-	    H, E, Q,
-	    uds_traits<search_node, L, AC, FC, RP>>;
-	
+	    H, E, Q, uds_traits<search_node, L, AC, FC, RP>>;
+
 	using unidirectional_search_full::unidirectional_search_full;
 };
 

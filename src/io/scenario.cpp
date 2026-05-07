@@ -25,7 +25,7 @@ scenario_serialize::close()
 	m_version    = scenario_version::UNKNOWN;
 	m_map_width  = 0;
 	m_map_height = 0;
-	m_inst_at   = 0;
+	m_inst_at    = 0;
 	m_cost_strings.clear();
 	m_cost_type.clear();
 	m_cost_value.clear();
@@ -408,7 +408,8 @@ scenario_serialize::skip_commands(int count, std::istream* in)
 }
 
 std::pair<int, std::errc>
-scenario_serialize::read_instance_line(scenario_instance& inst, std::istream* in)
+scenario_serialize::read_instance_line(
+    scenario_instance& inst, std::istream* in)
 {
 	if(m_state == serialize_state::END) { return {FINAL, {}}; }
 	if(!can_read(in) || m_state != serialize_state::COMMAND)
@@ -428,7 +429,8 @@ scenario_serialize::read_instance_line(scenario_instance& inst, std::istream* in
 }
 
 std::pair<int, std::errc>
-scenario_serialize::read_instance_line_v1(scenario_instance& inst, std::istream* in)
+scenario_serialize::read_instance_line_v1(
+    scenario_instance& inst, std::istream* in)
 {
 	assert(can_read(in));
 	// move to start of read
@@ -491,8 +493,8 @@ scenario_serialize::read_instance_line_v1(scenario_instance& inst, std::istream*
 		{
 			return {INVALID, std::errc{}};
 		}
-		if(inst.start_x < 0 || inst.start_y >= m_map_width
-		   || inst.goal_x < 0 || inst.goal_y >= m_map_height)
+		if(inst.start_x < 0 || inst.start_y >= m_map_width || inst.goal_x < 0
+		   || inst.goal_y >= m_map_height)
 		{
 			return {INVALID, std::errc{}};
 		}
@@ -509,7 +511,8 @@ scenario_serialize::read_instance_line_v1(scenario_instance& inst, std::istream*
 }
 
 std::pair<int, std::errc>
-scenario_serialize::read_instance_line_v2(scenario_instance& inst, std::istream* in)
+scenario_serialize::read_instance_line_v2(
+    scenario_instance& inst, std::istream* in)
 {
 	assert(can_read(in));
 	// move to start of read
@@ -581,8 +584,8 @@ scenario_serialize::read_instance_line_v2(scenario_instance& inst, std::istream*
 		{
 			return {INVALID, std::errc{}};
 		}
-		if(inst.start_x < 0 || inst.start_y >= m_map_width
-		   || inst.goal_x < 0 || inst.goal_y >= m_map_height)
+		if(inst.start_x < 0 || inst.start_y >= m_map_width || inst.goal_x < 0
+		   || inst.goal_y >= m_map_height)
 		{
 			return {INVALID, std::errc{}};
 		}

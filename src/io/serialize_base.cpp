@@ -9,8 +9,7 @@
 namespace warthog::io
 {
 
-serialize_base::serialize_base()
-{ }
+serialize_base::serialize_base() { }
 serialize_base::~serialize_base() = default;
 
 std::errc
@@ -79,8 +78,10 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 {
 	size_t len;
 	auto [s, err] = get_istream(in);
-	if (!m_line_data) {
-		m_max_line_length = m_max_line_length > 0 ? m_max_line_length : max_line_length;
+	if(!m_line_data)
+	{
+		m_max_line_length
+		    = m_max_line_length > 0 ? m_max_line_length : max_line_length;
 		m_line_data = std::make_unique<char[]>(m_max_line_length);
 	}
 	while(true)

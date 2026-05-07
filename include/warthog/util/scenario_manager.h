@@ -247,7 +247,7 @@ protected:
 	io::scenario_version version_ = io::scenario_version::UNKNOWN;
 	uint32_t scenario_width_      = 0;
 	uint32_t scenario_height_     = 0;
-	uint32_t inst_count_         = 0;
+	uint32_t inst_count_          = 0;
 	uint32_t patch_count_         = 0;
 	int32_t static_scenario_start_
 	    = -1; ///< >=0: is static scenario where inst commands start at pos,

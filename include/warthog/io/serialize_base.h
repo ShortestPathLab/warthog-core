@@ -9,7 +9,8 @@
 /// of line number for user-level error reporting and debugging.
 ///
 /// Ideal for use with serialize_base::parser (util::string_parser),
-/// which supports fast reading of tokens through string_view and error checking.
+/// which supports fast reading of tokens through string_view and error
+/// checking.
 ///
 /// @author: Ryan Hechenberger
 /// @created: 2026-04-10
@@ -31,22 +32,25 @@ namespace warthog::io
 ///        error checking, line-number tracking and other features.
 ///
 /// The base class for serialize, low-level with strict error checking.
-/// The ideal use case is to ensure data is read correctly, and error on ill-formed
-/// without raising exceptions.
+/// The ideal use case is to ensure data is read correctly, and error on
+/// ill-formed without raising exceptions.
 ///
-/// To support low-level, each read/write takes istream|ostream pointer to override the
-/// class default-defined, use get_istream|get_ostream to handle the selection manually.
-/// Most functions return std::errc of non-value init to state that procedure has failed.
+/// To support low-level, each read/write takes istream|ostream pointer to
+/// override the class default-defined, use get_istream|get_ostream to handle
+/// the selection manually. Most functions return std::errc of non-value init
+/// to state that procedure has failed.
 ///
-/// Use readline() to raed next line (or next blank line with true), limits length to max_line_length (1k def) and
-/// strips \r?\n from end.
-/// Use unreadline() to put a line back to be read by next readline (can be changed).
+/// Use readline() to raed next line (or next blank line with true), limits
+/// length to max_line_length (1k def) and strips \r?\n from end. Use
+/// unreadline() to put a line back to be read by next readline (can be
+/// changed).
 class serialize_base
 {
 public:
 	using parser = util::string_parser;
 
-	static constexpr size_t max_line_length = 1 << 10; ///< 1kB default maximum line length
+	static constexpr size_t max_line_length = 1
+	    << 10; ///< 1kB default maximum line length
 	serialize_base();
 	virtual ~serialize_base();
 
@@ -101,8 +105,10 @@ public:
 		return out != nullptr;
 	}
 
-	/// @return the maximum line length (null terminator included), 0 means unallocated and will default to max_line_length on readline() call
-	uint32_t get_max_line_length() noexcept
+	/// @return the maximum line length (null terminator included), 0 means
+	/// unallocated and will default to max_line_length on readline() call
+	uint32_t
+	get_max_line_length() noexcept
 	{
 		return m_max_line_length;
 	}
@@ -130,39 +136,47 @@ protected:
 	bool
 	istream_eof(std::istream* in = nullptr);
 
-    /// @brief reads lines and return 1 line, checking for errors
-    /// @param in optional stream to use, otherwise uses internal-set stream
-    /// @param skip_blanks if true, the first line where is_line_blank(line) is false is returned
-    /// @return the first valid line (can be blank), or error, the final empty line is returned empty and eof is set
-    ///
-    /// Reads lines into a buffer (max size get_max_line_length()), removing the line ends \r\n.
-	/// If unreadline was called before, returns that line, otherwise reads from istream.
-    /// Change the max buffer size with set_max_line_length, although it clears the buffer and current line.
+	/// @brief reads lines and return 1 line, checking for errors
+	/// @param in optional stream to use, otherwise uses internal-set stream
+	/// @param skip_blanks if true, the first line where is_line_blank(line) is
+	/// false is returned
+	/// @return the first valid line (can be blank), or error, the final empty
+	/// line is returned empty and eof is set
 	///
-    /// If line does not fit, return an error.
-    /// If an empty line is discovered, it will return the same result as the eof condition,
-    /// use istream_eof to distinguish.
-    /// The file ending on an empty line is handled the same way as the last line having no trailing \n.
+	/// Reads lines into a buffer (max size get_max_line_length()), removing
+	/// the line ends \r\n. If unreadline was called before, returns that line,
+	/// otherwise reads from istream. Change the max buffer size with
+	/// set_max_line_length, although it clears the buffer and current line.
 	///
-	/// get_line_num() will return the read number read, reading from an unreadline does not change the line number.
+	/// If line does not fit, return an error.
+	/// If an empty line is discovered, it will return the same result as the
+	/// eof condition, use istream_eof to distinguish. The file ending on an
+	/// empty line is handled the same way as the last line having no trailing
+	/// \n.
+	///
+	/// get_line_num() will return the read number read, reading from an
+	/// unreadline does not change the line number.
 	std::pair<std::string_view, std::errc>
 	readline(std::istream* in, bool skip_blanks = false);
 
 	/// @brief unreads a line, keeps only a single line
-	/// @param line the line to return and read later, does not have to match a line read from readline.
+	/// @param line the line to return and read later, does not have to match a
+	/// line read from readline.
 	void
 	unreadline(std::string_view line);
 
-	/// @brief check if while line is either blank or empty, as per std::isspace
+	/// @brief check if while line is either blank or empty, as per
+	/// std::isspace
 	bool
 	is_line_blank(std::string_view line);
 
 	/// @brief sets the max line length, clears current line buffer and line
-	void set_max_line_length(uint32_t len)
+	void
+	set_max_line_length(uint32_t len)
 	{
 		m_max_line_length = len;
-		m_line_data = nullptr;
-		m_line = std::string_view();
+		m_line_data       = nullptr;
+		m_line            = std::string_view();
 	}
 
 protected:
@@ -183,11 +197,11 @@ class line_serialize final : public serialize_base
 public:
 	using serialize_base::serialize_base;
 
-	using serialize_base::readline;
-	using serialize_base::unreadline;
 	using serialize_base::is_line_blank;
 	using serialize_base::istream_eof;
+	using serialize_base::readline;
 	using serialize_base::set_max_line_length;
+	using serialize_base::unreadline;
 };
 
 } // namespace warthog::io

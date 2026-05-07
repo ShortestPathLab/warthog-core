@@ -147,8 +147,7 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 			    Q.cost[(int)0], map_string);
 			experiments_.push_back(ex);
 			commands_.push_back(scenario_command::make_inst(
-			    Q.bucket, inst_count_++,
-			    (uint32_t)(experiments_.size() - 1)));
+			    Q.bucket, inst_count_++, (uint32_t)(experiments_.size() - 1)));
 		}
 		else if(con == io::scenario_serialize::FINAL) { break; }
 	}
@@ -241,8 +240,7 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			    map_string);
 			experiments_.push_back(ex);
 			commands_.push_back(scenario_command::make_inst(
-			    Q.bucket, inst_count_++,
-			    (uint32_t)(experiments_.size() - 1)));
+			    Q.bucket, inst_count_++, (uint32_t)(experiments_.size() - 1)));
 		}
 		else if(con == io::scenario_serialize::CMD_PATCH)
 		{

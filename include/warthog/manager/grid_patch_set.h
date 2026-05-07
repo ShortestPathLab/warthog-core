@@ -4,7 +4,8 @@
 /// @file grid_patch_set.h
 ///
 /// Utility to store grid map/patches.
-/// Can read with some flexibility and be used with scenario_runner to update a gridmap.
+/// Can read with some flexibility and be used with scenario_runner to update a
+/// gridmap.
 ///
 /// @author: Ryan Hechenberger
 /// @created: 2026-04-10
@@ -83,21 +84,24 @@ public:
 	    io::bittable_serialize& S, int max_grids = -1,
 	    uint32_t flags = DEFAULT);
 
-	/// @brief copies a user-provided bittable, subregion from offset with width/height
+	/// @brief copies a user-provided bittable, subregion from offset with
+	/// width/height
 	/// @param table the base table to push
 	/// @return true on success, false otherwise
-	/// @pre (offset_x == 0 && offset_y == 0 && width == npos && height == npos) || (width != npos && height != npos)
+	/// @pre (offset_x == 0 && offset_y == 0 && width == npos && height ==
+	/// npos) || (width != npos && height != npos)
 	///
 	/// Will copy from (offset_x,offset_y) table of width by height.
 	/// Subtable must fully fit within table or fail.
-	/// Defaults will copy whole bittable, if any arguments are changed then width/height
-	/// must be specified (i.e. cannot be npos).
+	/// Defaults will copy whole bittable, if any arguments are changed then
+	/// width/height must be specified (i.e. cannot be npos).
 	bool
 	push_copy(
 	    bittable table, uint16_t offset_x = 0, uint16_t offset_y = 0,
 	    uint16_t width = npos, uint16_t height = npos);
 
-	/// @brief pushes a bittable to set, not copying contents, does not own table memory
+	/// @brief pushes a bittable to set, not copying contents, does not own
+	/// table memory
 	/// @param patch the patch to push
 	/// @return true on success, false otherwise
 	bool

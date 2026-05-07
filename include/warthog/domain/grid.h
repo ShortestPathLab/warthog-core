@@ -7,8 +7,8 @@
 /// Includes the grid identifier (id), direction (and direction_id),
 /// point (coordinate) and utilities.
 ///
-/// These utilities include conversion between direction/direction_id, rotation,
-/// direction to point and inverse, helpers for grid traversal, etc.
+/// These utilities include conversion between direction/direction_id,
+/// rotation, direction to point and inverse, helpers for grid traversal, etc.
 ///
 /// @author: dharabor & Ryan Hechenberger
 /// @created: 2018-11-03

@@ -26,10 +26,10 @@ namespace warthog::io
 /// @brief the type of bittable to (de)serialize
 enum class bittable_type : uint8_t
 {
-    OCTILE, ///< original MovingAI format
-    PATCH, ///< patch format, grouping multiple octiles
-    OTHER, ///< unknown format
-    NONE, ///< no format specified
+	OCTILE, ///< original MovingAI format
+	PATCH,  ///< patch format, grouping multiple octiles
+	OTHER,  ///< unknown format
+	NONE,   ///< no format specified
 };
 
 /// @brief the cell character, as specified by MovingAI
@@ -159,21 +159,22 @@ public:
 		return std::errc{};
 	}
 
-    /// @brief reads the map/patch file header, getting the type
-    /// @param in alternative file stream to read from
-    /// @return value init on success, error code on failure
-    ///
-    /// Reads the header line, `type octile` for bittable_type::OCTILE or
-    /// `type patch` for bittable_type::PATCH, retrievable by get_type().
-    /// For PATCH type, also reads following line for number of patches in
-    /// file.
+	/// @brief reads the map/patch file header, getting the type
+	/// @param in alternative file stream to read from
+	/// @return value init on success, error code on failure
+	///
+	/// Reads the header line, `type octile` for bittable_type::OCTILE or
+	/// `type patch` for bittable_type::PATCH, retrievable by get_type().
+	/// For PATCH type, also reads following line for number of patches in
+	/// file.
 	std::errc
 	read_header(std::istream* in = nullptr);
 
-    /// @brief Reads the grids' header, getting width/height up to the map data.
-    /// @param in alternative filestream to read from
-    /// @return value init on success, error code on failure
-    /// @pre get_type() matches the format of file.
+	/// @brief Reads the grids' header, getting width/height up to the map
+	/// data.
+	/// @param in alternative filestream to read from
+	/// @return value init on success, error code on failure
+	/// @pre get_type() matches the format of file.
 	std::errc
 	read_grid_header(std::istream* in = nullptr);
 

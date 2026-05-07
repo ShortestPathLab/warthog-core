@@ -104,8 +104,8 @@ gridmap::setup_ser_(io::bittable_serialize& parser)
 		throw std::runtime_error("invalid grid format");
 	// calculate traversable
 	num_traversable_ = static_cast<uint32_t>(std::transform_reduce(
-	    db_.get(), db_.get() + db_size_, static_cast<int>(0), std::plus<uint32_t>(),
-	    &std::popcount<dbword>));
+	    db_.get(), db_.get() + db_size_, static_cast<int>(0),
+	    std::plus<uint32_t>(), &std::popcount<dbword>));
 }
 
 void

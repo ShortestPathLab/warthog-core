@@ -37,7 +37,8 @@
 namespace warthog::io
 {
 
-/// @brief scenario instance struct, reusable with fields set by scenario_serialize
+/// @brief scenario instance struct, reusable with fields set by
+/// scenario_serialize
 struct scenario_instance
 {
 	int64_t bucket;
@@ -49,7 +50,8 @@ struct scenario_instance
 	double goal_x;
 	double goal_y;
 	std::span<double> cost;
-	void* extra_data; ///< holds extra data that a user may require (not used by default)
+	void* extra_data; ///< holds extra data that a user may require (not used
+	                  ///< by default)
 
 	void
 	reset()
@@ -100,7 +102,8 @@ public:
 	reset();
 
 	/// @return the current state of scenario read/write
-	serialize_state state() const noexcept
+	serialize_state
+	state() const noexcept
 	{
 		return m_state;
 	}
@@ -202,9 +205,10 @@ public:
 	virtual int
 	last_command_type() const;
 
-    /// @brief reads in file version information, and sets version (accessible via get_version())
-    /// @param in optional stream to use, otherwise uses internal-set stream
-    /// @return success std::errc{}, else failure
+	/// @brief reads in file version information, and sets version (accessible
+	/// via get_version())
+	/// @param in optional stream to use, otherwise uses internal-set stream
+	/// @return success std::errc{}, else failure
 	/// @pre state() == serialize_state::INIT (returns errc otherwise)
 	virtual std::errc
 	read_version(std::istream* in = nullptr);
@@ -219,23 +223,26 @@ public:
 	virtual std::errc
 	read_header(std::istream* in = nullptr);
 
-	/// @brief read header as VERSION_1, does not consider the state or version. use read_header for checks instead.
+	/// @brief read header as VERSION_1, does not consider the state or
+	/// version. use read_header for checks instead.
 	std::errc
 	read_header_v1(std::istream* in = nullptr);
-	/// @brief read header as VERSION_2, does not consider the state or version. use read_header for checks instead.
+	/// @brief read header as VERSION_2, does not consider the state or
+	/// version. use read_header for checks instead.
 	std::errc
 	read_header_v2(std::istream* in = nullptr);
 
 	/// @brief gets the next command type
 	/// @param in optional stream to use, otherwise uses internal-set stream
-	/// @return a pair with a value from command_res and std::errc for success (else error)
+	/// @return a pair with a value from command_res and std::errc for success
+	/// (else error)
 	/// @pre state() == serialize_state::COMMAND (returns error otherwise)
 	///
 	/// With VERSION_1:
 	///   Returns CMD_INST or FINAL if no more commands are present
 	/// With VERSION_2:
-	///   Returns command based on last_command_type(), or FINAL if not present.
-	///   Default expects CMD_INST or CMD_PATCH.
+	///   Returns command based on last_command_type(), or FINAL if not
+	///   present. Default expects CMD_INST or CMD_PATCH.
 	std::pair<int, std::errc>
 	next_command_type(std::istream* in = nullptr);
 	/// @brief skips the next count number of commands
@@ -249,42 +256,51 @@ public:
 	/// @brief reads an instance line and stores results in scenario_instance
 	/// @param inst where to store the instance data read in
 	/// @param in optional stream to use, otherwise uses internal-set stream
-	/// @return a pair with a value from command_res and std::errc for success (else error)
+	/// @return a pair with a value from command_res and std::errc for success
+	/// (else error)
 	/// @pre state() == serialize_state::COMMAND (returns error otherwise)
 	///
-	/// if next_command_type().first == CMD_INST, then reads the instance, otherwise
-	/// returns CMD_? dependent on the type of command, or FINAL.
+	/// if next_command_type().first == CMD_INST, then reads the instance,
+	/// otherwise returns CMD_? dependent on the type of command, or FINAL.
 	/// With get_version() == VERSION_1:
-	///   Returns VALID for success, FINAL for no more commands, and INVALID for invalid instance.
+	///   Returns VALID for success, FINAL for no more commands, and INVALID
+	///   for invalid instance.
 	/// With get_version() == VERSION_2:
-	///   Returns VALID for success, FINAL for no more commands, and INVALID for invalid instance,
-	///   or last_command_type() (only CMD_PATCH for standard v2 scenario) of type of command.
+	///   Returns VALID for success, FINAL for no more commands, and INVALID
+	///   for invalid instance, or last_command_type() (only CMD_PATCH for
+	///   standard v2 scenario) of type of command.
 	///
-    /// INVALID return without error code means success in reading command, but command has invalid parameters.
-    /// Main checks are non-finite floats (start/goal/cost), mismatch width/height, or out of bounds
-    /// start/goal.  If get_force_int() == true, also checks start/goal are integers within the grid,
-    /// otherwise allows float also within the grid (allows x == width() or y == height()).
+	/// INVALID return without error code means success in reading command, but
+	/// command has invalid parameters. Main checks are non-finite floats
+	/// (start/goal/cost), mismatch width/height, or out of bounds start/goal.
+	/// If get_force_int() == true, also checks start/goal are integers within
+	/// the grid, otherwise allows float also within the grid (allows x ==
+	/// width() or y == height()).
 	virtual std::pair<int, std::errc>
 	read_instance_line(scenario_instance& inst, std::istream* in = nullptr);
 
-	/// @brief as VERSION_1 with read_instance_line, does not check pre-conditions
+	/// @brief as VERSION_1 with read_instance_line, does not check
+	/// pre-conditions
 	std::pair<int, std::errc>
 	read_instance_line_v1(scenario_instance& inst, std::istream* in = nullptr);
-	/// @brief as VERSION_2 with read_instance_line, does not check pre-conditions
+	/// @brief as VERSION_2 with read_instance_line, does not check
+	/// pre-conditions
 	std::pair<int, std::errc>
 	read_instance_line_v2(scenario_instance& inst, std::istream* in = nullptr);
 
 	/// @brief reads a patch line and stores results in scenario_patch
 	/// @param patch where to store the patch data read in (not grid)
 	/// @param in optional stream to use, otherwise uses internal-set stream
-	/// @return a pair with a value from command_res and std::errc for success (else error)
+	/// @return a pair with a value from command_res and std::errc for success
+	/// (else error)
 	/// @pre state() == serialize_state::COMMAND (returns error otherwise)
 	///
-	/// if next_command_type().first == CMD_PATCH, then reads the instance, otherwise
-	/// returns CMD_? dependent on the type of command, or FINAL.
+	/// if next_command_type().first == CMD_PATCH, then reads the instance,
+	/// otherwise returns CMD_? dependent on the type of command, or FINAL.
 	/// With get_version() == VERSION_2:
-	///   Returns VALID for success, FINAL for no more commands, INVALID if location is out of grid bounds,
-	///   or last_command_type() (only CMD_INST for standard v2 scenario) of type of command.
+	///   Returns VALID for success, FINAL for no more commands, INVALID if
+	///   location is out of grid bounds, or last_command_type() (only CMD_INST
+	///   for standard v2 scenario) of type of command.
 	virtual std::pair<int, std::errc>
 	read_patch_line(scenario_patch& patch, std::istream* in = nullptr);
 
@@ -304,7 +320,7 @@ protected:
 	std::filesystem::path m_map_filename;
 	uint32_t m_map_width  = 0;
 	uint32_t m_map_height = 0;
-	int32_t m_inst_at    = 0;
+	int32_t m_inst_at     = 0;
 
 	// dynamic data
 	std::pmr::monotonic_buffer_resource m_dyn_res;

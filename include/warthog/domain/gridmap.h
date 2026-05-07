@@ -197,12 +197,12 @@ public:
 
 		// read from the byte just before node_id and shift down until the
 		// nei adjacent to node_id is in the lowest position
-		tiles[0]
-		    = (uint8_t)(*((uint32_t*)(db_.get() + (pos1 - 1))) >> (bit_offset + 7));
-		tiles[1]
-		    = (uint8_t)(*((uint32_t*)(db_.get() + (pos2 - 1))) >> (bit_offset + 7));
-		tiles[2]
-		    = (uint8_t)(*((uint32_t*)(db_.get() + (pos3 - 1))) >> (bit_offset + 7));
+		tiles[0] = (uint8_t)(*((uint32_t*)(db_.get() + (pos1 - 1)))
+		                     >> (bit_offset + 7));
+		tiles[1] = (uint8_t)(*((uint32_t*)(db_.get() + (pos2 - 1)))
+		                     >> (bit_offset + 7));
+		tiles[2] = (uint8_t)(*((uint32_t*)(db_.get() + (pos3 - 1)))
+		                     >> (bit_offset + 7));
 	}
 
 	// takes the tiles from get_neighbours and tightly packs them into 8-bits
@@ -254,9 +254,12 @@ public:
 
 		// read 32bits of memory; grid_id_p is in the
 		// lowest bit position of tiles[1]
-		tiles[0] = (uint32_t)(*((uint64_t*)(db_.get() + pos1)) >> (bit_offset));
-		tiles[1] = (uint32_t)(*((uint64_t*)(db_.get() + pos2)) >> (bit_offset));
-		tiles[2] = (uint32_t)(*((uint64_t*)(db_.get() + pos3)) >> (bit_offset));
+		tiles[0]
+		    = (uint32_t)(*((uint64_t*)(db_.get() + pos1)) >> (bit_offset));
+		tiles[1]
+		    = (uint32_t)(*((uint64_t*)(db_.get() + pos2)) >> (bit_offset));
+		tiles[2]
+		    = (uint32_t)(*((uint64_t*)(db_.get() + pos3)) >> (bit_offset));
 	}
 
 	// similar to get_neighbours_32bit but grid_id_p is placed into the
@@ -285,9 +288,12 @@ public:
 
 		// read 32bits of memory; grid_id_p is in the
 		// highest bit position of tiles[1]
-		tiles[0] = (uint32_t)(*((uint64_t*)(db_.get() + pos1)) >> (bit_offset + 1));
-		tiles[1] = (uint32_t)(*((uint64_t*)(db_.get() + pos2)) >> (bit_offset + 1));
-		tiles[2] = (uint64_t)(*((uint64_t*)(db_.get() + pos3)) >> (bit_offset + 1));
+		tiles[0]
+		    = (uint32_t)(*((uint64_t*)(db_.get() + pos1)) >> (bit_offset + 1));
+		tiles[1]
+		    = (uint32_t)(*((uint64_t*)(db_.get() + pos2)) >> (bit_offset + 1));
+		tiles[2]
+		    = (uint64_t)(*((uint64_t*)(db_.get() + pos3)) >> (bit_offset + 1));
 	}
 
 	// fetches a contiguous set of tiles from three adjacent rows.
@@ -405,14 +411,14 @@ protected:
 	std::unique_ptr<warthog::dbword[]> db_;
 	std::filesystem::path filename_;
 
-	uint32_t dbwidth_ = 0;
-	uint32_t dbwidth64_ = 0;
-	uint32_t dbheight_ = 0;
-	uint32_t db_size_ = 0;
-	uint32_t padding_per_row_ = 0;
+	uint32_t dbwidth_              = 0;
+	uint32_t dbwidth64_            = 0;
+	uint32_t dbheight_             = 0;
+	uint32_t db_size_              = 0;
+	uint32_t padding_per_row_      = 0;
 	uint32_t padding_column_above_ = 0;
-	uint32_t max_id_ = 0;
-	uint32_t num_traversable_ = 0;
+	uint32_t max_id_               = 0;
+	uint32_t num_traversable_      = 0;
 
 	void
 	init_db();
