@@ -92,7 +92,7 @@ scenario_runner::snapshot_next(bool clear_patch)
 			// current snapshot, goto next snapshot
 			[[fallthrough]];
 		case util::scenario_command::INST:
-			++snapshot_at_;
+			++experiment_at_;
 			break;
 		case util::scenario_command::PATCH:
 			snapshot_patches(false);
@@ -115,8 +115,10 @@ scenario_runner::snapshot_patches(bool clear_patch)
 	int count = 0;
 	// if start of snapshot, apply that snapshot patches
 	if(command_at_ < commands.size()
-	   && commands[command_at_].type == util::scenario_command::SNAPSHOT)
+	   && commands[command_at_].type == util::scenario_command::SNAPSHOT) {
+		snapshot_at_ = commands[command_at_].id;
 		command_at_ += 1;
+	}
 	// while command_at_ is PATCH, add patch to applied list
 	while(command_at_ < commands.size())
 	{

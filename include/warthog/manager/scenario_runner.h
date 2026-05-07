@@ -92,6 +92,21 @@ public:
 	/// All patches required
 	std::span<const experiment*>
 	snapshot_inst_all();
+	
+	uint32_t get_command_at() const noexcept
+	{
+		return command_at_;
+	}
+	
+	int32_t get_experiment_at() const noexcept
+	{
+		return experiment_at_;
+	}
+	
+	int32_t get_snapshot_at() const noexcept
+	{
+		return snapshot_at_;
+	}
 
 	bool
 	complete() const noexcept

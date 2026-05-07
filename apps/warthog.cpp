@@ -167,7 +167,7 @@ run_experiments(
 	auto* expander = algo.get_expander();
 	if(expander == nullptr) return 1;
 
-	out << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
+	out << "id\tsnapshot\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
 	    << "\tnanos\tplen\tpcost\tscost\tmap\n";
 
 	for(uint32_t i = 0;; ++i)
@@ -272,7 +272,8 @@ run_experiments(
 		}
 #endif
 
-		out << i << "\t" << alg_name << "\t" << sol.met_.nodes_expanded_
+		out << i << "\t" << scen.run.get_snapshot_at() << "\t" 
+			<< alg_name << "\t" << sol.met_.nodes_expanded_
 		    << "\t" << sol.met_.nodes_generated_ << "\t"
 		    << sol.met_.nodes_reopen_ << "\t" << sol.met_.nodes_surplus_
 		    << "\t" << sol.met_.heap_ops_ << "\t"
