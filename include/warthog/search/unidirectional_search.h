@@ -41,30 +41,20 @@ namespace warthog::search
 // (default: search for any solution, until OPEN is exhausted)
 template<
     typename H, typename E, typename Q = util::pqueue_min,
-    typename Traits = uds_default_traits>
-class unidirectional_search_full
+    typename L                = std::tuple<>,
+    admissibility_criteria AC = admissibility_criteria::any,
+    feasibility_criteria FC   = feasibility_criteria::until_exhaustion,
+    reopen_policy RP          = reopen_policy::no>
+class unidirectional_search
 {
 public:
-	using traits      = Traits;
-	using search_node = uds_trait_node<Traits>;
-	using L           = uds_trait_observer<Traits>;
-
-	static constexpr admissibility_criteria AC = uds_trait_ac<Traits>();
-	static constexpr feasibility_criteria FC   = uds_trait_fc<Traits>();
-	static constexpr reopen_policy RP          = uds_trait_rp<Traits>();
-
-	unidirectional_search_full(
+	unidirectional_search(
 	    H* heuristic, E* expander, Q* queue, L listeners = L{})
 	    : heuristic_(heuristic), expander_(expander), open_(queue),
 	      listeners_(listeners)
 	{ }
-	unidirectional_search_full(const unidirectional_search_full& other)
-	    = delete;
-	~unidirectional_search_full() = default;
 
-	unidirectional_search_full&
-	operator=(const unidirectional_search_full& other)
-	    = delete;
+	~unidirectional_search() { }
 
 	void
 	get_pathcost(problem_instance* pi, search_parameters* par, solution* sol)
@@ -147,6 +137,14 @@ private:
 	E* expander_;
 	Q* open_;
 	[[no_unique_address]] L listeners_;
+
+	// no copy ctor
+	unidirectional_search(const unidirectional_search& other) { }
+	unidirectional_search&
+	operator=(const unidirectional_search& other)
+	{
+		return *this;
+	}
 
 	/**
 	 * Initialise a new 'search_node' for the ongoing search given the parent
@@ -255,7 +253,7 @@ private:
 				if(n->get_search_number() != current->get_search_number())
 				{
 					initialise_node_(n, current->get_id(), gval, pi, par, sol);
-					if(n->get_f() <= sol->sum_of_edge_costs_)
+					if(n->get_f() < sol->sum_of_edge_costs_)
 					{
 						open_->push(n);
 						WARTHOG_GINFO_FMT_IF(pi->verbose_, "Generate: {}", *n);
@@ -315,25 +313,6 @@ private:
 		    pi->verbose_ && sol->sum_of_edge_costs_ == warthog::COST_MAX,
 		    "Search failed; no solution exists.");
 	}
-};
-
-// Keep for backward compatibility.
-// Done as class instead of using to support user-defined deduction
-template<
-    typename H, typename E, typename Q = util::pqueue_min,
-    typename L                = std::tuple<>,
-    admissibility_criteria AC = admissibility_criteria::any,
-    feasibility_criteria FC   = feasibility_criteria::until_exhaustion,
-    reopen_policy RP          = reopen_policy::no>
-class unidirectional_search
-    : public unidirectional_search_full<
-          H, E, Q, uds_traits<search_node, L, AC, FC, RP>>
-{
-public:
-	using unidirectional_search_full = unidirectional_search_full<
-	    H, E, Q, uds_traits<search_node, L, AC, FC, RP>>;
-
-	using unidirectional_search_full::unidirectional_search_full;
 };
 
 template<

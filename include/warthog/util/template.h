@@ -108,13 +108,6 @@ choose_integer_sequence(auto value, TemplateFunc&& tfunc)
 	    value, std::forward<TemplateFunc>(tfunc));
 }
 
-template<typename T, typename T2>
-concept same_as_rmref
-    = std::same_as<std::remove_reference_t<T>, std::remove_reference_t<T2>>;
-template<typename T, typename T2>
-concept same_as_rmcvref
-    = std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<T2>>;
-
 } // namespace warthog::util
 
 #endif // WARTHOG_UTIL_CAST_H
