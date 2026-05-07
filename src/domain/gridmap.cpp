@@ -104,7 +104,7 @@ gridmap::setup_ser_(io::bittable_serialize& parser)
 		throw std::runtime_error("invalid grid format");
 	// calculate traversable
 	num_traversable_ = static_cast<uint32_t>(std::transform_reduce(
-	    db_, db_ + db_size_, static_cast<int>(0), std::plus<uint32_t>(),
+	    db_.get(), db_.get() + db_size_, static_cast<int>(0), std::plus<uint32_t>(),
 	    &std::popcount<dbword>));
 }
 
@@ -133,17 +133,14 @@ gridmap::init_db()
 	this->db_size_ = bittable::calc_array_size(store_width, store_height) + 8;
 
 	// create a one dimensional dbword array to store the grid
-	this->db_ = new warthog::dbword[db_size_];
-	bittable::setup(this->db_, store_width, store_height);
+	this->db_ = std::make_unique<warthog::dbword[]>(db_size_);
+	bittable::setup(this->db_.get(), store_width, store_height);
 	fill(0);
 
-	max_id_ = this->dbheight_ * this->dbwidth_ - 1;
+	this->max_id_ = this->dbheight_ * this->dbwidth_ - 1;
 }
 
-gridmap::~gridmap()
-{
-	delete[] db_;
-}
+gridmap::~gridmap() = default;
 
 void
 gridmap::print(std::ostream& out)

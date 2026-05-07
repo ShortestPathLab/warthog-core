@@ -16,7 +16,6 @@ include/warthog/limits.h
 
 include/warthog/domain/grid.h
 include/warthog/domain/gridmap.h
-include/warthog/domain/grid_patches.h
 include/warthog/domain/labelled_gridmap.h
 
 include/warthog/geometry/geography.h
@@ -27,6 +26,7 @@ include/warthog/heuristic/manhattan_heuristic.h
 include/warthog/heuristic/octile_heuristic.h
 include/warthog/heuristic/zero_heuristic.h
 
+include/warthog/io/fwd.h
 include/warthog/io/grid.h
 include/warthog/io/grid_trace.h
 include/warthog/io/log.h

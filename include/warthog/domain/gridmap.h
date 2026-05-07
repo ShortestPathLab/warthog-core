@@ -14,7 +14,7 @@
 // in a one dimensional array and also to avoid range checks when trying to
 // identify invalid neighbours of tiles on the edge of the map.
 //
-// @author: dharabor
+// @author: dharabor & Ryan Hechenberger
 // @created: 08/08/2012
 //
 
@@ -77,8 +77,7 @@ public:
 	void
 	load(const char* filename);
 
-	// here we convert from the coordinate space of
-	// the original grid to the coordinate space of db_.
+	/// @brief convert unpadded id to padded id
 	pad_id
 	to_padded_id(pack_id node_id) const noexcept
 	{
@@ -91,19 +90,20 @@ public:
 		    (uint32_t{node_id} / header_.width_) * padding_per_row_};
 	}
 
-	// here we convert from the coordinate space of
-	// the original grid to the coordinate space of db_.
+	/// @brief convert unpadded (x,y) to a padded id
 	pad_id
 	to_padded_id_from_unpadded(uint32_t x, uint32_t y) const noexcept
 	{
 		return pad_id{(y + PADDED_ROWS) * width() + x};
 	}
+	/// @brief convert padded (x,y) to a padded id
 	pad_id
 	to_padded_id_from_padded(uint32_t x, uint32_t y) const noexcept
 	{
 		return pad_id{y * width() + x};
 	}
 
+	/// @brief convert unpadded id to unpadded (x,y)
 	void
 	to_unpadded_xy(pack_id grid_id, uint32_t& x, uint32_t& y) const noexcept
 	{
@@ -112,6 +112,7 @@ public:
 		assert(x < header_.width_ && y < header_.height_);
 	}
 
+	/// @brief convert padded id to unpadded (x,y)
 	void
 	to_unpadded_xy(pad_id grid_id, uint32_t& x, uint32_t& y) const noexcept
 	{
@@ -120,6 +121,7 @@ public:
 		assert(x < header_.width_ && y < header_.height_);
 	}
 
+	/// @brief convert padded (x,y) to unpadded (x,y)
 	void
 	to_unpadded_xy_from_padded(
 	    uint32_t padded_x, uint32_t padded_y, uint32_t& x,
@@ -130,6 +132,7 @@ public:
 		assert(x < header_.width_ && y < header_.height_);
 	}
 
+	/// @brief convert padded id to padded (x,y)
 	void
 	to_padded_xy(pad_id grid_id, uint32_t& x, uint32_t& y) const noexcept
 	{
@@ -138,6 +141,7 @@ public:
 		assert(x < width() && y < height());
 	}
 
+	/// @brief convert unpadded (x,y) to padded (x,y)
 	void
 	to_padded_xy_from_unpadded(
 	    uint32_t unpadded_x, uint32_t unpadded_y, uint32_t& x,
@@ -148,6 +152,7 @@ public:
 		assert(x < width() && y < height());
 	}
 
+	/// @brief convert padded id to unpadded id
 	pack_id
 	to_unpadded_id(pad_id grid_id) const noexcept
 	{
@@ -160,6 +165,7 @@ public:
 		    // as the padded width is already removed
 		    PADDED_ROWS * header_.width_};
 	}
+	/// @brief convert unpadded (x,y) to unpadded id
 	pack_id
 	to_unpadded_id_from_unpadded(uint32_t x, uint32_t y) const noexcept
 	{
@@ -192,11 +198,11 @@ public:
 		// read from the byte just before node_id and shift down until the
 		// nei adjacent to node_id is in the lowest position
 		tiles[0]
-		    = (uint8_t)(*((uint32_t*)(db_ + (pos1 - 1))) >> (bit_offset + 7));
+		    = (uint8_t)(*((uint32_t*)(db_.get() + (pos1 - 1))) >> (bit_offset + 7));
 		tiles[1]
-		    = (uint8_t)(*((uint32_t*)(db_ + (pos2 - 1))) >> (bit_offset + 7));
+		    = (uint8_t)(*((uint32_t*)(db_.get() + (pos2 - 1))) >> (bit_offset + 7));
 		tiles[2]
-		    = (uint8_t)(*((uint32_t*)(db_ + (pos3 - 1))) >> (bit_offset + 7));
+		    = (uint8_t)(*((uint32_t*)(db_.get() + (pos3 - 1))) >> (bit_offset + 7));
 	}
 
 	// takes the tiles from get_neighbours and tightly packs them into 8-bits
@@ -248,9 +254,9 @@ public:
 
 		// read 32bits of memory; grid_id_p is in the
 		// lowest bit position of tiles[1]
-		tiles[0] = (uint32_t)(*((uint64_t*)(db_ + pos1)) >> (bit_offset));
-		tiles[1] = (uint32_t)(*((uint64_t*)(db_ + pos2)) >> (bit_offset));
-		tiles[2] = (uint32_t)(*((uint64_t*)(db_ + pos3)) >> (bit_offset));
+		tiles[0] = (uint32_t)(*((uint64_t*)(db_.get() + pos1)) >> (bit_offset));
+		tiles[1] = (uint32_t)(*((uint64_t*)(db_.get() + pos2)) >> (bit_offset));
+		tiles[2] = (uint32_t)(*((uint64_t*)(db_.get() + pos3)) >> (bit_offset));
 	}
 
 	// similar to get_neighbours_32bit but grid_id_p is placed into the
@@ -279,9 +285,9 @@ public:
 
 		// read 32bits of memory; grid_id_p is in the
 		// highest bit position of tiles[1]
-		tiles[0] = (uint32_t)(*((uint64_t*)(db_ + pos1)) >> (bit_offset + 1));
-		tiles[1] = (uint32_t)(*((uint64_t*)(db_ + pos2)) >> (bit_offset + 1));
-		tiles[2] = (uint64_t)(*((uint64_t*)(db_ + pos3)) >> (bit_offset + 1));
+		tiles[0] = (uint32_t)(*((uint64_t*)(db_.get() + pos1)) >> (bit_offset + 1));
+		tiles[1] = (uint32_t)(*((uint64_t*)(db_.get() + pos2)) >> (bit_offset + 1));
+		tiles[2] = (uint64_t)(*((uint64_t*)(db_.get() + pos3)) >> (bit_offset + 1));
 	}
 
 	// fetches a contiguous set of tiles from three adjacent rows.
@@ -300,9 +306,9 @@ public:
 		uint32_t pos3 = dbindex + dbwidth64_;
 
 		// read 64bits of tile data from each of the three rows
-		tiles[0] = *((uint64_t*)(db_) + pos1);
-		tiles[1] = *((uint64_t*)(db_) + pos2);
-		tiles[2] = *((uint64_t*)(db_) + pos3);
+		tiles[0] = *((uint64_t*)(db_.get()) + pos1);
+		tiles[1] = *((uint64_t*)(db_.get()) + pos2);
+		tiles[2] = *((uint64_t*)(db_.get()) + pos3);
 	}
 
 	// fetches a contiguous set of tiles from three adjacent rows.
@@ -395,19 +401,18 @@ protected:
 	void
 	setup_ser_(io::bittable_serialize& parser);
 
-private:
-	warthog::util::gm_header header_;
-	warthog::dbword* db_;
+	warthog::util::gm_header header_ = {};
+	std::unique_ptr<warthog::dbword[]> db_;
 	std::filesystem::path filename_;
 
-	uint32_t dbwidth_;
-	uint32_t dbwidth64_;
-	uint32_t dbheight_;
-	uint32_t db_size_;
-	uint32_t padding_per_row_;
-	uint32_t padding_column_above_;
-	uint32_t max_id_;
-	uint32_t num_traversable_;
+	uint32_t dbwidth_ = 0;
+	uint32_t dbwidth64_ = 0;
+	uint32_t dbheight_ = 0;
+	uint32_t db_size_ = 0;
+	uint32_t padding_per_row_ = 0;
+	uint32_t padding_column_above_ = 0;
+	uint32_t max_id_ = 0;
+	uint32_t num_traversable_ = 0;
 
 	void
 	init_db();
