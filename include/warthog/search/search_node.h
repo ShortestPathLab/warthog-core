@@ -19,7 +19,7 @@ namespace warthog::search
 struct search_node
 {
 	search_node() noexcept = default;
-	search_node(pad_id id = pad_id::max()) noexcept : id_(id) { }
+	search_node(pad_id id) noexcept : id_(id) { }
 
 	inline void
 	init(
