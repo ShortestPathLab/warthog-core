@@ -23,6 +23,7 @@
 #include <warthog/util/pqueue.h>
 #include <warthog/util/scenario_manager.h>
 #include <warthog/util/timer.h>
+#include <warthog/util/string.h>
 #ifdef WARTHOG_POSTHOC
 #include <warthog/io/grid_trace.h>
 #endif
@@ -80,18 +81,18 @@ help(std::ostream& out)
 	    << "\t--scen [scen file] (required) \n"
 	    << "\t--map [map file] (optional; specify this to override map "
 	       "values in scen file) \n"
-	    << "\t--costs [costs file] (required if using a weighted "
+	    << "\t--grid-weights [file] (required if using a weighted "
 	       "terrain algorithm)\n"
-	    << "\t--v2-cost [type] (optional; change used cost type for v2 scen "
-	       "file dynamic)"
+	    << "\t--cost [type] (optional; force use of selected cost in v2 scenario, error if not exists)"
+	    << "\t--cost-file [type] (optional; override scenario costs with file, conflicts with --cost)"
 	    << "\t--checkopt (optional; compare solution costs against "
 	       "values in the scen file)\n"
 	    << "\t--verbose (optional; prints debugging info when compiled "
 	       "with debug symbols)\n"
 	    << "\t--filter [id] (optional; run only inst [id])\n"
-	    << "\t--dump-map [id] (optional; dump map at id to stderr)"
-	    << "\t--dump-map-file [filename] (optional; file to dump map to, "
-	       "default /dev/stderr)"
+	    << "\t--dump-map [id] (optional; dump current gridmap at start of inst id to stderr default)"
+	    << "\t--dump-map-file [filename] (optional; override dump map to file"
+	       "default /dev/stderr, /dev/stdout outputs to stdout)"
 #ifdef WARTHOG_POSTHOC
 	    << "\t--trace [.trace.yaml file] (optional; write posthoc trace for "
 	       "first instance to [file])\n"
@@ -136,6 +137,7 @@ check_optimality(
 #define WARTHOG_POSTHOC_DO(f)
 #endif
 
+// convenience wrapper around initialisation code
 struct gridmap_scenario
 {
 	const warthog::manager::scenario_manager* mgr;
@@ -436,13 +438,18 @@ main(int argc, char** argv)
 	std::string alg   = cfg.get_param_value("alg");
 	// std::string gen = cfg.get_param_value("gen");
 	std::string mapfile  = cfg.get_param_value("map");
-	std::string costfile = cfg.get_param_value("costs");
-	std::string v2cost   = cfg.get_param_value("v2-cost");
+	std::string costtype   = cfg.get_param_value("cost");
+	std::string costfile = cfg.get_param_value("cost-file");
+	std::string weightsfile = cfg.get_param_value("weight-file");
 	dump_map_file        = cfg.get_param_value("dump-map-file");
 
 	if(filter_id == 1)
 	{
-		filter_id = std::stoi(cfg.get_param_value("filter"));
+		if (warthog::util::parse_token(cfg.get_param_value("filter"), filter_id) != std::errc{})
+		{
+			WARTHOG_GERROR_FMT("invalid --filter argument {}", filter_id);
+			return (int)std::errc::invalid_argument;
+		}
 	}
 #ifdef WARTHOG_POSTHOC
 	trace_file = cfg.get_param_value("trace");
@@ -455,12 +462,13 @@ main(int argc, char** argv)
 		return 0;
 	}
 
-	// check v2cost
-	if(v2cost.empty()) { v2cost = "8c-ncc"; }
-
 	if(dump_map_id == 1)
 	{
-		dump_map_id = std::stoi(cfg.get_param_value("dump-map"));
+		if (warthog::util::parse_token(cfg.get_param_value("dump-map"), dump_map_id) != std::errc{})
+		{
+			WARTHOG_GERROR_FMT("invalid --dump-map argument {}", dump_map_id);
+			return (int)std::errc::invalid_argument;
+		}
 	}
 	if(dump_map_file.empty()) { dump_map_file = "/dev/stderr"; }
 
