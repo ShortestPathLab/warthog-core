@@ -12,9 +12,9 @@ bool
 grid_patch_set::load(std::istream& file, int max_grids)
 {
 	io::bittable_serialize S;
-	if(auto ec = S.open_read(&file); ec != std::errc{})
+	if(auto r = S.open_read(&file); !r)
 	{
-		WARTHOG_GWARN_FMT("grid patch failed to open file code={}", (int)ec);
+		WARTHOG_GWARN_FMT("grid patch failed to open file code={}", (int)r.error());
 		return false;
 	}
 	if(int r = deserialize(S, max_grids); r < 0)
@@ -30,9 +30,9 @@ grid_patch_set::load(const std::filesystem::path& maps, int max_grids)
 {
 	io::bittable_serialize S;
 	S.set_filename(std::filesystem::path(maps));
-	if(auto ec = S.open_read(); ec != std::errc{})
+	if(auto r = S.open_read(); !r)
 	{
-		WARTHOG_GWARN_FMT("grid patch failed to open file code={}", (int)ec);
+		WARTHOG_GWARN_FMT("grid patch failed to open file code={}", (int)r.error());
 		return false;
 	}
 	if(int r = deserialize(S); r < 0)
@@ -57,10 +57,10 @@ grid_patch_set::deserialize(
 			              "has not been read.");
 			return -1;
 		}
-		if(auto ec = S.read_header(); ec != std::errc{})
+		if(auto r = S.read_header(); !r)
 		{
 			WARTHOG_GWARN_FMT(
-			    "grid patch failed to read header code={}", (int)ec);
+			    "grid patch failed to read header code={}", (int)r.error());
 			return -1;
 		}
 	}
@@ -89,11 +89,11 @@ grid_patch_set::deserialize(
 	{
 		// read new grid
 		++count;
-		if(auto ec = S.read_grid_header(); ec != std::errc{})
+		if(auto r = S.read_grid_header(); !r)
 		{
 			WARTHOG_GWARN_FMT(
 			    "grid patch failed to read patch {} header code={}", count,
-			    (int)ec);
+			    (int)r.error());
 			return -count;
 		}
 		if((flags & IGNORE_INDEX) == 0)
@@ -115,11 +115,11 @@ grid_patch_set::deserialize(
 		auto* grid_data = static_cast<bittable::value_type*>(
 		    grid_res_.allocate(bytes, alignof(bittable::value_type)));
 		bittable patch(grid_data, dim.width, dim.height);
-		if(auto ec = S.read_grid_data(patch); ec != std::errc{})
+		if(auto r = S.read_grid_data(patch); !r)
 		{
 			WARTHOG_GWARN_FMT(
 			    "grid patch failed to read patch {} data code={}", count,
-			    (int)ec);
+			    (int)r.error());
 			return -count;
 		}
 		patches_.push_back(patch);

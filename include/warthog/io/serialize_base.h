@@ -19,6 +19,7 @@
 
 #include <warthog/util/string.h>
 
+#include <expected>
 #include <cassert>
 #include <filesystem>
 #include <fstream>
@@ -78,13 +79,13 @@ public:
 
 	/// @brief opens scenario file get_scenario_filename() for reading
 	/// @param scenario use a user provided instead of get_scenario_filename()
-	/// @return error on operation
-	virtual std::errc
+	/// @return errc on error
+	virtual std::expected<void, std::errc>
 	open_read(std::istream* scenario = nullptr);
 	/// @brief opens scenario file get_scenario_filename() for writing
 	/// @param scenario use a user provided instead of get_scenario_filename()
-	/// @return error on operation
-	virtual std::errc
+	/// @return errc on error
+	virtual std::expected<void, std::errc>
 	open_write(std::ostream* scenario = nullptr);
 
 	virtual void
@@ -115,21 +116,21 @@ public:
 
 protected:
 	/// @return the internal istream or provided, or error
-	std::pair<std::istream*, std::errc>
+	std::expected<std::istream*, std::errc>
 	get_istream(std::istream* in = nullptr) noexcept
 	{
 		if(in == nullptr) in = m_stream_in;
-		if(in == nullptr || !in) return {nullptr, std::errc::io_error};
-		return {in, {}};
+		if(in == nullptr || !in) std::unexpected(std::errc::io_error);
+		return in;
 	}
 	/// @return the internal istream or provided, or error
-	std::pair<std::ostream*, std::errc>
+	std::expected<std::ostream*, std::errc>
 	get_ostream(std::ostream* out = nullptr) noexcept
 	{
 		if(out == nullptr) out = m_stream_out;
 		if(out == nullptr || !out->good())
-			return {nullptr, std::errc::io_error};
-		return {out, {}};
+			return std::unexpected(std::errc::io_error);
+		return out;
 	}
 
 	/// @return true if istream is at eof, false if not or in error
@@ -156,7 +157,7 @@ protected:
 	///
 	/// get_line_num() will return the read number read, reading from an
 	/// unreadline does not change the line number.
-	std::pair<std::string_view, std::errc>
+	std::expected<std::string_view, std::errc>
 	readline(std::istream* in, bool skip_blanks = false);
 
 	/// @brief unreads a line, keeps only a single line

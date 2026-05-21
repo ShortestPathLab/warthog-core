@@ -27,7 +27,7 @@ scenario_manager::load_scenario(const std::filesystem::path& filelocation)
 {
 	sfile_ = filelocation;
 	std::ifstream in(filelocation);
-	if(load_gppc_scenario(in) != std::errc{})
+	if(!load_gppc_scenario(in))
 	{
 		WARTHOG_GERROR_FMT(
 		    "Failed to load scenario file \"{}\"", sfile_.string());
@@ -41,7 +41,7 @@ scenario_manager::load_scenario(
 {
 	sfile_ = std::move(scenfile);
 	load_gppc_scenario(file);
-	if(load_gppc_scenario(file) != std::errc{})
+	if(!load_gppc_scenario(file))
 	{
 		WARTHOG_GERROR_FMT(
 		    "Failed to load scenario file \"{}\"", std::string(sfile_));
@@ -50,7 +50,7 @@ scenario_manager::load_scenario(
 }
 
 // V1.0 is the version officially supported by HOG
-std::errc
+std::expected<void, std::errc>
 scenario_manager::load_gppc_scenario(std::istream& scenfile)
 {
 	clear();
@@ -60,17 +60,17 @@ scenario_manager::load_gppc_scenario(std::istream& scenfile)
 	si.set_force_int(true);
 
 	// open stream and read header
-	if(auto ec = si.open_read(&scenfile); ec != std::errc{})
+	if(auto r = si.open_read(&scenfile); !r)
 	{
 		WARTHOG_GERROR("scenario_manager failed to open for read");
-		return ec;
+		return std::unexpected(r.error());
 	}
-	if(auto ec = si.read_version(); ec != std::errc{})
+	if(auto r = si.read_version(); !r)
 	{
 		WARTHOG_GERROR_FMT(
 		    "scenario_manager failed to read version on line: {}",
 		    si.get_line_num());
-		return std::errc::io_error;
+		return std::unexpected(r.error());
 	}
 	auto version = si.get_version();
 	if(version == io::scenario_version::VERSION_1)
@@ -84,19 +84,19 @@ scenario_manager::load_gppc_scenario(std::istream& scenfile)
 	else
 	{
 		WARTHOG_GERROR("scenario_manager reading unsupported version");
-		return std::errc::invalid_argument;
+		return std::unexpected(std::errc::invalid_argument);
 	}
 }
 
-std::errc
+std::expected<void, std::errc>
 scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 {
-	if(auto ec = si.read_header(); ec != std::errc{})
+	if(auto r = si.read_header(); !r)
 	{
 		WARTHOG_GERROR_FMT(
 		    "scenario_manager failed to read scenario v1 header on line: {}",
 		    si.get_line_num());
-		return std::errc::io_error;
+		return std::unexpected(r.error());
 	}
 
 	mfile_ = si.get_map_filename();
@@ -116,15 +116,15 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 	while(true)
 	{
 		Q.reset();
-		auto [con, ec] = si.read_instance_line(Q);
-		if(ec != std::errc{})
+		auto con = si.read_instance_line(Q);
+		if(!con)
 		{
 			WARTHOG_GERROR_FMT(
 			    "scenario_manager failed to read inst on line: {}",
 			    si.get_line_num());
-			return std::errc::io_error;
+			return std::unexpected(std::errc::io_error);
 		}
-		if(con == io::scenario_serialize::VALID)
+		if(*con == io::scenario_serialize::VALID)
 		{
 			std::string_view current_map(Q.map);
 			if(current_map.size() > 2048) // limit string size
@@ -133,7 +133,7 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 				    "scenario_manager v1 inst line map exceeds 2048 chars on "
 				    "line: {}",
 				    si.get_line_num());
-				return std::errc::argument_out_of_domain;
+				return std::unexpected(std::errc::argument_out_of_domain);
 			}
 			if(map_string != current_map)
 			{
@@ -149,20 +149,23 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 			commands_.push_back(scenario_command::make_inst(
 			    Q.bucket, inst_count_++, (uint32_t)(experiments_.size() - 1)));
 		}
-		else if(con == io::scenario_serialize::FINAL) { break; }
+		else if(*con == io::scenario_serialize::FINAL) { break; }
+		else {
+			WARTHOG_GWARN_FMT("scenario_manager v1 invalid instance on line {}", si.get_line_num());
+		}
 	}
-	return std::errc{};
+	return {};
 }
 
-std::errc
+std::expected<void, std::errc>
 scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 {
-	if(auto ec = si.read_header(); ec != std::errc{})
+	if(!si.read_header())
 	{
 		WARTHOG_GERROR_FMT(
 		    "scenario_manager failed to read scenario v2 header on line: {}",
 		    si.get_line_num());
-		return std::errc::io_error;
+		return std::unexpected(std::errc::io_error);
 	}
 
 	mfile_ = si.get_map_filename();
@@ -177,7 +180,7 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 	if(map_string.size() > 2048) // limit string size
 	{
 		WARTHOG_GERROR("scenario_manager v2 map exceeds 2048 chars");
-		return std::errc::filename_too_long;
+		return std::unexpected(std::errc::filename_too_long);
 	}
 
 	// get cost index
@@ -191,7 +194,7 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			WARTHOG_GERROR_FMT(
 			    "scenario_manager v2 failed to find user-provided cost: {}",
 			    cost_type_);
-			return std::errc::invalid_argument;
+			return std::unexpected(std::errc::invalid_argument);
 		}
 	}
 
@@ -204,17 +207,15 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 	while(true)
 	{
 		// try reading a inst line
-		int con;
-		std::errc ec;
-		std::tie(con, ec) = si.read_instance_line(Q);
-		if(ec != std::errc{})
+		auto con = si.read_instance_line(Q);
+		if(!con)
 		{
 			WARTHOG_GERROR_FMT(
 			    "scenario_manager failed to read command on line: {}",
 			    si.get_line_num());
-			return std::errc::io_error;
+			return std::unexpected(std::errc::io_error);
 		}
-		if(con == io::scenario_serialize::VALID)
+		if(*con == io::scenario_serialize::VALID)
 		{
 			if(last_type == -1)
 			{
@@ -238,15 +239,15 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			commands_.push_back(scenario_command::make_inst(
 			    Q.bucket, inst_count_++, (uint32_t)(experiments_.size() - 1)));
 		}
-		else if(con == io::scenario_serialize::CMD_PATCH)
+		else if(*con == io::scenario_serialize::CMD_PATCH)
 		{
-			std::tie(con, ec) = si.read_patch_line(P);
-			if(ec != std::errc{} || con != io::scenario_serialize::VALID)
+			auto pcon = si.read_patch_line(P);
+			if(!pcon || *pcon != io::scenario_serialize::VALID)
 			{
 				WARTHOG_GERROR_FMT(
 				    "scenario_manager failed to read command on line: {}",
 				    si.get_line_num());
-				return std::errc::io_error;
+				return std::unexpected(std::errc::io_error);
 			}
 			if(last_type != io::scenario_serialize::CMD_PATCH
 			   || last_bucket != P.bucket)
@@ -260,8 +261,8 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			commands_.push_back(scenario_command::make_patch(
 			    P.bucket, P.patch_id, P.loc_x, P.loc_y));
 		}
-		else if(con == io::scenario_serialize::FINAL) { break; }
-		else if(con == io::scenario_serialize::CMD_UNKNOWN)
+		else if(*con == io::scenario_serialize::FINAL) { break; }
+		else if(*con == io::scenario_serialize::CMD_UNKNOWN)
 		{
 			// ignore
 			si.skip_commands();
@@ -272,10 +273,10 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			WARTHOG_GERROR_FMT(
 			    "scenario_manager failed to read command on line: {}",
 			    si.get_line_num());
-			return std::errc::io_error;
+			return std::unexpected(std::errc::io_error);
 		}
 	}
-	return std::errc{};
+	return {};
 }
 
 std::string_view

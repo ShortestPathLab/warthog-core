@@ -210,7 +210,7 @@ public:
 	/// @param in optional stream to use, otherwise uses internal-set stream
 	/// @return success std::errc{}, else failure
 	/// @pre state() == serialize_state::INIT (returns errc otherwise)
-	virtual std::errc
+	virtual std::expected<void,std::errc>
 	read_version(std::istream* in = nullptr);
 	/// @brief read header (without version) information.
 	/// @param in optional stream to use, otherwise uses internal-set stream
@@ -220,16 +220,16 @@ public:
 	/// With VERSION1: peeks first instance to gain map name
 	/// With VERSION2: gets map width/height, available costs and patch
 	/// filename
-	virtual std::errc
+	virtual std::expected<void,std::errc>
 	read_header(std::istream* in = nullptr);
 
 	/// @brief read header as VERSION_1, does not consider the state or
 	/// version. use read_header for checks instead.
-	std::errc
+	std::expected<void,std::errc>
 	read_header_v1(std::istream* in = nullptr);
 	/// @brief read header as VERSION_2, does not consider the state or
 	/// version. use read_header for checks instead.
-	std::errc
+	std::expected<void,std::errc>
 	read_header_v2(std::istream* in = nullptr);
 
 	/// @brief gets the next command type
@@ -243,14 +243,14 @@ public:
 	/// With VERSION_2:
 	///   Returns command based on last_command_type(), or FINAL if not
 	///   present. Default expects CMD_INST or CMD_PATCH.
-	std::pair<int, std::errc>
+	std::expected<int, std::errc>
 	next_command_type(std::istream* in = nullptr);
 	/// @brief skips the next count number of commands
 	/// @param count number of commands to skip
 	/// @param in optional stream to use, otherwise uses internal-set stream
 	/// @return success std::errc{}, else failure
 	/// @pre state() == serialize_state::COMMAND (returns errc otherwise)
-	std::errc
+	std::expected<int,std::errc>
 	skip_commands(int count = 1, std::istream* in = nullptr);
 
 	/// @brief reads an instance line and stores results in scenario_instance
@@ -276,16 +276,16 @@ public:
 	/// If get_force_int() == true, also checks start/goal are integers within
 	/// the grid, otherwise allows float also within the grid (allows x ==
 	/// width() or y == height()).
-	virtual std::pair<int, std::errc>
+	virtual std::expected<int, std::errc>
 	read_instance_line(scenario_instance& inst, std::istream* in = nullptr);
 
 	/// @brief as VERSION_1 with read_instance_line, does not check
 	/// pre-conditions
-	std::pair<int, std::errc>
+	std::expected<int, std::errc>
 	read_instance_line_v1(scenario_instance& inst, std::istream* in = nullptr);
 	/// @brief as VERSION_2 with read_instance_line, does not check
 	/// pre-conditions
-	std::pair<int, std::errc>
+	std::expected<int, std::errc>
 	read_instance_line_v2(scenario_instance& inst, std::istream* in = nullptr);
 
 	/// @brief reads a patch line and stores results in scenario_patch
@@ -301,11 +301,11 @@ public:
 	///   Returns VALID for success, FINAL for no more commands, INVALID if
 	///   location is out of grid bounds, or last_command_type() (only CMD_INST
 	///   for standard v2 scenario) of type of command.
-	virtual std::pair<int, std::errc>
+	virtual std::expected<int, std::errc>
 	read_patch_line(scenario_patch& patch, std::istream* in = nullptr);
 
 	/// @brief as VERSION_2 with read_patch_line, does not check pre-conditions
-	std::pair<int, std::errc>
+	std::expected<int, std::errc>
 	read_patch_line_v2(scenario_patch& patch, std::istream* in = nullptr);
 
 protected:

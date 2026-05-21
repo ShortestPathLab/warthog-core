@@ -47,7 +47,7 @@ enum class gridmap_cell : char
 /// @brief Standard traversable terrain type from gridmap_cell
 /// @param c
 /// @return ".G" return true, false otherwise
-constexpr inline bool
+constexpr bool
 gridmap_cell_traversable(gridmap_cell c) noexcept
 {
 	switch(c)
@@ -60,7 +60,7 @@ gridmap_cell_traversable(gridmap_cell c) noexcept
 	}
 }
 /// @return char c is traversable, as gridmap_cell_traversable((gridmap_cell)c)
-constexpr inline bool
+constexpr bool
 gridmap_cell_traversable(char c) noexcept
 {
 	return gridmap_cell_traversable(static_cast<gridmap_cell>(c));
@@ -151,31 +151,31 @@ public:
 		return m_patch_id;
 	}
 	/// @brief gets the number of patches that have been read
-	/// @return std::errc{} for success, otherwise failure
-	std::errc
+	/// @return true for success, false failure
+	bool
 	set_patch_id(uint32_t id) noexcept
 	{
 		m_patch_id = id;
-		return std::errc{};
+		return true;
 	}
 
 	/// @brief reads the map/patch file header, getting the type
 	/// @param in alternative file stream to read from
-	/// @return value init on success, error code on failure
+	/// @return error code on failure
 	///
 	/// Reads the header line, `type octile` for bittable_type::OCTILE or
 	/// `type patch` for bittable_type::PATCH, retrievable by get_type().
 	/// For PATCH type, also reads following line for number of patches in
 	/// file.
-	std::errc
+	std::expected<void, std::errc>
 	read_header(std::istream* in = nullptr);
 
 	/// @brief Reads the grids' header, getting width/height up to the map
 	/// data.
 	/// @param in alternative filestream to read from
-	/// @return value init on success, error code on failure
+	/// @return error code on failure
 	/// @pre get_type() matches the format of file.
-	std::errc
+	std::expected<void, std::errc>
 	read_grid_header(std::istream* in = nullptr);
 
 	/// @brief Reads the grids data and stores it into a bittable, expects size
@@ -184,11 +184,11 @@ public:
 	/// @param offset_x offset of top-left in table to copy grid to
 	/// @param offset_y offset of top-left in table to copy grid to
 	/// @param in alternative filestream to read from
-	/// @return value init on success, error code on failure
+	/// @return error code on failure
 	/// @pre table must be init and large enough to store whole grid (including
 	/// from offset)
 	template<typename BitTable>
-	std::errc
+	std::expected<void, std::errc>
 	read_grid_data(
 	    BitTable& table, uint32_t offset_x = 0, uint32_t offset_y = 0,
 	    std::istream* in = nullptr);
@@ -205,7 +205,7 @@ public:
 	/// Data is tightly packed, with no delimited between rows of size width.
 	/// Characters are as defined by the MovingAI spec, use
 	/// gridmap_cell_traversable(c) to determine traversability if applicable.
-	std::errc
+	std::expected<void, std::errc>
 	read_grid_raw(std::span<char> buffer, std::istream* in = nullptr);
 
 protected:
@@ -217,7 +217,7 @@ protected:
 };
 
 template<typename BitTable>
-std::errc
+std::expected<void, std::errc>
 bittable_serialize::read_grid_data(
     BitTable& table, uint32_t offset_x, uint32_t offset_y, std::istream* in)
 {
@@ -226,28 +226,31 @@ bittable_serialize::read_grid_data(
 	const memory::bittable_dimension read_dim = m_dim;
 	// detect for overflow
 	if(offset_x >= dim.width || read_dim.width + offset_x > dim.width)
-		return std::errc::argument_out_of_domain;
+		return std::unexpected(std::errc::argument_out_of_domain);
 	if(offset_y >= dim.height || read_dim.height + offset_y > dim.height)
-		return std::errc::argument_out_of_domain;
+		return std::unexpected(std::errc::argument_out_of_domain);
 	uint32_t bit_id
 	    = static_cast<uint32_t>(table.xy_to_id(offset_x, offset_y));
 	const uint32_t bit_row_offset = dim.width - read_dim.width;
 
-	std::errc err;
-	std::tie(in, err) = get_istream(in);
-	if(err != std::errc{}) { return err; }
+	if (auto r = get_istream(in); r)
+		in = *r;
+	else
+		return std::unexpected(r.error());
+	
 	std::string_view line;
 	std::string_view token;
-
 	for(uint32_t y = 0; y < read_dim.height; ++y, bit_id += bit_row_offset)
 	{
 		// read row
-		std::tie(line, err) = readline(in);
-		if(err != std::errc{}) { return err; }
+		if (auto r = readline(in); r)
+			line = *r;
+		else
+			return std::unexpected(r.error());
 		parser par(line);
-		if(!par.next(token).eof()) { return par.error(); }
+		if(!par.next(token).eof()) { return std::unexpected(par.error()); }
 		if(token.size() != read_dim.width)
-			return std::errc::argument_out_of_domain;
+			return std::unexpected(std::errc::argument_out_of_domain);
 		// copy row to table
 		for(uint32_t x = 0; x < read_dim.width; ++x, ++bit_id)
 		{
@@ -257,7 +260,7 @@ bittable_serialize::read_grid_data(
 		}
 	}
 
-	return std::errc{};
+	return {};
 }
 
 } // namespace warthog::memory

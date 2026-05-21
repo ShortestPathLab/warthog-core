@@ -12,7 +12,7 @@ namespace warthog::io
 serialize_base::serialize_base() { }
 serialize_base::~serialize_base() = default;
 
-std::errc
+std::expected<void, std::errc>
 serialize_base::open_read(std::istream* is)
 {
 	close();
@@ -28,12 +28,12 @@ serialize_base::open_read(std::istream* is)
 		// bad stream
 		m_stream_in = nullptr;
 		m_stream    = nullptr;
-		return std::errc::io_error;
+		return std::unexpected(std::errc::io_error);
 	}
-	return std::errc{};
+	return {};
 }
 
-std::errc
+std::expected<void, std::errc>
 serialize_base::open_write(std::ostream* os)
 {
 	close();
@@ -49,9 +49,9 @@ serialize_base::open_write(std::ostream* os)
 		// bad stream
 		m_stream_out = nullptr;
 		m_stream     = nullptr;
-		return std::errc::io_error;
+		return std::unexpected(std::errc::io_error);
 	}
-	return std::errc{};
+	return {};
 }
 
 void
@@ -68,16 +68,18 @@ serialize_base::close()
 bool
 serialize_base::istream_eof(std::istream* in)
 {
-	auto [s, err] = get_istream(in);
-	if(err != std::errc{}) return false;
-	return s->eof();
+	in = get_istream(in).value_or(nullptr);
+	return in != nullptr && in->eof();
 }
 
-std::pair<std::string_view, std::errc>
+std::expected<std::string_view, std::errc>
 serialize_base::readline(std::istream* in, bool skip_blanks)
 {
 	size_t len;
-	auto [s, err] = get_istream(in);
+	if (auto r = get_istream(in); r)
+		in = *r;
+	else
+		return std::unexpected(r.error());
 	if(!m_line_data)
 	{
 		m_max_line_length
@@ -91,7 +93,7 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 			// return last unreadline
 			if(len > m_max_line_length - 1)
 			{
-				return {{}, std::errc::invalid_argument};
+				return std::unexpected(std::errc::invalid_argument);
 			}
 			if(len == 1 && m_unget_line[0] == '\0')
 			{
@@ -108,26 +110,25 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 		}
 		else
 		{
-			if(err != std::errc{}) { return {{}, err}; }
-			if(s->eof()) { return {{}, std::errc::io_error}; }
-			if(!s->getline(m_line_data.get(), m_max_line_length))
+			if(in->eof()) return std::unexpected(std::errc::io_error);
+			if(!in->getline(m_line_data.get(), m_max_line_length))
 			{
-				if(s->eof() && s->gcount() == 0)
+				if(in->eof() && in->gcount() == 0)
 				{
-					s->clear(std::ios::eofbit);
+					in->clear(std::ios::eofbit);
 					// extracted no characters and reached end of file, return
 					// no error
-					return {{}, {}};
+					return std::string_view();
 				}
 				else
 				{
 					// error
-					return {{}, std::errc::io_error};
+					return std::unexpected(std::errc::io_error);
 				}
 			}
 			// get length, if eof is set, is last line and no delimiter was
 			// extracted
-			len = static_cast<size_t>(s->gcount()) - (s->eof() ? 0 : 1);
+			len = static_cast<size_t>(in->gcount()) - (in->eof() ? 0 : 1);
 			if(len == 0) { m_line = std::string_view(); }
 			else
 			{
@@ -144,7 +145,7 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 		{
 			continue; // blank line, repeat
 		}
-		return {m_line, {}};
+		return m_line;
 	}
 }
 void

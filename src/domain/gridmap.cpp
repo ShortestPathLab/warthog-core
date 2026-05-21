@@ -85,7 +85,7 @@ gridmap::setup_stream_(std::istream& in)
 {
 	io::bittable_serialize parser;
 	parser.open_read(&in);
-	if(parser.read_header() != std::errc{})
+	if(!parser.read_header())
 		throw std::runtime_error("invalid grid format");
 	setup_ser_(parser);
 }
@@ -93,14 +93,14 @@ gridmap::setup_stream_(std::istream& in)
 void
 gridmap::setup_ser_(io::bittable_serialize& parser)
 {
-	if(parser.read_grid_header() != std::errc{})
+	if(!parser.read_grid_header())
 		throw std::runtime_error("invalid grid format");
 	this->header_.type_   = "octile";
 	this->header_.width_  = parser.get_dim().width;
 	this->header_.height_ = parser.get_dim().height;
 
 	init_db();
-	if(parser.read_grid_data(*this, 0, PADDED_ROWS) != std::errc{})
+	if(!parser.read_grid_data(*this, 0, PADDED_ROWS))
 		throw std::runtime_error("invalid grid format");
 	// calculate traversable
 	num_traversable_ = static_cast<uint32_t>(std::transform_reduce(

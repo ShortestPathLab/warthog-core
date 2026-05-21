@@ -276,7 +276,7 @@ labelled_gridmap<CELL>::setup_stream_(std::istream& in)
 {
 	io::bittable_serialize parser;
 	parser.open_read(&in);
-	if(parser.read_header() != std::errc{})
+	if(!parser.read_header())
 		throw std::runtime_error("invalid grid format");
 	setup_ser_(parser);
 }
@@ -285,7 +285,7 @@ template<typename CELL>
 inline void
 labelled_gridmap<CELL>::setup_ser_(io::bittable_serialize& parser)
 {
-	if(parser.read_grid_header() != std::errc{})
+	if(!parser.read_grid_header())
 		throw std::runtime_error("invalid grid format");
 	this->header_.type_   = "octile";
 	this->header_.width_  = parser.get_dim().width;
@@ -296,7 +296,7 @@ labelled_gridmap<CELL>::setup_ser_(io::bittable_serialize& parser)
 	std::unique_ptr<char[]> buffer_v
 	    = std::make_unique<char[]>(this->db_size_);
 	std::span<char> buffer(buffer_v.get(), this->db_size_);
-	if(auto ec = parser.read_grid_raw(buffer); ec != std::errc{})
+	if(!parser.read_grid_raw(buffer))
 		throw std::runtime_error("invalid grid format");
 	// copy buffet to db
 	std::copy_n(buffer.data(), buffer.size(), this->db_.get());

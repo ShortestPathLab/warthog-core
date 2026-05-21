@@ -6,7 +6,7 @@ project(Warthog
 
 set_property(GLOBAL PROPERTY WARTHOG_warthog-core ON)
 
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 option(WARTHOG_POSTHOC "Compile trace support generation for posthoc" OFF)

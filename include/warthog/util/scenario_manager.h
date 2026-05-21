@@ -21,6 +21,7 @@
 #include <warthog/io/grid.h>
 #include <warthog/io/scenario.h>
 
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -226,12 +227,12 @@ public:
 	}
 
 protected:
-	std::errc
+	std::expected<void, std::errc>
 	load_gppc_scenario(std::istream& scenfile);
 
-	std::errc
+	std::expected<void, std::errc>
 	load_gppc_scenario_body_v1(io::scenario_serialize& si);
-	std::errc
+	std::expected<void, std::errc>
 	load_gppc_scenario_body_v2(io::scenario_serialize& si);
 
 	std::string_view
