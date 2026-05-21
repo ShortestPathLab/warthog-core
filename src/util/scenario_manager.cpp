@@ -177,7 +177,7 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 	if(map_string.size() > 2048) // limit string size
 	{
 		WARTHOG_GERROR("scenario_manager v2 map exceeds 2048 chars");
-		return std::errc::argument_out_of_domain;
+		return std::errc::filename_too_long;
 	}
 
 	// get cost index
@@ -188,17 +188,10 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 		cost_index = si.find_cost_index(cost_type_);
 		if(cost_index < 0)
 		{
-			WARTHOG_GWARN_FMT(
+			WARTHOG_GERROR_FMT(
 			    "scenario_manager v2 failed to find user-provided cost: {}",
 			    cost_type_);
-		}
-	}
-	else
-	{
-		// try to use grid if exist
-		if(int ci = si.find_cost_index(io::cost_type::G_8C_NCC); ci >= 0)
-		{
-			cost_index = ci;
+			return std::errc::invalid_argument;
 		}
 	}
 
@@ -232,12 +225,15 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			last_type   = io::scenario_serialize::CMD_INST;
 			last_bucket = Q.bucket;
 
+			std::optional<double> ex_cost;
+			if (cost_index >= 0) {
+				ex_cost = Q.cost[cost_index];
+			}
 			experiment* ex = std::construct_at(
 			    static_cast<experiment*>(experiments_res_.allocate(
 			        sizeof(experiment), alignof(experiment))),
 			    Q.start_x, Q.start_y, Q.goal_x, Q.goal_y, si.get_map_width(),
-			    si.get_map_height(), Q.cost[(int)io::cost_type::G_8C_NCC],
-			    map_string);
+			    si.get_map_height(), ex_cost, map_string);
 			experiments_.push_back(ex);
 			commands_.push_back(scenario_command::make_inst(
 			    Q.bucket, inst_count_++, (uint32_t)(experiments_.size() - 1)));

@@ -111,18 +111,22 @@ bool
 check_optimality(
     const warthog::search::solution& sol, const warthog::util::experiment* exp)
 {
-	uint32_t precision = 2;
-	double epsilon     = (1.0 / (int)pow(10, precision)) / 2;
-	double delta       = fabs(sol.sum_of_edge_costs_ - exp->distance());
-
-	if(fabs(delta - epsilon) > epsilon)
+	if (!exp->distance())
 	{
-		std::cerr << std::setprecision(exp->precision());
+		// unknown solution
+		return true;
+	}
+	uint32_t precision = 2;
+	double epsilon     = std::pow(10.0, -precision) * 0.5;
+	double delta       = std::fabs(sol.sum_of_edge_costs_ - *exp->distance());
+
+	if(std::fabs(delta - epsilon) > epsilon)
+	{
 		std::cerr << "optimality check failed!" << std::endl;
 		std::cerr << std::endl;
 		std::cerr << "optimal path length: " << sol.sum_of_edge_costs_
 		          << " computed length: ";
-		std::cerr << exp->distance() << std::endl;
+		std::cerr << *exp->distance() << std::endl;
 		std::cerr << "precision: " << precision << " epsilon: " << epsilon
 		          << std::endl;
 		std::cerr << "delta: " << delta << std::endl;
@@ -280,8 +284,12 @@ run_experiments(
 		    << "\t" << sol.met_.nodes_surplus_ << "\t" << sol.met_.heap_ops_
 		    << "\t" << sol.met_.time_elapsed_nano_.count() << "\t"
 		    << (!sol.path_.empty() ? sol.path_.size() - 1 : 0) << "\t"
-		    << sol.sum_of_edge_costs_ << "\t" << exp->distance() << "\t"
-		    << scen.mgr->last_file_loaded() << std::endl;
+		    << sol.sum_of_edge_costs_ << "\t";
+		if (exp->distance())
+			out << *exp->distance();
+		else
+			out << '-';
+		out << "\t" << scen.mgr->last_file_loaded() << std::endl;
 
 		if(checkopt)
 		{
@@ -474,13 +482,49 @@ main(int argc, char** argv)
 
 	// load up the instances
 	warthog::util::scenario_manager scenmgr;
-	scenmgr.set_cost_type(v2cost);
-	scenmgr.load_scenario(sfile.c_str());
+	if (!costtype.empty())
+		scenmgr.set_cost_type(costtype);
+	try {
+		scenmgr.load_scenario(sfile.c_str());
+	}
+	catch (const std::runtime_error& e)
+	{
+		return (int)std::errc::io_error;
+	}
+
+	// override experiments distance if given
+	if (!costfile.empty()) {
+		std::istream *readin;
+		std::optional<std::ifstream> readfile;
+		if (costfile == "/dev/stdin") {
+			readin = &std::cin;
+		} else {
+			readin = &readfile.emplace(costfile);
+		}
+		std::string token;
+		int exp_id = 0;
+		while (*readin >> token) {
+			// will log warning if exp_id >= scenmgr.num_experiments
+			auto* exp = scenmgr.get_experiment(exp_id++);
+			if (exp == nullptr)
+				break;
+			if (token == "-") {
+				exp->distance_.reset();
+			} else {
+				double d;
+				if (warthog::util::parse_token(token, d) != std::errc{}) {
+					WARTHOG_GERROR_FMT("invalid distance parsed in provided --cost-file {} at token {}", costfile, exp_id-1);
+					break;
+				}
+			}
+		}
+		WARTHOG_GERROR_FMT_IF(readin->fail(), "--cost-file {} io error", costfile);
+	}
 
 	if(scenmgr.num_experiments() == 0)
 	{
-		std::cerr << "err; scenario file does not contain any instances\n";
-		return 1;
+		WARTHOG_GCRIT("scenario file does not contain any instances");
+		return (int)std::errc::invalid_argument;
 	}
 
 	// the map filename can be given or (default) taken from the scenario file

@@ -28,22 +28,19 @@
 namespace warthog::util
 {
 
-class experiment
+struct experiment
 {
-public:
 	experiment(
 	    uint32_t sx, uint32_t sy, uint32_t gx, uint32_t gy, uint32_t mapwidth,
-	    uint32_t mapheight, double d, std::string_view m)
+	    uint32_t mapheight, std::optional<double> d, std::string_view m)
 	    : startx_(sx), starty_(sy), goalx_(gx), goaly_(gy),
-	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d), map_(m),
-	      precision_(4)
+	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d), map_(m)
 	{ }
 	experiment(
 	    double sx, double sy, double gx, double gy, uint32_t mapwidth,
-	    uint32_t mapheight, double d, std::string_view m)
+	    uint32_t mapheight, std::optional<double> d, std::string_view m)
 	    : startx_(sx), starty_(sy), goalx_(gx), goaly_(gy),
-	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d), map_(m),
-	      precision_(4)
+	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d), map_(m)
 	{ }
 
 	// no copy
@@ -98,7 +95,7 @@ public:
 		return goaly_;
 	}
 
-	double
+	std::optional<double>
 	distance() const noexcept
 	{
 		return distance_;
@@ -122,18 +119,6 @@ public:
 		return mapheight_;
 	}
 
-	int32_t
-	precision() const noexcept
-	{
-		return precision_;
-	}
-
-	void
-	set_precision(int32_t prec) noexcept
-	{
-		precision_ = prec;
-	}
-
 	void
 	print(std::ostream& out);
 
@@ -145,12 +130,10 @@ public:
 		    pack_id{goaly() * mapwidth_ + goalx()});
 	}
 
-private:
 	double startx_, starty_, goalx_, goaly_;
 	uint32_t mapwidth_, mapheight_;
-	double distance_;
+	std::optional<double> distance_; ///< -1 = no solution, non-init = unknown solution
 	std::string_view map_;
-	int32_t precision_;
 };
 
 } // namespace warthog::util

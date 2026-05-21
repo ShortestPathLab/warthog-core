@@ -15,8 +15,10 @@ experiment::print(std::ostream& out)
 	out << this->starty() << "\t";
 	out << this->goalx() << "\t";
 	out << this->goaly() << "\t";
-	out << std::fixed << std::setprecision((int)this->precision());
-	out << this->distance();
+	if (this->distance())
+		out << std::setprecision(10) << *this->distance();
+	else
+		out << '-';
 }
 
 } // namespace warthog::util
