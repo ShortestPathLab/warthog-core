@@ -17,7 +17,7 @@ grid_patch_set::load(std::istream& file, int max_grids)
 		WARTHOG_GWARN_FMT("grid patch failed to open file code={}", (int)r.error());
 		return false;
 	}
-	if(int r = deserialize(S, max_grids); r < 0)
+	if(int r = load(S, max_grids); r < 0)
 	{
 		WARTHOG_GWARN_FMT("grid patch failed to read patch {}", -r - 1);
 		return false;
@@ -35,7 +35,7 @@ grid_patch_set::load(const std::filesystem::path& maps, int max_grids)
 		WARTHOG_GWARN_FMT("grid patch failed to open file code={}", (int)r.error());
 		return false;
 	}
-	if(int r = deserialize(S); r < 0)
+	if(int r = load(S); r < 0)
 	{
 		WARTHOG_GWARN_FMT("grid patch failed to read patch {}", -r - 1);
 		return false;
@@ -44,7 +44,7 @@ grid_patch_set::load(const std::filesystem::path& maps, int max_grids)
 }
 
 int
-grid_patch_set::deserialize(
+grid_patch_set::load(
     io::bittable_serialize& S, int max_grids, uint32_t flags)
 {
 	// read header
@@ -123,6 +123,103 @@ grid_patch_set::deserialize(
 			return -count;
 		}
 		patches_.push_back(patch);
+	}
+
+	return count;
+}
+
+bool
+grid_patch_set::save(std::ostream& file, int grid_id)
+{
+	io::bittable_serialize S;
+	if(auto r = S.open_write(&file); !r)
+	{
+		WARTHOG_GWARN_FMT("grid patch failed to open file code={}", (int)r.error());
+		return false;
+	}
+	if(int r = load(S, grid_id); r < 0)
+	{
+		WARTHOG_GWARN_FMT("grid patch failed to write patch {}", -r - 1);
+		return false;
+	}
+	return true;
+}
+
+bool
+grid_patch_set::save(const std::filesystem::path& maps, int grid_id)
+{
+	io::bittable_serialize S;
+	S.set_filename(std::filesystem::path(maps));
+	if(auto r = S.open_write(); !r)
+	{
+		WARTHOG_GWARN_FMT("grid patch failed to open file code={}", (int)r.error());
+		return false;
+	}
+	if(int r = load(S, grid_id); r < 0)
+	{
+		WARTHOG_GWARN_FMT("grid patch failed to write patch {}", -r - 1);
+		return false;
+	}
+	return true;
+}
+
+int
+grid_patch_set::save(
+	io::bittable_serialize& S, int grid_id,
+	uint32_t flags)
+{
+	if (!(flags & SKIP_HEADER)) {
+		// write header
+		if (S.get_type() == warthog::io::bittable_type::NONE) {
+			if (grid_id >= 0) {
+				// set type
+				if (auto r = S.set_type(warthog::io::bittable_type::OCTILE); !r) {
+					WARTHOG_GERROR("grid patch save failed to set type");
+					return -1;
+				}
+			} else {
+				// set type
+				if (auto r = S.set_type(warthog::io::bittable_type::PATCH); !r) {
+					WARTHOG_GERROR("grid patch save failed to set type");
+					return -1;
+				}
+				if (auto r = S.set_patch_amount(size()); !r) {
+					WARTHOG_GERROR("grid patch save failed to set amount");
+					return -1;
+				}
+			}
+		}
+	}
+	// write header
+	if(auto type = S.get_type(); type != io::bittable_type::OCTILE && type != io::bittable_type::PATCH)
+	{
+		WARTHOG_GERROR_IF((flags & SKIP_HEADER) != 0, "grid patch SKIP_HEADER given but serialize not setup");
+				WARTHOG_GERROR_IF((flags & SKIP_HEADER) != 0, "grid patch SKIP_HEADER given but serialize not setup");
+((flags & SKIP_HEADER) == 0, "grid patch not in state to use");
+		return -1;
+	}
+	if (auto r = S.write_header(); !r) {
+		WARTHOG_GERROR_FMT("grid patch failed to write header errc={}", (int)r.error());
+		return -1;
+	}
+
+	// start writing grids
+	int count = 0;
+	while(count < patches_.size() && S.get_patch_count() < S.get_patch_amount())
+	{
+		// read new grid
+		auto& P = patches_[grid_id >= 0 ? grid_id : count];
+		++count;
+		if (!S.set_dim(P.width(), P.height())) {
+			WARTHOG_GERROR_FMT("grid patch failed to set dimensions {}x{}", P.width(), P.height());
+			return -count;
+		}
+		if (auto r = S.write_grid_data(P); !r) {
+			WARTHOG_GERROR_FMT("grid patch failed to write grid errc={}", (int)r.error());
+			return -count;
+		}
+		if (grid_id >= 0)
+			break;
 	}
 
 	return count;

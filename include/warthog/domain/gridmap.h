@@ -66,16 +66,24 @@ public:
 
 	void
 	setup(uint32_t height, uint32_t width);
+
 	void
 	load(std::istream& input);
 	void
 	load(io::bittable_serialize& parser);
 	void
-	load(std::filesystem::path&& filename);
-	void
-	load(const std::filesystem::path& filename);
+	load(std::filesystem::path filename);
 	void
 	load(const char* filename);
+	
+	void
+	save(std::ostream& input, bool padding = false);
+	void
+	save(io::bittable_serialize& parser, bool padding = false);
+	void
+	save(const std::filesystem::path& filename, bool padding = false);
+	void
+	save(const char* filename, bool padding = false);
 
 	/// @brief convert unpadded id to padded id
 	pad_id

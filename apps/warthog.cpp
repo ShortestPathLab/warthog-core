@@ -198,36 +198,7 @@ run_experiments(
 		if(i == dump_map_id)
 		{
 			// print map
-			std::optional<std::ofstream> outstream;
-			std::ostream* out = nullptr;
-			// convert dev to stream for cross-platform support
-			if(dump_map_file == "/dev/stderr") { out = &std::cerr; }
-			else if(dump_map_file == "/dev/stdout") { out = &std::cout; }
-			else
-			{
-				out = &outstream.emplace(dump_map_file);
-				WARTHOG_GERROR_FMT_IF(
-				    !*out, "failed to open file to dump map {}\n",
-				    dump_map_file);
-			}
-			if(*out)
-			{
-				// out is valid, print
-				std::string line(scen.grid.width() + 1, '\n');
-				for(uint32_t y = 0, ye = scen.grid.height(),
-				             xe = scen.grid.width();
-				    y < ye; ++y)
-				{
-					for(uint32_t x = 0; x < xe; ++x)
-					{
-						line[x] = "@."[(
-						    int)(scen.grid.get_label(
-						             scen.grid.to_padded_id_from_padded(x, y))
-						         != 0)];
-					}
-					*out << line;
-				}
-			}
+			scen.grid.save(dump_map_file, true);
 		}
 
 		if(filter_id >= 0 && i == filter_id)

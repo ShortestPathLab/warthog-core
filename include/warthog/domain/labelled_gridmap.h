@@ -82,16 +82,11 @@ public:
 		setup_ser_(parser);
 	}
 	void
-	load(std::filesystem::path&& filename)
+	load(std::filesystem::path filename)
 	{
 		filename_ = std::move(filename);
 		std::ifstream in(filename_);
 		setup_stream_(in);
-	}
-	void
-	load(const std::filesystem::path& filename)
-	{
-		load(std::filesystem::path(filename));
 	}
 	void
 	load(const char* filename)
@@ -275,7 +270,8 @@ inline void
 labelled_gridmap<CELL>::setup_stream_(std::istream& in)
 {
 	io::bittable_serialize parser;
-	parser.open_read(&in);
+	if(!parser.open_read(&in))
+		throw std::runtime_error("invalid grid stream");
 	if(!parser.read_header())
 		throw std::runtime_error("invalid grid format");
 	setup_ser_(parser);

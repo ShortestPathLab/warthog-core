@@ -40,7 +40,6 @@ scenario_manager::load_scenario(
     std::istream& file, std::filesystem::path&& scenfile)
 {
 	sfile_ = std::move(scenfile);
-	load_gppc_scenario(file);
 	if(!load_gppc_scenario(file))
 	{
 		WARTHOG_GERROR_FMT(
@@ -265,7 +264,8 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 		else if(*con == io::scenario_serialize::CMD_UNKNOWN)
 		{
 			// ignore
-			si.skip_commands();
+			if (auto r = si.skip_commands(); !r)
+				return std::unexpected(r.error());
 		}
 		else
 		{

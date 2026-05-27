@@ -79,6 +79,9 @@ class bittable_serialize : public serialize_base
 {
 public:
 	bittable_serialize();
+
+	static constexpr uint32_t patch_auto = std::numeric_limits<uint32_t>::max();
+	
 	/// @return the grid dimension, either as last read grid from file or set
 	/// by user for writing
 	memory::bittable_dimension
@@ -87,17 +90,18 @@ public:
 		return m_dim;
 	}
 	/// @brief sets the grid dimension, throws if out of range
-	void
+	bool
 	set_dim(uint32_t width, uint32_t height)
 	{
 		if(bool bad_width = width <= 0 || width > GRID_DIMENSION_MAX,
 		   bad_height     = height <= 0 || height > GRID_DIMENSION_MAX;
 		   bad_width || bad_height)
 		{
-			throw std::out_of_range(bad_width ? "width" : "height");
+			return false;
 		}
 		m_dim.width  = width;
 		m_dim.height = height;
+		return true;
 	}
 
 	/// @return the type/version of the file, default OCTILE
@@ -108,16 +112,16 @@ public:
 	}
 	/// @brief sets the type/version to write to the file header, supported is
 	/// octile/patch.
-	/// @return std::errc{} for success, otherwise failure
-	std::errc
+	/// @return true for success, false failure
+	bool
 	set_type(bittable_type type)
 	{
 		if(type != bittable_type::OCTILE && type != bittable_type::PATCH)
 		{
-			return std::errc::argument_out_of_domain;
+			return false;
 		}
 		m_type = type;
-		return std::errc{};
+		return true;
 	}
 
 	/// @brief get the number of patches in file
@@ -127,29 +131,31 @@ public:
 		return m_patch_amount;
 	}
 	/// @brief set the number of patches (for writing)
-	/// @return std::errc{} for success, otherwise failure
-	std::errc
+	/// @return true for success, false failure
+	bool
 	set_patch_amount(uint32_t count)
 	{
 		if(count > PATCH_COUNT_LIMIT)
 		{
-			return std::errc::argument_out_of_domain;
+			return false;
 		}
 		m_patch_amount = count;
-		return std::errc{};
+		return true;
 	}
+	bool
+	set_patch_auto()
+	{
+		m_patch_amount = patch_auto;
+		return true;
+	}
+
 	/// @brief gets the number of patches that have been read/write
 	uint32_t
 	get_patch_count() const noexcept
 	{
 		return m_patch_count;
 	}
-	/// @brief gets the id of last patch (usually get_patch_count())
-	uint32_t
-	get_patch_id() const noexcept
-	{
-		return m_patch_id;
-	}
+
 	/// @brief gets the number of patches that have been read
 	/// @return true for success, false failure
 	bool
@@ -157,6 +163,12 @@ public:
 	{
 		m_patch_id = id;
 		return true;
+	}
+	/// @brief gets the id of last patch (usually get_patch_count())
+	uint32_t
+	get_patch_id() const noexcept
+	{
+		return m_patch_id;
 	}
 
 	/// @brief reads the map/patch file header, getting the type
@@ -208,12 +220,28 @@ public:
 	std::expected<void, std::errc>
 	read_grid_raw(std::span<char> buffer, std::istream* in = nullptr);
 
+	std::expected<void, std::errc>
+	write_header(std::ostream* out = nullptr);
+
+	template<typename BitTable>
+	std::expected<void, std::errc>
+	write_grid_data(
+	    BitTable& table, uint32_t offset_x = 0, uint32_t offset_y = 0, gridmap_cell blocker = gridmap_cell::OUT_OF_BOUNDS, gridmap_cell traversable = gridmap_cell::TERRAIN,
+	    std::ostream* out = nullptr);
+
+	std::expected<void, std::errc>
+	write_grid_raw(std::span<char> buffer, std::ostream* out = nullptr);
+
+	std::expected<void, std::errc>
+	write_end(std::ostream* out = nullptr);
+
 protected:
 	memory::bittable_dimension m_dim = {};
 	bittable_type m_type             = bittable_type::NONE;
 	uint32_t m_patch_amount          = 0;
 	uint32_t m_patch_count           = 0;
 	uint32_t m_patch_id              = 0;
+	std::streampos m_patch_auto_pos  = 0;
 };
 
 template<typename BitTable>
@@ -229,6 +257,7 @@ bittable_serialize::read_grid_data(
 		return std::unexpected(std::errc::argument_out_of_domain);
 	if(offset_y >= dim.height || read_dim.height + offset_y > dim.height)
 		return std::unexpected(std::errc::argument_out_of_domain);
+	
 	uint32_t bit_id
 	    = static_cast<uint32_t>(table.xy_to_id(offset_x, offset_y));
 	const uint32_t bit_row_offset = dim.width - read_dim.width;
@@ -260,6 +289,63 @@ bittable_serialize::read_grid_data(
 		}
 	}
 
+	return {};
+}
+
+template<typename BitTable>
+std::expected<void, std::errc>
+bittable_serialize::write_grid_data(
+    BitTable& table, uint32_t offset_x, uint32_t offset_y, gridmap_cell blocker, gridmap_cell traversable, std::ostream* out)
+{
+	// check table
+	const memory::bittable_dimension dim      = table.dim();
+	const memory::bittable_dimension write_dim = m_dim;
+	// detect for overflow
+	if(offset_x >= dim.width || write_dim.width == 0 || write_dim.width + offset_x > dim.width)
+		return std::unexpected(std::errc::argument_out_of_domain);
+	if(offset_y >= dim.height || write_dim.height == 0 || write_dim.height + offset_y > dim.height)
+		return std::unexpected(std::errc::argument_out_of_domain);
+	
+	uint32_t bit_id
+	    = static_cast<uint32_t>(table.xy_to_id(offset_x, offset_y));
+	const uint32_t bit_row_offset = dim.width - write_dim.width;
+
+	if (auto r = get_ostream(out); r)
+		out = *r;
+	else
+		return std::unexpected(r.error());
+	
+	if (m_type == bittable_type::PATCH) {
+		if (!(*out << "patch " << m_patch_id++ << '\n'))
+			return std::unexpected(std::errc::io_error);
+	}
+	if (!(*out << "height " << write_dim.height << "\nwidth " << write_dim.width << "\nmap\n"))
+		return std::unexpected(std::errc::io_error);
+	
+	std::array<char, 2048> buffer;
+	std::unique_ptr<char[]> buffer_dyn;
+	std::span<char> line_buffer;
+	if (write_dim.width < 2048) {
+		line_buffer = std::span<char>(buffer.data(), write_dim.width + 1);
+	} else {
+		buffer_dyn = std::make_unique<char[]>(write_dim.width + 1);
+		line_buffer = std::span<char>(buffer_dyn.get(), write_dim.width + 1);
+	}
+	// set end to newline
+	line_buffer[write_dim.width] = '\n';
+
+	for(uint32_t y = 0; y < write_dim.height; ++y, bit_id += bit_row_offset)
+	{
+		// copy row to buffer
+		for(uint32_t x = 0; x < write_dim.width; ++x, ++bit_id)
+		{
+			line_buffer[x] = table.get(static_cast<BitTable::id_type>(bit_id)) ?
+				(char)traversable : (char)blocker;
+		}
+		// write row
+		if (!(*out << std::string_view(line_buffer.data(), line_buffer.size())))
+			return std::unexpected(std::errc::io_error);
+	}
 	return {};
 }
 

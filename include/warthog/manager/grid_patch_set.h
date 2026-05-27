@@ -80,8 +80,19 @@ public:
 	/// S have not read the header else errors. IGNORE_INDEX will not error if
 	/// index in patch file does not match.
 	int
-	deserialize(
+	load(
 	    io::bittable_serialize& S, int max_grids = -1,
+	    uint32_t flags = DEFAULT);
+
+	bool
+	save(std::ostream& file, int grid_id = -1);
+
+	bool
+	save(const std::filesystem::path& maps, int grid_id = -1);
+
+	int
+	save(
+	    io::bittable_serialize& S, int grid_id = -1,
 	    uint32_t flags = DEFAULT);
 
 	/// @brief copies a user-provided bittable, subregion from offset with
