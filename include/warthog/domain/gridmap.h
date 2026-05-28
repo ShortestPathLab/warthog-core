@@ -23,7 +23,7 @@
 #include <warthog/io/bittable_serialize.h>
 #include <warthog/memory/bittable.h>
 #include <warthog/util/cast.h>
-#include <warthog/util/gm_parser.h>
+#include <warthog/util/gm_header.h>
 #include <warthog/util/helpers.h>
 #include <warthog/util/intrin.h>
 
