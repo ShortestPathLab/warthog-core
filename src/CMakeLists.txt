@@ -6,16 +6,16 @@ domain/gridmap.cpp
 geometry/geography.cpp
 geometry/geom.cpp
 
-io/grid.cpp
+io/bittable_serialize.cpp
 io/grid_trace.cpp
 io/log.cpp
-io/scenario.cpp
+io/scenario_serialize.cpp
 io/serialize_base.cpp
 
-manager/grid_patch_set.cpp
-manager/scenario_runner.cpp
-
 memory/node_pool.cpp
+
+scenario/grid_patch_set.cpp
+scenario/scenario_runner.cpp
 
 search/expansion_policy.cpp
 search/gridmap_expansion_policy.cpp

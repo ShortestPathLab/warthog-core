@@ -1,4 +1,4 @@
-#include <warthog/io/grid.h>
+#include <warthog/io/bittable_serialize.h>
 
 #include <cstring>
 #include <iomanip>

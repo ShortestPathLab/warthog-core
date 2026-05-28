@@ -18,8 +18,8 @@
 
 #include "experiment.h"
 #include <warthog/domain/gridmap.h>
-#include <warthog/io/grid.h>
-#include <warthog/io/scenario.h>
+#include <warthog/io/bittable_serialize.h>
+#include <warthog/io/scenario_serialize.h>
 
 #include <expected>
 #include <filesystem>

@@ -1,5 +1,5 @@
-#ifndef WARTHOG_MANAGER_SCENARIO_MANAGER_H
-#define WARTHOG_MANAGER_SCENARIO_MANAGER_H
+#ifndef WARTHOG_SCENARIO_SCENARIO_MANAGER_H
+#define WARTHOG_SCENARIO_SCENARIO_MANAGER_H
 
 /// @file scenario_runner.h
 ///
@@ -12,9 +12,9 @@
 #include "experiment.h"
 #include <warthog/util/scenario_manager.h>
 
-namespace warthog::manager
+namespace warthog::scenario
 {
 using warthog::util::scenario_manager;
-} // namespace warthog::manager
+} // namespace warthog::scenario
 
-#endif // WARTHOG_MANAGER_SCENARIO_MANAGER_H
+#endif // WARTHOG_SCENARIO_SCENARIO_MANAGER_H

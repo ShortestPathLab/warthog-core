@@ -1,11 +1,11 @@
-#include <warthog/manager/grid_patch_set.h>
+#include <warthog/scenario/grid_patch_set.h>
 
-#include <warthog/io/grid.h>
+#include <warthog/io/bittable_serialize.h>
 #include <warthog/io/log.h>
 
 #include <limits>
 
-namespace warthog::manager
+namespace warthog::scenario
 {
 
 bool
@@ -280,4 +280,4 @@ grid_patch_set::reset()
 	grid_res_.release();
 }
 
-} // namespace warthog::manager
+} // namespace warthog::scenario

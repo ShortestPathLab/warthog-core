@@ -1,5 +1,5 @@
-#ifndef WARTHOG_MANAGER_SCENARIO_RUNNER_H
-#define WARTHOG_MANAGER_SCENARIO_RUNNER_H
+#ifndef WARTHOG_SCENARIO_SCENARIO_RUNNER_H
+#define WARTHOG_SCENARIO_SCENARIO_RUNNER_H
 
 /// @file scenario_runner.h
 ///
@@ -14,7 +14,7 @@
 #include "scenario_manager.h"
 #include <warthog/domain/gridmap.h>
 
-namespace warthog::manager
+namespace warthog::scenario
 {
 
 struct patch_loc
@@ -168,6 +168,6 @@ protected:
 	int32_t snapshot_at_   = -1;
 };
 
-} // namespace warthog::util
+} // namespace warthog::scenario
 
-#endif // WARTHOG_MANAGER_SCENARIO_RUNNER_H
+#endif // WARTHOG_SCENARIO_SCENARIO_RUNNER_H

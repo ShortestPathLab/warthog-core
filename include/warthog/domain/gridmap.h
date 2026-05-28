@@ -20,7 +20,7 @@
 
 #include "grid.h"
 #include <warthog/constants.h>
-#include <warthog/io/grid.h>
+#include <warthog/io/bittable_serialize.h>
 #include <warthog/memory/bittable.h>
 #include <warthog/util/cast.h>
 #include <warthog/util/gm_parser.h>

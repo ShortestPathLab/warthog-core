@@ -1,6 +1,6 @@
 #include <warthog/domain/gridmap.h>
 
-#include <warthog/io/grid.h>
+#include <warthog/io/grid_trace.h>
 #include <warthog/io/log.h>
 
 #include <bit>

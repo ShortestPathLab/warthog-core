@@ -1,4 +1,4 @@
-#include <warthog/manager/scenario_runner.h>
+#include <warthog/scenario/scenario_runner.h>
 
 #include <warthog/io/log.h>
 #include <warthog/search/dummy_listener.h>
@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace warthog::manager
+namespace warthog::scenario
 {
 
 scenario_runner::scenario_runner() = default;
@@ -247,4 +247,4 @@ scenario_runner::girdmap_apply_patch(
 	return true;
 }
 
-} // namespace warthog::util
+} // namespace warthog::scenario

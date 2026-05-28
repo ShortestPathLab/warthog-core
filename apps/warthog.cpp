@@ -13,15 +13,15 @@
 #include <warthog/heuristic/manhattan_heuristic.h>
 #include <warthog/heuristic/octile_heuristic.h>
 #include <warthog/heuristic/zero_heuristic.h>
-#include <warthog/io/scenario.h>
-#include <warthog/manager/grid_patch_set.h>
-#include <warthog/manager/scenario_runner.h>
+#include <warthog/io/scenario_serialize.h>
+#include <warthog/scenario/grid_patch_set.h>
+#include <warthog/scenario/scenario_manager.h>
+#include <warthog/scenario/scenario_runner.h>
 #include <warthog/search/gridmap_expansion_policy.h>
 #include <warthog/search/search.h>
 #include <warthog/search/unidirectional_search.h>
 #include <warthog/search/vl_gridmap_expansion_policy.h>
 #include <warthog/util/pqueue.h>
-#include <warthog/util/scenario_manager.h>
 #include <warthog/util/timer.h>
 #include <warthog/util/string.h>
 #ifdef WARTHOG_POSTHOC
@@ -90,9 +90,8 @@ help(std::ostream& out)
 	    << "\t--verbose (optional; prints debugging info when compiled "
 	       "with debug symbols)\n"
 	    << "\t--filter [id] (optional; run only inst [id])\n"
-	    << "\t--dump-map [id] (optional; dump current gridmap at start of inst id to stderr default)"
-	    << "\t--dump-map-file [filename] (optional; override dump map to file"
-	       "default /dev/stderr, /dev/stdout outputs to stdout)"
+	    << "\t--dump-map [id] (optional; dump current gridmap at start of inst id to stderr default)\n"
+	    << "\t--dump-map-file [filename] (optional; override dump map to file)\n"
 #ifdef WARTHOG_POSTHOC
 	    << "\t--trace [.trace.yaml file] (optional; write posthoc trace for "
 	       "first instance to [file])\n"
@@ -144,12 +143,12 @@ check_optimality(
 // convenience wrapper around initialisation code
 struct gridmap_scenario
 {
-	const warthog::manager::scenario_manager* mgr;
-	warthog::manager::scenario_runner run;
+	const warthog::scenario::scenario_manager* mgr;
+	warthog::scenario::scenario_runner run;
 	warthog::domain::gridmap grid;
-	warthog::manager::grid_patch_set patches;
+	warthog::scenario::grid_patch_set patches;
 
-	gridmap_scenario(const warthog::manager::scenario_manager& scen)
+	gridmap_scenario(const warthog::scenario::scenario_manager& scen)
 	    : mgr(&scen), run(&scen)
 	{ }
 
@@ -279,7 +278,7 @@ run_experiments(
 
 int
 run_astar(
-    warthog::util::scenario_manager& scenmgr, std::string mapname,
+    warthog::scenario::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name)
 {
 	gridmap_scenario scen(scenmgr);
@@ -304,7 +303,7 @@ run_astar(
 
 int
 run_astar4c(
-    warthog::util::scenario_manager& scenmgr, std::string mapname,
+    warthog::scenario::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name)
 {
 	gridmap_scenario scen(scenmgr);
@@ -329,7 +328,7 @@ run_astar4c(
 
 int
 run_dijkstra(
-    warthog::util::scenario_manager& scenmgr, std::string mapname,
+    warthog::scenario::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name)
 {
 	gridmap_scenario scen(scenmgr);
@@ -353,7 +352,7 @@ run_dijkstra(
 
 int
 run_wgm_astar(
-    warthog::util::scenario_manager& scenmgr, std::string mapname,
+    warthog::scenario::scenario_manager& scenmgr, std::string mapname,
     std::string alg_name, std::string costfile)
 {
 	gridmap_scenario scen(scenmgr);
@@ -452,7 +451,7 @@ main(int argc, char** argv)
 	if(dump_map_file.empty()) { dump_map_file = "/dev/stderr"; }
 
 	// load up the instances
-	warthog::util::scenario_manager scenmgr;
+	warthog::scenario::scenario_manager scenmgr;
 	if (!costtype.empty())
 		scenmgr.set_cost_type(costtype);
 	try {

@@ -1,5 +1,5 @@
-#ifndef WARTHOG_MANAGER_EXPERIMENT_H
-#define WARTHOG_MANAGER_EXPERIMENT_H
+#ifndef WARTHOG_SCENARIO_EXPERIMENT_H
+#define WARTHOG_SCENARIO_EXPERIMENT_H
 
 /// @file experiment.h
 ///
@@ -11,9 +11,9 @@
 
 #include <warthog/util/experiment.h>
 
-namespace warthog::manager
+namespace warthog::scenario
 {
 using warthog::util::experiment;
-} // namespace warthog::manager
+} // namespace warthog::scenario
 
-#endif // WARTHOG_MANAGER_SCENARIO_MANAGER_H
+#endif // WARTHOG_SCENARIO_EXPERIMENT_H

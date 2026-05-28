@@ -1,7 +1,7 @@
-#include <warthog/io/scenario.h>
+#include <warthog/io/scenario_serialize.h>
 
-#include <warthog/io/grid.h>
-#include <warthog/util/scenario_manager.h>
+#include <warthog/io/bittable_serialize.h>
+// #include <warthog/scenario/scenario_manager.h>
 
 #include <cmath>
 #include <cstring>

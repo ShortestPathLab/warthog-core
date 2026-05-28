@@ -1,5 +1,5 @@
-#ifndef WARTHOG_MANAGER_GRID_PATCH_SET_H
-#define WARTHOG_MANAGER_GRID_PATCH_SET_H
+#ifndef WARTHOG_SCENARIO_GRID_PATCH_SET_H
+#define WARTHOG_SCENARIO_GRID_PATCH_SET_H
 
 /// @file grid_patch_set.h
 ///
@@ -19,7 +19,7 @@
 #include <istream>
 #include <memory_resource>
 
-namespace warthog::manager
+namespace warthog::scenario
 {
 
 /// @brief a class for managing a set of patches
@@ -142,6 +142,6 @@ protected:
 	std::vector<bittable> patches_;
 };
 
-} // namespace warthog::manager
+} // namespace warthog::scenario
 
-#endif // WARTHOG_MANAGER_PATCH_SET_H
+#endif // WARTHOG_SCENARIO_GRID_PATCH_SET_H

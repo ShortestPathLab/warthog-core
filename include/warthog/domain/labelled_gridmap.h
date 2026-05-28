@@ -18,7 +18,7 @@
 
 #include "grid.h"
 #include <warthog/constants.h>
-#include <warthog/io/grid.h>
+#include <warthog/io/bittable_serialize.h>
 #include <warthog/util/gm_parser.h>
 #include <warthog/util/helpers.h>
 
