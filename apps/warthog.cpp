@@ -108,7 +108,7 @@ help(std::ostream& out)
 
 bool
 check_optimality(
-    const warthog::search::solution& sol, const warthog::util::experiment* exp)
+    const warthog::search::solution& sol, const warthog::scenario::experiment* exp)
 {
 	if (!exp->distance())
 	{
@@ -501,7 +501,7 @@ main(int argc, char** argv)
 	if(mapfile == "")
 	{
 		// first, try to load the map from the scenario file
-		mapfile = warthog::util::find_map_filename(scenmgr, sfile);
+		mapfile = warthog::scenario::find_map_filename(scenmgr, sfile);
 		if(mapfile.empty())
 		{
 			std::cerr << "could not locate a corresponding map file\n";

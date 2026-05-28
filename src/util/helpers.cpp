@@ -2,7 +2,7 @@
 
 #include <warthog/search/search.h>
 #include <warthog/search/solution.h>
-#include <warthog/util/scenario_manager.h>
+#include <warthog/scenario/scenario_manager.h>
 
 #include <cstdint>
 #include <fstream>

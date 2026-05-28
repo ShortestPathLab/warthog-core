@@ -1,4 +1,4 @@
-#include <warthog/util/scenario_manager.h>
+#include <warthog/scenario/scenario_manager.h>
 
 #include <warthog/io/log.h>
 #include <warthog/search/dummy_listener.h>
@@ -7,7 +7,7 @@
 #include <cstdlib>
 #include <cstring>
 
-namespace warthog::util
+namespace warthog::scenario
 {
 
 scenario_manager::scenario_manager() { }
@@ -290,28 +290,6 @@ scenario_manager::copy_string(std::string_view str)
 	return std::string_view(mapchars, str.size());
 }
 
-void
-scenario_manager::write_scenario(std::ostream& scenariofile)
-{
-
-	std::cerr << "dumping scenario file..\n";
-	if(experiments_.size() == 0) // nothing to write
-		return;
-
-	// std::ofstream scenariofile;
-	scenariofile.precision(16);
-	// scenariofile.open(filelocation, std::ios::out);
-	scenariofile << "version 1" << std::endl;
-
-	for(unsigned int i = 0; i < experiments_.size(); i++)
-	{
-		experiment* cur = experiments_.at(i);
-		cur->print(scenariofile);
-		scenariofile << std::endl;
-	}
-	// scenariofile.close();
-}
-
 /**
  * Finds a matching map file to a scenario.
  * Take mappath as scenmgr map name.  scendir as partent(sfilename), or
@@ -417,4 +395,4 @@ find_map_filename(
 	return {};
 }
 
-} // namespace warthog::util
+} // namespace warthog::scenario

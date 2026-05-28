@@ -32,11 +32,11 @@ scenario_runner::experiment_next(uint32_t count)
 		// command_at_ incremented in following fuction calls
 		switch(cmd.type)
 		{
-		case util::scenario_command::SNAPSHOT:
-		case util::scenario_command::PATCH:
+		case scenario_command::SNAPSHOT:
+		case scenario_command::PATCH:
 			patch_count += snapshot_patches();
 			break;
-		case util::scenario_command::INST:
+		case scenario_command::INST:
 			if(const experiment* inst = snapshot_inst(); inst != nullptr)
 			{
 				if(--count == 0) return {inst, patch_count};
@@ -82,7 +82,7 @@ scenario_runner::snapshot_next(bool clear_patch)
 		auto cmd = commands[command_at_];
 		switch(cmd.type)
 		{
-		case util::scenario_command::SNAPSHOT:
+		case scenario_command::SNAPSHOT:
 			if(cmd.id != snapshot_at_)
 			{
 				// at new snapshot, return
@@ -91,10 +91,10 @@ scenario_runner::snapshot_next(bool clear_patch)
 			}
 			// current snapshot, goto next snapshot
 			[[fallthrough]];
-		case util::scenario_command::INST:
+		case scenario_command::INST:
 			++experiment_at_;
 			break;
-		case util::scenario_command::PATCH:
+		case scenario_command::PATCH:
 			snapshot_patches(false);
 			// snapshot_patches increments snapshot_at_
 			break;
@@ -115,7 +115,7 @@ scenario_runner::snapshot_patches(bool clear_patch)
 	int count = 0;
 	// if start of snapshot, apply that snapshot patches
 	if(command_at_ < commands.size()
-	   && commands[command_at_].type == util::scenario_command::SNAPSHOT)
+	   && commands[command_at_].type == scenario_command::SNAPSHOT)
 	{
 		snapshot_at_ = commands[command_at_].id;
 		command_at_ += 1;
@@ -124,7 +124,7 @@ scenario_runner::snapshot_patches(bool clear_patch)
 	while(command_at_ < commands.size())
 	{
 		if(auto cmd = commands[command_at_];
-		   cmd.type == util::scenario_command::PATCH)
+		   cmd.type == scenario_command::PATCH)
 		{
 			command_at_ += 1;
 			count       += 1;
@@ -144,7 +144,7 @@ scenario_runner::snapshot_inst()
 	auto commands = scenario_->get_commands();
 	if(command_at_ >= commands.size()) return nullptr;
 	auto cmd = commands[command_at_];
-	if(cmd.type != util::scenario_command::INST) return nullptr;
+	if(cmd.type != scenario_command::INST) return nullptr;
 	command_at_    += 1;
 	experiment_at_ += 1;
 	if(cmd.cmd.inst.experiment_id >= scenario_->num_experiments()
@@ -170,7 +170,7 @@ scenario_runner::snapshot_inst_all()
 	while(command_at_ < commands.size())
 	{
 		auto cmd = commands[command_at_];
-		if(cmd.type != util::scenario_command::INST) break;
+		if(cmd.type != scenario_command::INST) break;
 		if(cmd.cmd.inst.experiment_id >= exp.size()
 		   || cmd.cmd.inst.experiment_id != (uint32_t)experiment_at_)
 		{

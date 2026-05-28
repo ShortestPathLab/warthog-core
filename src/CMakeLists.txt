@@ -15,6 +15,7 @@ io/serialize_base.cpp
 memory/node_pool.cpp
 
 scenario/grid_patch_set.cpp
+scenario/scenario_manager.cpp
 scenario/scenario_runner.cpp
 
 search/expansion_policy.cpp
@@ -27,9 +28,7 @@ search/vl_gridmap_expansion_policy.cpp
 
 util/cost_table.cpp
 util/dimacs_parser.cpp
-util/experiment.cpp
 util/file_utils.cpp
 util/helpers.cpp
-util/scenario_manager.cpp
 util/timer.cpp
 )
