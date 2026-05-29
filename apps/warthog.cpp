@@ -13,7 +13,6 @@
 #include <warthog/heuristic/manhattan_heuristic.h>
 #include <warthog/heuristic/octile_heuristic.h>
 #include <warthog/heuristic/zero_heuristic.h>
-#include <warthog/io/scenario_serialize.h>
 #include <warthog/scenario/grid_patch_set.h>
 #include <warthog/scenario/scenario_manager.h>
 #include <warthog/scenario/scenario_runner.h>
@@ -81,9 +80,9 @@ help(std::ostream& out)
 	    << "\t--scen [scen file] (required) \n"
 	    << "\t--map [map file] (optional; specify this to override map "
 	       "values in scen file) \n"
-	    << "\t--grid-weights [file] (required if using a weighted "
+	    << "\t--grid-weight [file] (required if using a weighted "
 	       "terrain algorithm)\n"
-	    << "\t--cost [type] (optional; force use of selected cost in v2 scenario, error if not exists)"
+	    << "\t--cost [type] (optional; force use of selected solution cost of instance, error if not exists)"
 	    << "\t--cost-file [type] (optional; override scenario costs with file, conflicts with --cost)"
 	    << "\t--checkopt (optional; compare solution costs against "
 	       "values in the scen file)\n"
@@ -115,11 +114,11 @@ check_optimality(
 		// unknown solution
 		return true;
 	}
-	uint32_t precision = 2;
+	constexpr int32_t precision = 2;
 	double epsilon     = std::pow(10.0, -precision) * 0.5;
 	double delta       = std::fabs(sol.sum_of_edge_costs_ - *exp->distance());
 
-	if(std::fabs(delta - epsilon) > epsilon)
+	if(delta > epsilon)
 	{
 		std::cerr << "optimality check failed!" << std::endl;
 		std::cerr << std::endl;
@@ -170,7 +169,7 @@ run_experiments(
 	warthog::search::search_parameters par;
 	warthog::search::solution sol;
 	auto* expander = algo.get_expander();
-	if(expander == nullptr) return 1;
+	if(expander == nullptr) return (int)std::errc::invalid_argument;
 
 	out << "id\tsnapshot\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
 	    << "\tnanos\tplen\tpcost\tscost\tmap\n";
@@ -190,14 +189,14 @@ run_experiments(
 			{
 				// failed to apply patches, exit
 				WARTHOG_GCRIT("dynamic patch error: failed to apply patches");
-				return 5;
+				return (int)std::errc::io_error;
 			}
 		}
 
 		if(i == dump_map_id)
 		{
 			// print map
-			scen.grid.save(dump_map_file, true);
+			scen.grid.save(dump_map_file, false);
 		}
 
 		if(filter_id >= 0 && i == filter_id)
@@ -266,7 +265,7 @@ run_experiments(
 			if(!check_optimality(sol, exp))
 			{
 				WARTHOG_GCRIT("search error: failed suboptimal 4");
-				return 4;
+				return (int)std::errc::result_out_of_range;
 			}
 		}
 	}
@@ -285,7 +284,7 @@ run_astar(
 	if(!scen.load_map(std::filesystem::path(mapname)))
 	{
 		WARTHOG_GCRIT("failed to load map");
-		return 3;
+		return (int)std::errc::io_error;
 	}
 	warthog::search::gridmap_expansion_policy expander(&scen.grid);
 	warthog::heuristic::octile_heuristic heuristic(
@@ -310,7 +309,7 @@ run_astar4c(
 	if(!scen.load_map(std::filesystem::path(mapname)))
 	{
 		WARTHOG_GCRIT("failed to load map");
-		return 3;
+		return (int)std::errc::io_error;
 	}
 	warthog::search::gridmap_expansion_policy expander(&scen.grid, true);
 	warthog::heuristic::manhattan_heuristic heuristic(
@@ -335,7 +334,7 @@ run_dijkstra(
 	if(!scen.load_map(std::filesystem::path(mapname)))
 	{
 		WARTHOG_GCRIT("failed to load map");
-		return 3;
+		return (int)std::errc::io_error;
 	}
 	warthog::search::gridmap_expansion_policy expander(&scen.grid);
 	warthog::heuristic::zero_heuristic heuristic;
@@ -366,9 +365,8 @@ run_wgm_astar(
 	double lowest_cost = costs.lowest_cost(map);
 	if(std::isnan(lowest_cost))
 	{
-		std::cerr << "err; costs file does not specify cost of some terrains"
-		          << std::endl;
-		exit(1);
+		WARTHOG_GCRIT("grid weights file does not specify cost of some terrains");
+		return (int)std::errc::io_error;
 	}
 	heuristic.set_hscale(lowest_cost);
 
@@ -389,9 +387,12 @@ main(int argc, char** argv)
 	    = {{"alg", required_argument, 0, 0},
 	       {"scen", required_argument, 0, 0},
 	       {"map", required_argument, 0, 0},
+	       {"grid-weight", required_argument, 0, 0},
 	       // {"gen", required_argument, 0, 3},
 	       {"help", no_argument, &print_help, 1},
 	       {"checkopt", no_argument, &checkopt, 1},
+	       {"cost", required_argument, 0, 0},
+	       {"cost-file", required_argument, 0, 0},
 	       {"verbose", no_argument, &verbose, 1},
 	       {"filter", required_argument, &filter_id, 1},
 	       {"dump-map", required_argument, &dump_map_id, 1},
@@ -399,8 +400,6 @@ main(int argc, char** argv)
 #ifdef WARTHOG_POSTHOC
 	       {"trace", required_argument, 0, 0},
 #endif
-	       {"costs", required_argument, 0, 0},
-	       {"v2-cost", required_argument, 0, 0},
 	       {0, 0, 0, 0}};
 
 	warthog::util::cfg cfg;
@@ -416,9 +415,9 @@ main(int argc, char** argv)
 	std::string alg   = cfg.get_param_value("alg");
 	// std::string gen = cfg.get_param_value("gen");
 	std::string mapfile  = cfg.get_param_value("map");
-	std::string costtype   = cfg.get_param_value("cost");
+	std::string costtype = cfg.get_param_value("cost");
 	std::string costfile = cfg.get_param_value("cost-file");
-	std::string weightsfile = cfg.get_param_value("weight-file");
+	std::string weightsfile = cfg.get_param_value("grid-weight");
 	dump_map_file        = cfg.get_param_value("dump-map-file");
 
 	if(filter_id == 1)
@@ -444,7 +443,7 @@ main(int argc, char** argv)
 	{
 		if (warthog::util::parse_token(cfg.get_param_value("dump-map"), dump_map_id) != std::errc{})
 		{
-			WARTHOG_GERROR_FMT("invalid --dump-map argument {}", dump_map_id);
+			WARTHOG_GCRIT_FMT("invalid --dump-map argument {}", dump_map_id);
 			return (int)std::errc::invalid_argument;
 		}
 	}
@@ -453,6 +452,10 @@ main(int argc, char** argv)
 	// load up the instances
 	warthog::scenario::scenario_manager scenmgr;
 	if (!costtype.empty())
+		if (!costfile.empty()) {
+			WARTHOG_GCRIT("cannot mix --cost and --cost-file together");
+			return (int)std::errc::invalid_argument;
+		}
 		scenmgr.set_cost_type(costtype);
 	try {
 		scenmgr.load_scenario(sfile.c_str());
@@ -488,6 +491,13 @@ main(int argc, char** argv)
 				}
 			}
 		}
+		// reset any remaining instances to unknown result
+		while (true) {
+			auto* exp = scenmgr.get_experiment(exp_id++);
+			if (exp == nullptr)
+				break;
+			exp->distance_.reset();
+		}
 		WARTHOG_GERROR_FMT_IF(readin->fail(), "--cost-file {} io error", costfile);
 	}
 
@@ -516,7 +526,7 @@ main(int argc, char** argv)
 	else if(alg == "astar4c") { return run_astar4c(scenmgr, mapfile, alg); }
 	else if(alg == "astar_wgm")
 	{
-		return run_wgm_astar(scenmgr, mapfile, alg, costfile);
+		return run_wgm_astar(scenmgr, mapfile, alg, weightsfile);
 	}
 	std::cerr << "err; invalid search algorithm: " << alg << "\n";
 	return 1;

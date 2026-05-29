@@ -39,8 +39,8 @@ template<admissibility_criteria A>
 inline bool
 admissible(cost_t lb, cost_t ub, search_parameters* par)
 {
-	// default admissibility: any solution at all
-	return ub != warthog::COST_MAX;
+	// default admissibility: lower bound meets upper bound
+	return lb >= ub;
 }
 
 // w_admissibility:

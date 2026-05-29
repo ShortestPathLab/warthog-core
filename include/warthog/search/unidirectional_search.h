@@ -253,7 +253,8 @@ private:
 				if(n->get_search_number() != current->get_search_number())
 				{
 					initialise_node_(n, current->get_id(), gval, pi, par, sol);
-					if(n->get_f() < sol->sum_of_edge_costs_)
+					// <= to ensure target is pushed to the queue
+					if(n->get_f() <= sol->sum_of_edge_costs_)
 					{
 						open_->push(n);
 						WARTHOG_GINFO_FMT_IF(pi->verbose_, "Generate: {}", *n);
@@ -268,9 +269,13 @@ private:
 				// for the node is less than the current upperbound
 				if(gval < n->get_g())
 				{
-					if((gval + n->get_f() - n->get_g())
+					if((gval + (n->get_f() - n->get_g()))
 					   < sol->sum_of_edge_costs_)
 					{
+						// if target node, update solution cost
+						if (sol->s_node_ == n) {
+							sol->sum_of_edge_costs_ = gval;
+						}
 						n->relax(gval, current->get_id());
 						io::observer_relax_node(listeners_, *n);
 

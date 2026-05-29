@@ -268,19 +268,17 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			    P.bucket, P.patch_id, P.loc_x, P.loc_y));
 		}
 		else if(*con == io::scenario_serialize::FINAL) { break; }
-		else if(*con == io::scenario_serialize::CMD_UNKNOWN)
+		else
 		{
+			WARTHOG_GWARN_FMT_IF(*con == io::scenario_serialize::INVALID,
+			    "scenario_manager invalid command on line {}",
+			    si.get_line_num());
+			WARTHOG_GINFO_FMT_IF(*con != io::scenario_serialize::INVALID,
+			    "scenario_manager unknown command on line {}",
+			    si.get_line_num());
 			// ignore
 			if (auto r = si.skip_commands(); !r)
 				return std::unexpected(r.error());
-		}
-		else
-		{
-			// error, invalid inst
-			WARTHOG_GERROR_FMT(
-			    "scenario_manager failed to read command on line: {}",
-			    si.get_line_num());
-			return std::unexpected(std::errc::io_error);
 		}
 	}
 	return {};
