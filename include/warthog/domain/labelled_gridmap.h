@@ -270,10 +270,8 @@ inline void
 labelled_gridmap<CELL>::setup_stream_(std::istream& in)
 {
 	io::bittable_serialize parser;
-	if(!parser.open_read(&in))
-		throw std::runtime_error("invalid grid stream");
-	if(!parser.read_header())
-		throw std::runtime_error("invalid grid format");
+	if(!parser.open_read(&in)) throw std::runtime_error("invalid grid stream");
+	if(!parser.read_header()) throw std::runtime_error("invalid grid format");
 	setup_ser_(parser);
 }
 

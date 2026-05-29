@@ -132,7 +132,8 @@ struct experiment
 
 	double startx_, starty_, goalx_, goaly_;
 	uint32_t mapwidth_, mapheight_;
-	std::optional<double> distance_; ///< -1 = no solution, non-init = unknown solution
+	std::optional<double>
+	    distance_; ///< -1 = no solution, non-init = unknown solution
 	std::string_view map_;
 };
 
@@ -146,7 +147,7 @@ experiment::print(std::ostream& out)
 	out << this->starty() << "\t";
 	out << this->goalx() << "\t";
 	out << this->goaly() << "\t";
-	if (this->distance())
+	if(this->distance())
 		out << std::setprecision(10) << *this->distance();
 	else
 		out << '-';

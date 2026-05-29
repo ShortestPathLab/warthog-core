@@ -19,8 +19,8 @@
 
 #include <warthog/util/string.h>
 
-#include <expected>
 #include <cassert>
+#include <expected>
 #include <filesystem>
 #include <fstream>
 #include <memory>
@@ -137,25 +137,25 @@ protected:
 	bool
 	istream_eof(std::istream* in = nullptr);
 
-    /// @brief reads lines and return 1 line, checking for errors
-    /// @param in optional stream to use, otherwise uses internal-set stream
-    /// @param skip_blanks if true, the first line where is_line_blank(line) is
-    /// false is returned
-    /// @return the first valid line (can be blank), or error, the final empty
-    /// line is returned empty and eof is set
-    ///
-    /// Reads lines into a buffer (max size get_max_line_length()), removing
-    /// the line ends \r\n. If unreadline was called before, returns that line,
-    /// otherwise reads from istream. Change the max buffer size with
-    /// set_max_line_length, although it clears the buffer and current line.
-    ///
-    /// If line does not fit, return an error.
-    /// If an empty line is discovered, it will return the same result as the
-    /// eof condition, use istream_eof to distinguish. The file can end of a
-    /// a blank line seamlessly.
-    ///
-    /// get_line_num() will return the 1-index line number, reading from an
-    /// unreadline does not change the line number.
+	/// @brief reads lines and return 1 line, checking for errors
+	/// @param in optional stream to use, otherwise uses internal-set stream
+	/// @param skip_blanks if true, the first line where is_line_blank(line) is
+	/// false is returned
+	/// @return the first valid line (can be blank), or error, the final empty
+	/// line is returned empty and eof is set
+	///
+	/// Reads lines into a buffer (max size get_max_line_length()), removing
+	/// the line ends \r\n. If unreadline was called before, returns that line,
+	/// otherwise reads from istream. Change the max buffer size with
+	/// set_max_line_length, although it clears the buffer and current line.
+	///
+	/// If line does not fit, return an error.
+	/// If an empty line is discovered, it will return the same result as the
+	/// eof condition, use istream_eof to distinguish. The file can end of a
+	/// a blank line seamlessly.
+	///
+	/// get_line_num() will return the 1-index line number, reading from an
+	/// unreadline does not change the line number.
 	std::expected<std::string_view, std::errc>
 	readline(std::istream* in, bool skip_blanks = false);
 

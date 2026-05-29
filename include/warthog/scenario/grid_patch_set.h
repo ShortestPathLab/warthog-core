@@ -92,8 +92,7 @@ public:
 
 	int
 	save(
-	    io::bittable_serialize& S, int grid_id = -1,
-	    uint32_t flags = DEFAULT);
+	    io::bittable_serialize& S, int grid_id = -1, uint32_t flags = DEFAULT);
 
 	/// @brief copies a user-provided bittable, subregion from offset with
 	/// width/height

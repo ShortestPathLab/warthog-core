@@ -1,9 +1,9 @@
 #include <warthog/scenario/scenario_manager.h>
 
 #include <warthog/io/log.h>
+#include <warthog/io/scenario_serialize.h>
 #include <warthog/search/dummy_listener.h>
 #include <warthog/search/problem_instance.h>
-#include <warthog/io/scenario_serialize.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -156,8 +156,11 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 			    Q.bucket, inst_count_++, (uint32_t)(experiments_.size() - 1)));
 		}
 		else if(*con == io::scenario_serialize::FINAL) { break; }
-		else {
-			WARTHOG_GWARN_FMT("scenario_manager v1 invalid instance on line {}", si.get_line_num());
+		else
+		{
+			WARTHOG_GWARN_FMT(
+			    "scenario_manager v1 invalid instance on line {}",
+			    si.get_line_num());
 		}
 	}
 	return {};
@@ -233,9 +236,7 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			last_bucket = Q.bucket;
 
 			std::optional<double> ex_cost;
-			if (cost_index >= 0) {
-				ex_cost = Q.cost[cost_index];
-			}
+			if(cost_index >= 0) { ex_cost = Q.cost[cost_index]; }
 			experiment* ex = std::construct_at(
 			    static_cast<experiment*>(experiments_res_.allocate(
 			        sizeof(experiment), alignof(experiment))),
@@ -270,14 +271,16 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 		else if(*con == io::scenario_serialize::FINAL) { break; }
 		else
 		{
-			WARTHOG_GWARN_FMT_IF(*con == io::scenario_serialize::INVALID,
+			WARTHOG_GWARN_FMT_IF(
+			    *con == io::scenario_serialize::INVALID,
 			    "scenario_manager invalid command on line {}",
 			    si.get_line_num());
-			WARTHOG_GINFO_FMT_IF(*con != io::scenario_serialize::INVALID,
+			WARTHOG_GINFO_FMT_IF(
+			    *con != io::scenario_serialize::INVALID,
 			    "scenario_manager unknown command on line {}",
 			    si.get_line_num());
 			// ignore
-			if (auto r = si.skip_commands(); !r)
+			if(auto r = si.skip_commands(); !r)
 				return std::unexpected(r.error());
 		}
 	}

@@ -15,21 +15,22 @@ bittable_serialize::bittable_serialize()
 std::expected<void, std::errc>
 bittable_serialize::read_header(std::istream* in)
 {
-	if (auto r = get_istream(in); r)
+	if(auto r = get_istream(in); r)
 		in = *r;
 	else
 		return std::unexpected(r.error());
 
 	std::string_view line;
 	std::string_view token;
-	if (auto r = readline(in); r)
+	if(auto r = readline(in); r)
 		line = *r;
 	else
 		return std::unexpected(r.error());
 	bittable_type detected_type = bittable_type::NONE;
 	{
 		parser par(line);
-		if(!par.next(token) || token != "type") return std::unexpected(std::errc::io_error);
+		if(!par.next(token) || token != "type")
+			return std::unexpected(std::errc::io_error);
 		if(!par.next(token).eof()) return std::unexpected(std::errc::io_error);
 	}
 
@@ -45,7 +46,7 @@ bittable_serialize::read_header(std::istream* in)
 	if(detected_type == bittable_type::OCTILE) { m_patch_amount = 1; }
 	else if(detected_type == bittable_type::PATCH)
 	{
-		if (auto r = readline(in); r)
+		if(auto r = readline(in); r)
 			line = *r;
 		else
 			return std::unexpected(r.error());
@@ -68,7 +69,7 @@ std::expected<void, std::errc>
 bittable_serialize::read_grid_header(std::istream* in)
 {
 	std::errc err;
-	if (auto r = get_istream(in); r)
+	if(auto r = get_istream(in); r)
 		in = *r;
 	else
 		return std::unexpected(r.error());
@@ -78,7 +79,7 @@ bittable_serialize::read_grid_header(std::istream* in)
 	m_patch_count += 1;
 
 	// read height
-	if (auto r = readline(in); r)
+	if(auto r = readline(in); r)
 		line = *r;
 	else
 		return std::unexpected(r.error());
@@ -88,9 +89,10 @@ bittable_serialize::read_grid_header(std::istream* in)
 		parser par(line);
 		if(!par.next(token).next(m_patch_id).eof())
 			return std::unexpected(std::errc::io_error);
-		if(token != "patch") return std::unexpected(std::errc::argument_out_of_domain);
+		if(token != "patch")
+			return std::unexpected(std::errc::argument_out_of_domain);
 
-		if (auto r = readline(in); r)
+		if(auto r = readline(in); r)
 			line = *r;
 		else
 			return std::unexpected(r.error());
@@ -104,7 +106,7 @@ bittable_serialize::read_grid_header(std::istream* in)
 	}
 
 	// read width
-	if (auto r = readline(in); r)
+	if(auto r = readline(in); r)
 		line = *r;
 	else
 		return std::unexpected(r.error());
@@ -117,14 +119,15 @@ bittable_serialize::read_grid_header(std::istream* in)
 	}
 
 	// read "map"
-	if (auto r = readline(in); r)
+	if(auto r = readline(in); r)
 		line = *r;
 	else
 		return std::unexpected(r.error());
 	{
 		parser par(line);
 		if(!par.next(token).eof()) return std::unexpected(std::errc::io_error);
-		if(token != "map") return std::unexpected(std::errc::argument_out_of_domain);
+		if(token != "map")
+			return std::unexpected(std::errc::argument_out_of_domain);
 	}
 
 	return {};
@@ -140,14 +143,14 @@ bittable_serialize::read_grid_raw(std::span<char> buffer, std::istream* in)
 	std::string_view line;
 	std::string_view token;
 
-	if (auto r = get_istream(in); r)
+	if(auto r = get_istream(in); r)
 		in = *r;
 	else
 		return std::unexpected(r.error());
 	for(uint32_t y = 0; y < read_dim.height; ++y)
 	{
 		// read row
-		if (auto r = readline(in); r)
+		if(auto r = readline(in); r)
 			line = *r;
 		else
 			return std::unexpected(r.error());
@@ -166,40 +169,44 @@ std::expected<void, std::errc>
 bittable_serialize::write_header(std::ostream* out)
 {
 	using namespace std::string_view_literals;
-	if (auto r = get_ostream(out); r)
+	if(auto r = get_ostream(out); r)
 		out = *r;
 	else
 		return std::unexpected(r.error());
-	
+
 	m_patch_auto_pos = 0;
-	m_patch_count = 0;
-	m_patch_id = 0;
-	if (m_type == bittable_type::OCTILE) {
+	m_patch_count    = 0;
+	m_patch_id       = 0;
+	if(m_type == bittable_type::OCTILE)
+	{
 		// expect single map, user does not need to provide this info
-		if (!(*out << "type octile\n"))
+		if(!(*out << "type octile\n"))
 			return std::unexpected(std::errc::io_error);
 		m_patch_amount = 1;
-	} else if (m_type == bittable_type::PATCH) {
+	}
+	else if(m_type == bittable_type::PATCH)
+	{
 		// expect variable number of patches
-		if (!(*out << "type patch\npatches "))
+		if(!(*out << "type patch\npatches "))
 			return std::unexpected(std::errc::io_error);
-		if (m_patch_amount == patch_auto) {
+		if(m_patch_amount == patch_auto)
+		{
 			// not known in advance, out must be seekable to work
 			m_patch_auto_pos = out->tellp();
-			if (m_patch_auto_pos < 0 || !*out)
+			if(m_patch_auto_pos < 0 || !*out)
 				return std::unexpected(std::errc::invalid_seek);
 			// output 9 spaces, replace at end
 			*out << "         "sv;
-		} else {
+		}
+		else
+		{
 			// set number of patches
 			*out << m_patch_amount;
 		}
-	} else {
-		return std::unexpected(std::errc::invalid_argument);
 	}
+	else { return std::unexpected(std::errc::invalid_argument); }
 	// check after previous write
-	if (!*out)
-		return std::unexpected(std::errc::io_error);
+	if(!*out) return std::unexpected(std::errc::io_error);
 
 	m_patch_count += 1;
 	return {};
@@ -213,16 +220,18 @@ bittable_serialize::write_grid_raw(std::span<char> buffer, std::ostream* out)
 		return std::unexpected(std::errc::result_out_of_range);
 	char* data_at = buffer.data();
 
-	if (auto r = get_ostream(out); r)
+	if(auto r = get_ostream(out); r)
 		out = *r;
 	else
 		return std::unexpected(r.error());
 
-	if (m_type == bittable_type::PATCH) {
-		if (!(*out << "patch " << m_patch_id++ << '\n'))
+	if(m_type == bittable_type::PATCH)
+	{
+		if(!(*out << "patch " << m_patch_id++ << '\n'))
 			return std::unexpected(std::errc::io_error);
 	}
-	if (!(*out << "height " << write_dim.height << "\nwidth " << write_dim.width << "\nmap\n"))
+	if(!(*out << "height " << write_dim.height << "\nwidth " << write_dim.width
+	          << "\nmap\n"))
 		return std::unexpected(std::errc::io_error);
 
 	for(uint32_t y = 0; y < write_dim.height; ++y)
@@ -230,8 +239,7 @@ bittable_serialize::write_grid_raw(std::span<char> buffer, std::ostream* out)
 		// read row
 		out->write(data_at, write_dim.width);
 		out->put('\n');
-		if (!*out)
-			return std::unexpected(std::errc::io_error);
+		if(!*out) return std::unexpected(std::errc::io_error);
 		data_at += write_dim.width;
 	}
 
@@ -242,24 +250,25 @@ bittable_serialize::write_grid_raw(std::span<char> buffer, std::ostream* out)
 std::expected<void, std::errc>
 bittable_serialize::write_end(std::ostream* out)
 {
-	if (auto r = get_ostream(out); r)
+	if(auto r = get_ostream(out); r)
 		out = *r;
 	else
 		return std::unexpected(r.error());
-	if (!*out)
-		return std::unexpected(std::errc::io_error);
-	
-	if (m_patch_amount == patch_auto) {
+	if(!*out) return std::unexpected(std::errc::io_error);
+
+	if(m_patch_amount == patch_auto)
+	{
 		// auto, go and write m_patch_count
-		if (!out->seekp(m_patch_auto_pos))
+		if(!out->seekp(m_patch_auto_pos))
 			return std::unexpected(std::errc::invalid_seek);
-		if (!*out << m_patch_count)
-			return std::unexpected(std::errc::io_error);
-	} else {
-		if (m_patch_count != m_patch_amount)
+		if(!*out << m_patch_count) return std::unexpected(std::errc::io_error);
+	}
+	else
+	{
+		if(m_patch_count != m_patch_amount)
 			return std::unexpected(std::errc::result_out_of_range);
 	}
-	
+
 	return {};
 }
 

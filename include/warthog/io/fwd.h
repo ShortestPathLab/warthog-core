@@ -41,7 +41,6 @@ enum class cost_type : uint8_t
 	OTHER,
 };
 
-
 /// @brief the type of bittable to (de)serialize
 enum class bittable_type : uint8_t
 {

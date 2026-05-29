@@ -209,7 +209,7 @@ public:
 	/// @param in optional stream to use, otherwise uses internal-set stream
 	/// @return success std::errc{}, else failure
 	/// @pre state() == serialize_state::INIT (returns errc otherwise)
-	virtual std::expected<void,std::errc>
+	virtual std::expected<void, std::errc>
 	read_version(std::istream* in = nullptr);
 	/// @brief read header (without version) information.
 	/// @param in optional stream to use, otherwise uses internal-set stream
@@ -219,16 +219,16 @@ public:
 	/// With VERSION1: peeks first instance to gain map name
 	/// With VERSION2: gets map width/height, available costs and patch
 	/// filename
-	virtual std::expected<void,std::errc>
+	virtual std::expected<void, std::errc>
 	read_header(std::istream* in = nullptr);
 
 	/// @brief read header as VERSION_1, does not consider the state or
 	/// version. use read_header for checks instead.
-	std::expected<void,std::errc>
+	std::expected<void, std::errc>
 	read_header_v1(std::istream* in = nullptr);
 	/// @brief read header as VERSION_2, does not consider the state or
 	/// version. use read_header for checks instead.
-	std::expected<void,std::errc>
+	std::expected<void, std::errc>
 	read_header_v2(std::istream* in = nullptr);
 
 	/// @brief gets the next command type
@@ -249,7 +249,7 @@ public:
 	/// @param in optional stream to use, otherwise uses internal-set stream
 	/// @return success std::errc{}, else failure
 	/// @pre state() == serialize_state::COMMAND (returns errc otherwise)
-	std::expected<int,std::errc>
+	std::expected<int, std::errc>
 	skip_commands(int count = 1, std::istream* in = nullptr);
 
 	/// @brief reads an instance line and stores results in scenario_instance

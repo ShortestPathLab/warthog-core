@@ -273,7 +273,8 @@ private:
 					   < sol->sum_of_edge_costs_)
 					{
 						// if target node, update solution cost
-						if (sol->s_node_ == n) {
+						if(sol->s_node_ == n)
+						{
 							sol->sum_of_edge_costs_ = gval;
 						}
 						n->relax(gval, current->get_id());

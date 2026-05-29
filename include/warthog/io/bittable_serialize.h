@@ -59,8 +59,9 @@ class bittable_serialize : public serialize_base
 public:
 	bittable_serialize();
 
-	static constexpr uint32_t patch_auto = std::numeric_limits<uint32_t>::max();
-	
+	static constexpr uint32_t patch_auto
+	    = std::numeric_limits<uint32_t>::max();
+
 	/// @return the grid dimension, either as last read grid from file or set
 	/// by user for writing
 	memory::bittable_dimension
@@ -114,15 +115,13 @@ public:
 	bool
 	set_patch_amount(uint32_t count)
 	{
-		if(count > PATCH_COUNT_LIMIT)
-		{
-			return false;
-		}
+		if(count > PATCH_COUNT_LIMIT) { return false; }
 		m_patch_amount = count;
 		return true;
 	}
 
-	/// @brief number of patches for writing is dynamic (requires seekable file)
+	/// @brief number of patches for writing is dynamic (requires seekable
+	/// file)
 	/// @return true for success, false failure
 	bool
 	set_patch_auto()
@@ -202,15 +201,17 @@ public:
 	std::expected<void, std::errc>
 	read_grid_raw(std::span<char> buffer, std::istream* in = nullptr);
 
-    /// @brief Writes out file header
-    /// @param out alternative filestream to write to
-    /// @return error code on failure
-    /// @pre get_type()==bittable_type::OCTILE || get_type()==bittable_type::PATCH
-    /// 
-    /// Writes out the header for either map (OCTILE) or patch (PATCH) file.
-    /// For PATCH, set_patch_amount is needed in advanced, alternatively
-    /// set_patch_auto() does not require knowing in advanced, but file stream
-    /// must be seekable for this option and write_end() must be called at the end.
+	/// @brief Writes out file header
+	/// @param out alternative filestream to write to
+	/// @return error code on failure
+	/// @pre get_type()==bittable_type::OCTILE ||
+	/// get_type()==bittable_type::PATCH
+	///
+	/// Writes out the header for either map (OCTILE) or patch (PATCH) file.
+	/// For PATCH, set_patch_amount is needed in advanced, alternatively
+	/// set_patch_auto() does not require knowing in advanced, but file stream
+	/// must be seekable for this option and write_end() must be called at the
+	/// end.
 	std::expected<void, std::errc>
 	write_header(std::ostream* out = nullptr);
 
@@ -231,9 +232,10 @@ public:
 	template<typename BitTable>
 	std::expected<void, std::errc>
 	write_grid_data(
-	    BitTable& table, uint32_t offset_x = 0, uint32_t offset_y = 0, gridmap_cell blocker = gridmap_cell::OUT_OF_BOUNDS, gridmap_cell traversable = gridmap_cell::TERRAIN,
-	    std::ostream* out = nullptr);
-
+	    BitTable& table, uint32_t offset_x = 0, uint32_t offset_y = 0,
+	    gridmap_cell blocker     = gridmap_cell::OUT_OF_BOUNDS,
+	    gridmap_cell traversable = gridmap_cell::TERRAIN,
+	    std::ostream* out        = nullptr);
 
 	/// @brief Writes out a grid from user-given buffer
 	/// @param buffer grid to write (top-left start at buffer[0])
@@ -241,9 +243,9 @@ public:
 	/// @return error code on failure
 	/// @pre get_dim() != {}
 	///
-    /// Similar to write_grid_data, except user provides the map data.
-    /// User must use set_dim(width,height) before calling this function to set
-    /// the output grid width/height.
+	/// Similar to write_grid_data, except user provides the map data.
+	/// User must use set_dim(width,height) before calling this function to set
+	/// the output grid width/height.
 	std::expected<void, std::errc>
 	write_grid_raw(std::span<char> buffer, std::ostream* out = nullptr);
 
@@ -275,22 +277,22 @@ bittable_serialize::read_grid_data(
 		return std::unexpected(std::errc::argument_out_of_domain);
 	if(offset_y >= dim.height || read_dim.height + offset_y > dim.height)
 		return std::unexpected(std::errc::argument_out_of_domain);
-	
+
 	uint32_t bit_id
 	    = static_cast<uint32_t>(table.xy_to_id(offset_x, offset_y));
 	const uint32_t bit_row_offset = dim.width - read_dim.width;
 
-	if (auto r = get_istream(in); r)
+	if(auto r = get_istream(in); r)
 		in = *r;
 	else
 		return std::unexpected(r.error());
-	
+
 	std::string_view line;
 	std::string_view token;
 	for(uint32_t y = 0; y < read_dim.height; ++y, bit_id += bit_row_offset)
 	{
 		// read row
-		if (auto r = readline(in); r)
+		if(auto r = readline(in); r)
 			line = *r;
 		else
 			return std::unexpected(r.error());
@@ -313,42 +315,50 @@ bittable_serialize::read_grid_data(
 template<typename BitTable>
 std::expected<void, std::errc>
 bittable_serialize::write_grid_data(
-    BitTable& table, uint32_t offset_x, uint32_t offset_y, gridmap_cell blocker, gridmap_cell traversable, std::ostream* out)
+    BitTable& table, uint32_t offset_x, uint32_t offset_y,
+    gridmap_cell blocker, gridmap_cell traversable, std::ostream* out)
 {
 	// check table
-	const memory::bittable_dimension dim      = table.dim();
+	const memory::bittable_dimension dim       = table.dim();
 	const memory::bittable_dimension write_dim = m_dim;
 	// detect for overflow
-	if(offset_x >= dim.width || write_dim.width == 0 || write_dim.width + offset_x > dim.width)
+	if(offset_x >= dim.width || write_dim.width == 0
+	   || write_dim.width + offset_x > dim.width)
 		return std::unexpected(std::errc::argument_out_of_domain);
-	if(offset_y >= dim.height || write_dim.height == 0 || write_dim.height + offset_y > dim.height)
+	if(offset_y >= dim.height || write_dim.height == 0
+	   || write_dim.height + offset_y > dim.height)
 		return std::unexpected(std::errc::argument_out_of_domain);
-	
+
 	uint32_t bit_id
 	    = static_cast<uint32_t>(table.xy_to_id(offset_x, offset_y));
 	const uint32_t bit_row_offset = dim.width - write_dim.width;
 
-	if (auto r = get_ostream(out); r)
+	if(auto r = get_ostream(out); r)
 		out = *r;
 	else
 		return std::unexpected(r.error());
-	
-	if (m_type == bittable_type::PATCH) {
-		if (!(*out << "patch " << m_patch_id++ << '\n'))
+
+	if(m_type == bittable_type::PATCH)
+	{
+		if(!(*out << "patch " << m_patch_id++ << '\n'))
 			return std::unexpected(std::errc::io_error);
 	}
-	if (!(*out << "height " << write_dim.height << "\nwidth " << write_dim.width << "\nmap\n"))
+	if(!(*out << "height " << write_dim.height << "\nwidth " << write_dim.width
+	          << "\nmap\n"))
 		return std::unexpected(std::errc::io_error);
-	
+
 	std::array<char, 2048> buffer;
 	std::unique_ptr<char[]> buffer_dyn;
 	std::span<char> line_buffer;
-	if (write_dim.width < 2048) {
+	if(write_dim.width < 2048)
+	{
 		// use stack buffer
 		line_buffer = std::span<char>(buffer.data(), write_dim.width + 1);
-	} else {
+	}
+	else
+	{
 		// too large, use dynamic buffer
-		buffer_dyn = std::make_unique<char[]>(write_dim.width + 1);
+		buffer_dyn  = std::make_unique<char[]>(write_dim.width + 1);
 		line_buffer = std::span<char>(buffer_dyn.get(), write_dim.width + 1);
 	}
 	// set end to newline
@@ -359,11 +369,12 @@ bittable_serialize::write_grid_data(
 		// copy row to buffer
 		for(uint32_t x = 0; x < write_dim.width; ++x, ++bit_id)
 		{
-			line_buffer[x] = table.get(static_cast<BitTable::id_type>(bit_id)) ?
-				(char)traversable : (char)blocker;
+			line_buffer[x] = table.get(static_cast<BitTable::id_type>(bit_id))
+			    ? (char)traversable
+			    : (char)blocker;
 		}
 		// write row
-		if (!(*out << std::string_view(line_buffer.data(), line_buffer.size())))
+		if(!(*out << std::string_view(line_buffer.data(), line_buffer.size())))
 			return std::unexpected(std::errc::io_error);
 	}
 	return {};

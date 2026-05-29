@@ -19,8 +19,8 @@
 //
 
 #include "grid.h"
-#include <warthog/io/fwd.h>
 #include <warthog/constants.h>
+#include <warthog/io/fwd.h>
 #include <warthog/memory/bittable.h>
 #include <warthog/util/cast.h>
 #include <warthog/util/gm_header.h>
@@ -75,7 +75,7 @@ public:
 	load(std::filesystem::path filename);
 	void
 	load(const char* filename);
-	
+
 	void
 	save(std::ostream& input, bool padding = false);
 	void

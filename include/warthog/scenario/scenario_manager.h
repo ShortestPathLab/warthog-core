@@ -260,7 +260,7 @@ find_map_filename(
 std::filesystem::path
 find_map_filename(
     const std::filesystem::path& scenmgr,
-    const std::filesystem::path& sfilename = {});	
+    const std::filesystem::path& sfilename = {});
 
 } // namespace warthog::scenario
 

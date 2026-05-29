@@ -47,23 +47,23 @@ scenario_serialize::last_command_type() const
 	return CMD_UNKNOWN;
 }
 
-std::expected<void,std::errc>
+std::expected<void, std::errc>
 scenario_serialize::read_version(std::istream* in)
 {
 	if(m_state != serialize_state::INIT)
 		return std::unexpected(std::errc::state_not_recoverable);
-	if (auto r = get_istream(in); r) {
-		in = *r;
-	} else {
+	if(auto r = get_istream(in); r) { in = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
 	std::string_view line;
 	std::string_view token;
 
-	if (auto r = readline(in); r) {
-		line = *r;
-	} else {
+	if(auto r = readline(in); r) { line = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -85,7 +85,7 @@ scenario_serialize::read_version(std::istream* in)
 	return {};
 }
 
-std::expected<void,std::errc>
+std::expected<void, std::errc>
 scenario_serialize::read_header(std::istream* in)
 {
 	if(!can_read(in) || m_state != serialize_state::VERSION)
@@ -102,12 +102,12 @@ scenario_serialize::read_header(std::istream* in)
 	}
 }
 
-std::expected<void,std::errc>
+std::expected<void, std::errc>
 scenario_serialize::read_header_v1(std::istream* in)
 {
-	if (auto r = get_istream(in); r) {
-		in = *r;
-	} else {
+	if(auto r = get_istream(in); r) { in = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -150,12 +150,12 @@ scenario_serialize::read_header_v1(std::istream* in)
 	return {};
 }
 
-std::expected<void,std::errc>
+std::expected<void, std::errc>
 scenario_serialize::read_header_v2(std::istream* in)
 {
-	if (auto r = get_istream(in); r) {
-		in = *r;
-	} else {
+	if(auto r = get_istream(in); r) { in = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -164,9 +164,9 @@ scenario_serialize::read_header_v2(std::istream* in)
 	std::string_view token;
 
 	// height
-	if (auto r = readline(in); r) {
-		line = *r;
-	} else {
+	if(auto r = readline(in); r) { line = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -186,9 +186,9 @@ scenario_serialize::read_header_v2(std::istream* in)
 	}
 
 	// width
-	if (auto r = readline(in); r) {
-		line = *r;
-	} else {
+	if(auto r = readline(in); r) { line = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -207,9 +207,9 @@ scenario_serialize::read_header_v2(std::istream* in)
 	}
 
 	// cost
-	if (auto r = readline(in); r) {
-		line = *r;
-	} else {
+	if(auto r = readline(in); r) { line = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -251,9 +251,9 @@ scenario_serialize::read_header_v2(std::istream* in)
 	}
 
 	// get map (patch) filename
-	if (auto r = readline(in); r) {
-		line = *r;
-	} else {
+	if(auto r = readline(in); r) { line = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -274,9 +274,9 @@ scenario_serialize::read_header_v2(std::istream* in)
 	}
 
 	// read in "commands"
-	if (auto r = readline(in); r) {
-		line = *r;
-	} else {
+	if(auto r = readline(in); r) { line = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -304,9 +304,9 @@ scenario_serialize::next_command_type(std::istream* in)
 {
 	if(!can_read(in) || m_state != serialize_state::COMMAND)
 		return std::unexpected(std::errc::state_not_recoverable);
-	if (auto r = get_istream(in); r) {
-		in = *r;
-	} else {
+	if(auto r = get_istream(in); r) { in = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -353,16 +353,16 @@ scenario_serialize::next_command_type(std::istream* in)
 	}
 }
 
-std::expected<int,std::errc>
+std::expected<int, std::errc>
 scenario_serialize::skip_commands(int count, std::istream* in)
 {
 	if(m_state == serialize_state::END) { return {}; }
 	if(!can_read(in) || m_state != serialize_state::COMMAND)
 		return std::unexpected(std::errc::state_not_recoverable);
 
-	if (auto r = get_istream(in); r) {
-		in = *r;
-	} else {
+	if(auto r = get_istream(in); r) { in = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -370,7 +370,7 @@ scenario_serialize::skip_commands(int count, std::istream* in)
 	while(count > 0)
 	{
 		--count;
-		if (auto r = readline(in, true); !r)
+		if(auto r = readline(in, true); !r)
 		{
 			m_state = serialize_state::ERROR;
 			return std::unexpected(r.error());
@@ -413,15 +413,15 @@ scenario_serialize::read_instance_line_v1(
 	std::string_view line;
 	std::string_view token;
 
-	if (auto r = get_istream(in); r) {
-		in = *r;
-	} else {
+	if(auto r = get_istream(in); r) { in = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
-	if (auto r = readline(in, true); r) {
-		line = *r;
-	} else {
+	if(auto r = readline(in, true); r) { line = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -484,15 +484,15 @@ scenario_serialize::read_instance_line_v2(
 	std::string_view line;
 	std::string_view token;
 
-	if (auto r = get_istream(in); r) {
-		in = *r;
-	} else {
+	if(auto r = get_istream(in); r) { in = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
-	if (auto r = readline(in, true); r) {
-		line = *r;
-	} else {
+	if(auto r = readline(in, true); r) { line = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
@@ -503,7 +503,7 @@ scenario_serialize::read_instance_line_v2(
 	}
 
 	parser par(line);
-	if(!par.next(m_command_type)) return  std::unexpected(par.error());
+	if(!par.next(m_command_type)) return std::unexpected(par.error());
 	auto cmd_type = last_command_type();
 	if(cmd_type != CMD_INST)
 	{
@@ -581,15 +581,15 @@ scenario_serialize::read_patch_line_v2(scenario_patch& patch, std::istream* in)
 	std::string_view line;
 	std::string_view token;
 
-	if (auto r = get_istream(in); r) {
-		in = *r;
-	} else {
+	if(auto r = get_istream(in); r) { in = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}
-	if (auto r = readline(in, true); r) {
-		line = *r;
-	} else {
+	if(auto r = readline(in, true); r) { line = *r; }
+	else
+	{
 		m_state = serialize_state::ERROR;
 		return std::unexpected(r.error());
 	}

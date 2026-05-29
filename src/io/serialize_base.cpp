@@ -76,7 +76,7 @@ std::expected<std::string_view, std::errc>
 serialize_base::readline(std::istream* in, bool skip_blanks)
 {
 	size_t len;
-	if (auto r = get_istream(in); r)
+	if(auto r = get_istream(in); r)
 		in = *r;
 	else
 		return std::unexpected(r.error());

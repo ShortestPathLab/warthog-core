@@ -21,8 +21,8 @@
 #include <warthog/search/unidirectional_search.h>
 #include <warthog/search/vl_gridmap_expansion_policy.h>
 #include <warthog/util/pqueue.h>
-#include <warthog/util/timer.h>
 #include <warthog/util/string.h>
+#include <warthog/util/timer.h>
 #ifdef WARTHOG_POSTHOC
 #include <warthog/io/grid_trace.h>
 #endif
@@ -82,15 +82,19 @@ help(std::ostream& out)
 	       "values in scen file) \n"
 	    << "\t--grid-weight [file] (required if using a weighted "
 	       "terrain algorithm)\n"
-	    << "\t--cost [type] (optional; force use of selected solution cost of instance, error if not exists)"
-	    << "\t--cost-file [type] (optional; override scenario costs with file, conflicts with --cost)"
+	    << "\t--cost [type] (optional; force use of selected solution cost of "
+	       "instance, error if not exists)"
+	    << "\t--cost-file [type] (optional; override scenario costs with "
+	       "file, conflicts with --cost)"
 	    << "\t--checkopt (optional; compare solution costs against "
 	       "values in the scen file)\n"
 	    << "\t--verbose (optional; prints debugging info when compiled "
 	       "with debug symbols)\n"
 	    << "\t--filter [id] (optional; run only inst [id])\n"
-	    << "\t--dump-map [id] (optional; dump current gridmap at start of inst id to stderr default)\n"
-	    << "\t--dump-map-file [filename] (optional; override dump map to file)\n"
+	    << "\t--dump-map [id] (optional; dump current gridmap at start of "
+	       "inst id to stderr default)\n"
+	    << "\t--dump-map-file [filename] (optional; override dump map to "
+	       "file)\n"
 #ifdef WARTHOG_POSTHOC
 	    << "\t--trace [.trace.yaml file] (optional; write posthoc trace for "
 	       "first instance to [file])\n"
@@ -107,16 +111,17 @@ help(std::ostream& out)
 
 bool
 check_optimality(
-    const warthog::search::solution& sol, const warthog::scenario::experiment* exp)
+    const warthog::search::solution& sol,
+    const warthog::scenario::experiment* exp)
 {
-	if (!exp->distance())
+	if(!exp->distance())
 	{
 		// unknown solution
 		return true;
 	}
 	constexpr int32_t precision = 2;
-	double epsilon     = std::pow(10.0, -precision) * 0.5;
-	double delta       = std::fabs(sol.sum_of_edge_costs_ - *exp->distance());
+	double epsilon              = std::pow(10.0, -precision) * 0.5;
+	double delta = std::fabs(sol.sum_of_edge_costs_ - *exp->distance());
 
 	if(delta > epsilon)
 	{
@@ -254,7 +259,7 @@ run_experiments(
 		    << "\t" << sol.met_.time_elapsed_nano_.count() << "\t"
 		    << (!sol.path_.empty() ? sol.path_.size() - 1 : 0) << "\t"
 		    << sol.sum_of_edge_costs_ << "\t";
-		if (exp->distance())
+		if(exp->distance())
 			out << *exp->distance();
 		else
 			out << '-';
@@ -365,7 +370,8 @@ run_wgm_astar(
 	double lowest_cost = costs.lowest_cost(map);
 	if(std::isnan(lowest_cost))
 	{
-		WARTHOG_GCRIT("grid weights file does not specify cost of some terrains");
+		WARTHOG_GCRIT(
+		    "grid weights file does not specify cost of some terrains");
 		return (int)std::errc::io_error;
 	}
 	heuristic.set_hscale(lowest_cost);
@@ -414,15 +420,16 @@ main(int argc, char** argv)
 	std::string sfile = cfg.get_param_value("scen");
 	std::string alg   = cfg.get_param_value("alg");
 	// std::string gen = cfg.get_param_value("gen");
-	std::string mapfile  = cfg.get_param_value("map");
-	std::string costtype = cfg.get_param_value("cost");
-	std::string costfile = cfg.get_param_value("cost-file");
+	std::string mapfile     = cfg.get_param_value("map");
+	std::string costtype    = cfg.get_param_value("cost");
+	std::string costfile    = cfg.get_param_value("cost-file");
 	std::string weightsfile = cfg.get_param_value("grid-weight");
-	dump_map_file        = cfg.get_param_value("dump-map-file");
+	dump_map_file           = cfg.get_param_value("dump-map-file");
 
 	if(filter_id == 1)
 	{
-		if (warthog::util::parse_token(cfg.get_param_value("filter"), filter_id) != std::errc{})
+		if(warthog::util::parse_token(cfg.get_param_value("filter"), filter_id)
+		   != std::errc{})
 		{
 			WARTHOG_GERROR_FMT("invalid --filter argument {}", filter_id);
 			return (int)std::errc::invalid_argument;
@@ -441,7 +448,9 @@ main(int argc, char** argv)
 
 	if(dump_map_id == 1)
 	{
-		if (warthog::util::parse_token(cfg.get_param_value("dump-map"), dump_map_id) != std::errc{})
+		if(warthog::util::parse_token(
+		       cfg.get_param_value("dump-map"), dump_map_id)
+		   != std::errc{})
 		{
 			WARTHOG_GCRIT_FMT("invalid --dump-map argument {}", dump_map_id);
 			return (int)std::errc::invalid_argument;
@@ -451,54 +460,59 @@ main(int argc, char** argv)
 
 	// load up the instances
 	warthog::scenario::scenario_manager scenmgr;
-	if (!costtype.empty())
-		if (!costfile.empty()) {
+	if(!costtype.empty())
+		if(!costfile.empty())
+		{
 			WARTHOG_GCRIT("cannot mix --cost and --cost-file together");
 			return (int)std::errc::invalid_argument;
 		}
-		scenmgr.set_cost_type(costtype);
-	try {
+	scenmgr.set_cost_type(costtype);
+	try
+	{
 		scenmgr.load_scenario(sfile.c_str());
 	}
-	catch (const std::runtime_error& e)
+	catch(const std::runtime_error& e)
 	{
 		return (int)std::errc::io_error;
 	}
 
 	// override experiments distance if given
-	if (!costfile.empty()) {
-		std::istream *readin;
+	if(!costfile.empty())
+	{
+		std::istream* readin;
 		std::optional<std::ifstream> readfile;
-		if (costfile == "/dev/stdin") {
-			readin = &std::cin;
-		} else {
-			readin = &readfile.emplace(costfile);
-		}
+		if(costfile == "/dev/stdin") { readin = &std::cin; }
+		else { readin = &readfile.emplace(costfile); }
 		std::string token;
 		int exp_id = 0;
-		while (*readin >> token) {
+		while(*readin >> token)
+		{
 			// will log warning if exp_id >= scenmgr.num_experiments
 			auto* exp = scenmgr.get_experiment(exp_id++);
-			if (exp == nullptr)
-				break;
-			if (token == "-") {
-				exp->distance_.reset();
-			} else {
+			if(exp == nullptr) break;
+			if(token == "-") { exp->distance_.reset(); }
+			else
+			{
 				double d;
-				if (warthog::util::parse_token(token, d) != std::errc{}) {
-					WARTHOG_GERROR_FMT("invalid distance parsed in provided --cost-file {} at token {}", costfile, exp_id-1);
+				if(warthog::util::parse_token(token, d) != std::errc{})
+				{
+					WARTHOG_GERROR_FMT(
+					    "invalid distance parsed in provided --cost-file {} "
+					    "at token {}",
+					    costfile, exp_id - 1);
 					break;
 				}
 			}
 		}
 		// reset any remaining instances to unknown result
-		while (true) {
+		while(true)
+		{
 			auto* exp = scenmgr.get_experiment(exp_id++);
-			if (exp == nullptr)
-				break;
+			if(exp == nullptr) break;
 			exp->distance_.reset();
 		}
-		WARTHOG_GERROR_FMT_IF(readin->fail(), "--cost-file {} io error", costfile);
+		WARTHOG_GERROR_FMT_IF(
+		    readin->fail(), "--cost-file {} io error", costfile);
 	}
 
 	if(scenmgr.num_experiments() == 0)
