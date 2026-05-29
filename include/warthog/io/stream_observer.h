@@ -15,7 +15,6 @@
 ///
 /// @author: Ryan Hechenberger
 /// @created: 2025-08-01
-//
 
 #include "fwd.h"
 

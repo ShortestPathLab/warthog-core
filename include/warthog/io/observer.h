@@ -1,7 +1,7 @@
 #ifndef WARTHOG_IO_OBSERVER_H
 #define WARTHOG_IO_OBSERVER_H
 
-/// @file io/observer.h
+/// @file observer.h
 ///
 /// Defines use of an observer pattern, in which observer object is registered
 /// to an observable, and the observable will trigger events to all relevant

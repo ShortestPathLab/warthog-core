@@ -3,6 +3,7 @@
 #include <warthog/io/log.h>
 #include <warthog/search/dummy_listener.h>
 #include <warthog/search/problem_instance.h>
+#include <warthog/io/scenario_serialize.h>
 
 #include <cstdlib>
 #include <cstring>
@@ -20,6 +21,12 @@ scenario_manager::clear()
 	experiments_.clear();
 	experiments_res_.release();
 	mfile_.clear();
+}
+
+void
+scenario_manager::set_cost_type(io::cost_type c) noexcept
+{
+	cost_type_ = io::scenario_serialize::get_cost_str(c);
 }
 
 void

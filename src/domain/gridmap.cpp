@@ -2,6 +2,7 @@
 
 #include <warthog/io/grid_trace.h>
 #include <warthog/io/log.h>
+#include <warthog/io/bittable_serialize.h>
 
 #include <bit>
 #include <cassert>

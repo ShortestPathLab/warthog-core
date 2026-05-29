@@ -1,7 +1,7 @@
 #ifndef WARTHOG_IO_GRID_H
 #define WARTHOG_IO_GRID_H
 
-/// @file io/grid.h
+/// @file grid.h
 ///
 /// Read utility for gridmap.
 ///
@@ -22,27 +22,6 @@
 
 namespace warthog::io
 {
-
-/// @brief the type of bittable to (de)serialize
-enum class bittable_type : uint8_t
-{
-	OCTILE, ///< original MovingAI format
-	PATCH,  ///< patch format, grouping multiple octiles
-	OTHER,  ///< unknown format
-	NONE,   ///< no format specified
-};
-
-/// @brief the cell character, as specified by MovingAI
-enum class gridmap_cell : char
-{
-	TERRAIN         = '.',
-	TERRAIN_2       = 'G',
-	OUT_OF_BOUNDS   = '@',
-	OUT_OF_BOUNDS_2 = 'O',
-	TREES           = 'T',
-	SWAMP           = 'S',
-	WATER           = 'W',
-};
 
 /// @brief Standard traversable terrain type from gridmap_cell
 /// @param c
@@ -142,6 +121,9 @@ public:
 		m_patch_amount = count;
 		return true;
 	}
+
+	/// @brief number of patches for writing is dynamic (requires seekable file)
+	/// @return true for success, false failure
 	bool
 	set_patch_auto()
 	{
@@ -156,7 +138,7 @@ public:
 		return m_patch_count;
 	}
 
-	/// @brief gets the number of patches that have been read
+	/// @brief override the patch id to write
 	/// @return true for success, false failure
 	bool
 	set_patch_id(uint32_t id) noexcept
@@ -209,7 +191,7 @@ public:
 	/// from get_dim()
 	/// @param buffer the buffer
 	/// @param in alternative filestream to read from
-	/// @return value init on success, error code on failure
+	/// @return error code on failure
 	/// @pre buffer must be large enough to store width x height characters
 	/// from get_dim()
 	///
@@ -220,18 +202,54 @@ public:
 	std::expected<void, std::errc>
 	read_grid_raw(std::span<char> buffer, std::istream* in = nullptr);
 
+    /// @brief Writes out file header
+    /// @param out alternative filestream to write to
+    /// @return error code on failure
+    /// @pre get_type()==bittable_type::OCTILE || get_type()==bittable_type::PATCH
+    /// 
+    /// Writes out the header for either map (OCTILE) or patch (PATCH) file.
+    /// For PATCH, set_patch_amount is needed in advanced, alternatively
+    /// set_patch_auto() does not require knowing in advanced, but file stream
+    /// must be seekable for this option and write_end() must be called at the end.
 	std::expected<void, std::errc>
 	write_header(std::ostream* out = nullptr);
 
+	/// @brief Writes out a bittable (cropped) as a grid
+	/// @param table table to write
+	/// @param offset_x top-left x to crop to
+	/// @param offset_y top-left y to crop to
+	/// @param blocker char to represent a blocker (=0)
+	/// @param traversable char to represent a non-blocker (!=0)
+	/// @param out alternative filestream to write to
+	/// @return error code on failure
+	/// @pre get_dim() != {}
+	///
+	/// Writes out a bittable to file, cropped to region (offset_x,offset_y) --
+	/// (offset_x+get_dim().width,offset_y+get_dim().height).
+	/// User must use set_dim(width,height) before calling this function to set
+	/// the output grid width/height.
 	template<typename BitTable>
 	std::expected<void, std::errc>
 	write_grid_data(
 	    BitTable& table, uint32_t offset_x = 0, uint32_t offset_y = 0, gridmap_cell blocker = gridmap_cell::OUT_OF_BOUNDS, gridmap_cell traversable = gridmap_cell::TERRAIN,
 	    std::ostream* out = nullptr);
 
+
+	/// @brief Writes out a grid from user-given buffer
+	/// @param buffer grid to write (top-left start at buffer[0])
+	/// @param out alternative filestream to write to
+	/// @return error code on failure
+	/// @pre get_dim() != {}
+	///
+    /// Similar to write_grid_data, except user provides the map data.
+    /// User must use set_dim(width,height) before calling this function to set
+    /// the output grid width/height.
 	std::expected<void, std::errc>
 	write_grid_raw(std::span<char> buffer, std::ostream* out = nullptr);
 
+	/// @brief Perform end of file work, only required for set_patch_auto()
+	/// @param out alternative filestream to write to
+	/// @return error code on failure
 	std::expected<void, std::errc>
 	write_end(std::ostream* out = nullptr);
 
@@ -326,8 +344,10 @@ bittable_serialize::write_grid_data(
 	std::unique_ptr<char[]> buffer_dyn;
 	std::span<char> line_buffer;
 	if (write_dim.width < 2048) {
+		// use stack buffer
 		line_buffer = std::span<char>(buffer.data(), write_dim.width + 1);
 	} else {
+		// too large, use dynamic buffer
 		buffer_dyn = std::make_unique<char[]>(write_dim.width + 1);
 		line_buffer = std::span<char>(buffer_dyn.get(), write_dim.width + 1);
 	}

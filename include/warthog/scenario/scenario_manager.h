@@ -18,8 +18,6 @@
 
 #include "experiment.h"
 #include <warthog/domain/gridmap.h>
-#include <warthog/io/bittable_serialize.h>
-#include <warthog/io/scenario_serialize.h>
 
 #include <expected>
 #include <filesystem>
@@ -190,10 +188,7 @@ public:
 		cost_type_ = v;
 	}
 	void
-	set_cost_type(io::cost_type c) noexcept
-	{
-		cost_type_ = io::scenario_serialize::get_cost_str(c);
-	}
+	set_cost_type(io::cost_type c) noexcept;
 
 	bool
 	is_static_scenario() const noexcept

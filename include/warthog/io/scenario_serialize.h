@@ -18,7 +18,6 @@
 ///
 /// @author: dharabor & Ryan Hechenberger
 /// @created: 2025-12-04
-///
 
 #include "serialize_base.h"
 

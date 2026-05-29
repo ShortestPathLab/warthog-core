@@ -1,7 +1,7 @@
 #ifndef WARTHOG_IO_GRID_TRACE_H
 #define WARTHOG_IO_GRID_TRACE_H
 
-/// @file io/grid_trace.h
+/// @file grid_trace.h
 ///
 /// Basic posthoc_trace for use with gridmap.
 ///
