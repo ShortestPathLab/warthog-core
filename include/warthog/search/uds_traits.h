@@ -22,6 +22,7 @@ namespace warthog::search
 enum class admissibility_criteria
 {
 	any,
+	optimal,
 	w_admissible,
 	eps_admissible
 };
@@ -35,9 +36,23 @@ enum class admissibility_criteria
 // @param lb: node that establishes the current lower bound
 // @param ub: node with the best solution so far
 
-template<admissibility_criteria A>
+template<admissibility_criteria A = admissibility_criteria::any>
 inline bool
-admissible(cost_t lb, cost_t ub, search_parameters* par)
+admissible(cost_t lb, cost_t ub, search_parameters* par);
+
+template<>
+inline bool
+admissible<admissibility_criteria::any>(
+    cost_t lb, cost_t ub, search_parameters* par)
+{
+	// default admissibility: lower bound meets upper bound
+	return lb != warthog::COST_MAX;
+}
+
+template<>
+inline bool
+admissible<admissibility_criteria::optimal>(
+    cost_t lb, cost_t ub, search_parameters* par)
 {
 	// default admissibility: lower bound meets upper bound
 	return lb >= ub;

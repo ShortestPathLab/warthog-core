@@ -345,7 +345,10 @@ run_dijkstra(
 	warthog::heuristic::zero_heuristic heuristic;
 	warthog::util::pqueue_min open;
 
-	warthog::search::unidirectional_search astar(
+	warthog::search::unidirectional_search<decltype(heuristic), decltype(expander), decltype(open),
+		decltype(listener_type(WARTHOG_POSTHOC_DO(&scen.grid))),
+		warthog::search::admissibility_criteria::optimal>
+	astar(
 	    &heuristic, &expander, &open,
 	    listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
 
