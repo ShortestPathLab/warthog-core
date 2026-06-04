@@ -185,16 +185,11 @@ reopen<reopen_policy::yes>()
 	return true;
 }
 
-struct uds_default_traits
-{
-	// using node = std::tuple<>;
-	// using observer = std::tuple<>;
-	static constexpr admissibility_criteria ac = admissibility_criteria::any;
-	static constexpr feasibility_criteria fc
-	    = feasibility_criteria::until_exhaustion;
-	static constexpr reopen_policy rp = reopen_policy::no;
-};
-
+/// Modify search behaviour of unidirectional_search.
+/// To be passed as template parameters with compile-time values
+/// and types.
+/// These values are optional and a user-provided struct only require
+/// parameter for values that differ to the default.
 template<
     typename N = search_node, typename L = std::tuple<>,
     admissibility_criteria AC = admissibility_criteria::any,
@@ -207,6 +202,20 @@ struct uds_traits
 	static constexpr admissibility_criteria ac = AC;
 	static constexpr feasibility_criteria fc   = FC;
 	static constexpr reopen_policy rp          = RP;
+};
+
+/// The default parameters given in the class for uds traits.
+/// Is equivalent to an empty struct in behaviour, as
+/// admissibility_criteria::any, feasibility_criteria::until_exhaustion
+/// and reopen_policy::no are the default values in uds.
+struct uds_default_traits
+{
+	// using node = search_node;
+	// using observer = std::tuple<>;
+	static constexpr admissibility_criteria ac = admissibility_criteria::any;
+	static constexpr feasibility_criteria fc
+	    = feasibility_criteria::until_exhaustion;
+	static constexpr reopen_policy rp = reopen_policy::no;
 };
 
 namespace details
