@@ -41,7 +41,7 @@ enum class admissibility_criteria
 // @param lb: node that establishes the current lower bound
 // @param ub: node with the best solution so far
 
-template<admissibility_criteria A = admissibility_criteria::any>
+template<admissibility_criteria A>
 inline bool
 admissible(cost_t lb, cost_t ub, search_parameters* par);
 
@@ -167,7 +167,7 @@ enum class reopen_policy
 
 // decide whether to renopen nodes already expanded (when their g-value
 // can be improved). we handle the positive case via specialisation.
-template<reopen_policy R = reopen_policy::no>
+template<reopen_policy R>
 inline bool
 reopen();
 
@@ -185,16 +185,31 @@ reopen<reopen_policy::yes>()
 	return true;
 }
 
+/// The default parameters given in the class for uds traits.
+/// Is equivalent to an empty struct in behaviour, as
+/// admissibility_criteria::any, feasibility_criteria::until_exhaustion
+/// and reopen_policy::no are the default values in uds.
+struct uds_default_traits
+{
+	using node = search_node;
+	using observer = std::tuple<>;
+	static constexpr admissibility_criteria ac = admissibility_criteria::any;
+	static constexpr feasibility_criteria fc
+	    = feasibility_criteria::until_exhaustion;
+	static constexpr reopen_policy rp = reopen_policy::no;
+};
+
 /// Modify search behaviour of unidirectional_search.
 /// To be passed as template parameters with compile-time values
 /// and types.
 /// These values are optional and a user-provided struct only require
 /// parameter for values that differ to the default.
 template<
-    typename N = search_node, typename L = std::tuple<>,
-    admissibility_criteria AC = admissibility_criteria::any,
-    feasibility_criteria FC   = feasibility_criteria::until_exhaustion,
-    reopen_policy RP          = reopen_policy::no>
+    typename N = uds_default_traits::node,
+	typename L = uds_default_traits::observer,
+    admissibility_criteria AC = uds_default_traits::ac,
+    feasibility_criteria FC   = uds_default_traits::fc,
+    reopen_policy RP          = uds_default_traits::rp>
 struct uds_traits
 {
 	using node                                 = N;
@@ -204,27 +219,13 @@ struct uds_traits
 	static constexpr reopen_policy rp          = RP;
 };
 
-/// The default parameters given in the class for uds traits.
-/// Is equivalent to an empty struct in behaviour, as
-/// admissibility_criteria::any, feasibility_criteria::until_exhaustion
-/// and reopen_policy::no are the default values in uds.
-struct uds_default_traits
-{
-	// using node = search_node;
-	// using observer = std::tuple<>;
-	static constexpr admissibility_criteria ac = admissibility_criteria::any;
-	static constexpr feasibility_criteria fc
-	    = feasibility_criteria::until_exhaustion;
-	static constexpr reopen_policy rp = reopen_policy::no;
-};
-
 namespace details
 {
 
 template<typename Traits>
 struct uds_trait_node
 {
-	using type = search_node;
+	using type = uds_default_traits::node;
 };
 template<typename Traits>
     requires requires { typename Traits::node; }
@@ -236,7 +237,7 @@ struct uds_trait_node<Traits>
 template<typename Traits>
 struct uds_trait_observer
 {
-	using type = std::tuple<>;
+	using type = uds_default_traits::observer;
 };
 template<typename Traits>
     requires requires { typename Traits::observer; }
@@ -265,7 +266,7 @@ uds_trait_ac() noexcept
 	{
 		return Traits::ac;
 	}
-	else { return admissibility_criteria::any; }
+	else { return uds_default_traits::ac; }
 }
 
 template<typename Traits>
@@ -280,7 +281,7 @@ uds_trait_fc() noexcept
 	{
 		return Traits::fc;
 	}
-	else { return feasibility_criteria::until_exhaustion; }
+	else { return uds_default_traits::fc; }
 }
 
 template<typename Traits>
@@ -293,7 +294,7 @@ uds_trait_rp() noexcept
 	{
 		return Traits::rp;
 	}
-	else { return reopen_policy::no; }
+	else { return uds_default_traits::rp; }
 }
 
 } // namespace warthog::search
