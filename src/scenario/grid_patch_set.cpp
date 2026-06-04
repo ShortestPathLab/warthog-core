@@ -206,10 +206,7 @@ grid_patch_set::save(io::bittable_serialize& S, int grid_id, uint32_t flags)
 		WARTHOG_GERROR_IF(
 		    (flags & SKIP_HEADER) != 0,
 		    "grid patch SKIP_HEADER given but serialize not setup");
-		WARTHOG_GERROR_IF(
-		    (flags & SKIP_HEADER) != 0,
-		    "grid patch SKIP_HEADER given but serialize not setup");
-		((flags & SKIP_HEADER) == 0, "grid patch not in state to use");
+		WARTHOG_GERROR_IF((flags & SKIP_HEADER) == 0, "grid patch not in state to use");
 		return -1;
 	}
 	if(auto r = S.write_header(); !r)

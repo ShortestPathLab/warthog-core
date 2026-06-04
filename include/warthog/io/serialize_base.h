@@ -25,6 +25,7 @@
 #include <fstream>
 #include <memory>
 #include <sstream>
+#include <system_error>
 
 namespace warthog::io
 {
@@ -120,7 +121,7 @@ protected:
 	get_istream(std::istream* in = nullptr) noexcept
 	{
 		if(in == nullptr) in = m_stream_in;
-		if(in == nullptr || !in) std::unexpected(std::errc::io_error);
+		if(in == nullptr || !*in) return std::unexpected(std::errc::io_error);
 		return in;
 	}
 	/// @return the internal istream or provided, or error
