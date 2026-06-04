@@ -348,29 +348,34 @@ labelled_gridmap<CELL>::save(io::bittable_serialize& parser, bool padding)
 	std::unique_ptr<char[]> buffer_v
 	    = std::make_unique<char[]>(lwidth * lheight);
 	std::span<char> buffer(buffer_v.get(), lwidth * lheight);
-	pad_id row_id = pad_id::zero();
+	pad_id row_id    = pad_id::zero();
 	pad_id buffer_id = pad_id::zero();
 	pad_id row_id_end(lwidth * lheight);
-	if (padding) {
+	if(padding)
+	{
 		// convert 0 to '@'
 		std::ranges::fill(buffer, '@');
 		// output had buffer, only write in unbuffered area
 		buffer_id = to_padded_id(static_cast<pack_id>(buffer_id));
-	} else {
+	}
+	else
+	{
 		// update pad_id to only cover unpadded area of grid
-		row_id = to_padded_id(static_cast<pack_id>(row_id));
+		row_id     = to_padded_id(static_cast<pack_id>(row_id));
 		row_id_end = to_padded_id(static_cast<pack_id>(row_id_end));
 	}
 	// copy unpadded grid to (un)padded output grid
 	const uint32_t pwidth = width();
 	const uint32_t hwidth = header_width();
 	std::span<CELL> grid(this->db_.get(), this->db_size_);
-	for (; row_id.id < row_id_end.id; row_id.id += pwidth, buffer_id.id += lwidth)
+	for(; row_id.id < row_id_end.id;
+	    row_id.id += pwidth, buffer_id.id += lwidth)
 	{
-		std::ranges::copy(grid.subspan(row_id.id, hwidth), buffer.subspan(buffer_id.id, hwidth));
+		std::ranges::copy(
+		    grid.subspan(row_id.id, hwidth),
+		    buffer.subspan(buffer_id.id, hwidth));
 	}
-	if(auto r = parser.write_grid_raw(buffer);
-	   !r)
+	if(auto r = parser.write_grid_raw(buffer); !r)
 	{
 		WARTHOG_GERROR_FMT(
 		    "gridmap save failed grid write errc={}", (int)r.error());
@@ -402,20 +407,21 @@ labelled_gridmap<CELL>::setup_ser_(io::bittable_serialize& parser)
 {
 	if(!parser.read_grid_header()) return false;
 	const uint32_t lwidth = parser.get_dim().width;
-	const uint64_t lsize = (uint64_t)lwidth * parser.get_dim().height;
+	const uint64_t lsize  = (uint64_t)lwidth * parser.get_dim().height;
 	this->header_.width_  = lwidth;
 	this->header_.height_ = parser.get_dim().height;
 
 	init_db();
 	// read raw data to buffer
-	std::unique_ptr<char[]> buffer_v
-	    = std::make_unique<char[]>(lsize);
+	std::unique_ptr<char[]> buffer_v = std::make_unique<char[]>(lsize);
 	std::span<char> buffer(buffer_v.get(), lsize);
 	if(!parser.read_grid_raw(buffer)) return false;
 	// copy buffet to db, add padding
-	for (pack_id row_id(0); row_id.id < lsize; row_id.id += lwidth)
+	for(pack_id row_id(0); row_id.id < lsize; row_id.id += lwidth)
 	{
-		std::ranges::copy(buffer.subspan(row_id.id, lwidth), this->db_.get() + to_padded_id(row_id).id);
+		std::ranges::copy(
+		    buffer.subspan(row_id.id, lwidth),
+		    this->db_.get() + to_padded_id(row_id).id);
 	}
 	return true;
 }
