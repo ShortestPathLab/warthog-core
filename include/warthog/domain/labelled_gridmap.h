@@ -116,7 +116,8 @@ public:
 		if(!parser.open_write())
 		{
 			WARTHOG_GERROR_FMT(
-				"gridmap save failed to write to file \"{}\"", filename.string());
+			    "gridmap save failed to write to file \"{}\"",
+			    filename.string());
 			return false;
 		}
 		return save(parser, padding);
@@ -129,7 +130,7 @@ public:
 		if(!parser.open_write())
 		{
 			WARTHOG_GERROR_FMT(
-				"gridmap save failed to write to file \"{}\"", filename);
+			    "gridmap save failed to write to file \"{}\"", filename);
 			return false;
 		}
 		return save(parser, padding);
@@ -285,10 +286,7 @@ public:
 		return sizeof(*this) + sizeof(CELL) * db_size_;
 	}
 
-	operator bool() const noexcept
-	{
-		return static_cast<bool>(db_);
-	}
+	operator bool() const noexcept { return static_cast<bool>(db_); }
 
 protected:
 	bool
@@ -296,7 +294,8 @@ protected:
 	bool
 	setup_ser_(io::bittable_serialize& parser);
 
-	struct {
+	struct
+	{
 		uint32_t height_;
 		uint32_t width_;
 	} header_ = {};
@@ -314,12 +313,11 @@ protected:
 	init_db();
 };
 
-
 template<typename CELL>
 inline bool
 labelled_gridmap<CELL>::save(io::bittable_serialize& parser, bool padding)
 {
-	if (!*this)
+	if(!*this)
 	{
 		WARTHOG_GERROR("gridmap save failed due to empty gridmap");
 		return false;
@@ -376,8 +374,7 @@ template<typename CELL>
 inline bool
 labelled_gridmap<CELL>::setup_ser_(io::bittable_serialize& parser)
 {
-	if(!parser.read_grid_header())
-		return false;
+	if(!parser.read_grid_header()) return false;
 	this->header_.width_  = parser.get_dim().width;
 	this->header_.height_ = parser.get_dim().height;
 
@@ -386,8 +383,7 @@ labelled_gridmap<CELL>::setup_ser_(io::bittable_serialize& parser)
 	std::unique_ptr<char[]> buffer_v
 	    = std::make_unique<char[]>(this->db_size_);
 	std::span<char> buffer(buffer_v.get(), this->db_size_);
-	if(!parser.read_grid_raw(buffer))
-		return false;
+	if(!parser.read_grid_raw(buffer)) return false;
 	// copy buffet to db
 	std::copy_n(buffer.data(), buffer.size(), this->db_.get());
 	return true;

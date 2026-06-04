@@ -22,22 +22,19 @@ gridmap::gridmap(uint32_t h, uint32_t w) : header_{h, w}
 
 gridmap::gridmap(std::istream& input)
 {
-	if (!setup_stream_(input))
-		throw std::runtime_error("invalid grid");
+	if(!setup_stream_(input)) throw std::runtime_error("invalid grid");
 }
 
 gridmap::gridmap(io::bittable_serialize& parser)
 {
-	if (!setup_ser_(parser))
-		throw std::runtime_error("invalid grid");
+	if(!setup_ser_(parser)) throw std::runtime_error("invalid grid");
 }
 
 gridmap::gridmap(std::filesystem::path&& filename)
 {
 	filename_ = std::move(filename);
 	std::ifstream in(filename_);
-	if (!setup_stream_(in))
-		throw std::runtime_error("invalid grid");
+	if(!setup_stream_(in)) throw std::runtime_error("invalid grid");
 }
 
 gridmap::gridmap(const std::filesystem::path& filename)
@@ -125,7 +122,7 @@ gridmap::save(const char* filename, bool padding)
 bool
 gridmap::save(io::bittable_serialize& parser, bool padding)
 {
-	if (!*this)
+	if(!*this)
 	{
 		WARTHOG_GERROR("gridmap save failed due to empty gridmap");
 		return false;
@@ -171,7 +168,7 @@ gridmap::save(io::bittable_serialize& parser, bool padding)
 bool
 gridmap::setup_stream_(std::istream& in)
 {
-	if (!in) return false;
+	if(!in) return false;
 	io::bittable_serialize parser;
 	if(!parser.open_read(&in)) return false;
 	if(!parser.read_header()) return false;
@@ -181,19 +178,17 @@ gridmap::setup_stream_(std::istream& in)
 bool
 gridmap::setup_ser_(io::bittable_serialize& parser)
 {
-	if(!parser.read_grid_header())
-		return false;
+	if(!parser.read_grid_header()) return false;
 	this->header_.width_  = parser.get_dim().width;
 	this->header_.height_ = parser.get_dim().height;
 
 	init_db();
-	if(!parser.read_grid_data(*this, 0, PADDED_ROWS))
-		return false;
+	if(!parser.read_grid_data(*this, 0, PADDED_ROWS)) return false;
 	// calculate traversable
 	num_traversable_ = static_cast<uint32_t>(std::transform_reduce(
 	    db_.get(), db_.get() + db_size_, static_cast<int>(0),
 	    std::plus<uint32_t>(), &std::popcount<dbword>));
-	
+
 	return true;
 }
 

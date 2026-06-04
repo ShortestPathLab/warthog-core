@@ -408,10 +408,7 @@ public:
 		return sizeof(*this) + sizeof(warthog::dbword) * db_size_;
 	}
 
-	operator bool() const noexcept
-	{
-		return static_cast<bool>(db_);
-	}
+	operator bool() const noexcept { return static_cast<bool>(db_); }
 
 protected:
 	bool
@@ -419,7 +416,8 @@ protected:
 	bool
 	setup_ser_(io::bittable_serialize& parser);
 
-	struct {
+	struct
+	{
 		uint32_t height_;
 		uint32_t width_;
 	} header_ = {};
