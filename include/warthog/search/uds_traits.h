@@ -1,16 +1,20 @@
 #ifndef WARTHOG_SEARCH_UDS_TRAITS_H
 #define WARTHOG_SEARCH_UDS_TRAITS_H
 
-// search/uds_traits.h
-//
-// Traits that specify how a Uni-Directional Search should behave:
-//   - to determine admissibility
-//   - to determine termination
-//   - to determine whether to reopen
-//
-// @author: dharabor
-// @created: 2021-10-12
-//
+/// @file uds_traits.h
+///
+/// Traits that specify how a Uni-Directional Search should behave:
+///   - to determine admissibility
+///   - to determine termination
+///   - to determine whether to reopen
+///
+/// Traits are applied through a trait class, see uds_traits for an example
+/// of a complete (and user definable) class of all traits.
+/// Every trait has a default value, and thus are optional to include, i.e.
+/// an empty struct is the same as uds_default_traits.
+///
+/// @author: dharabor & Ryan Hechenberger
+/// @created: 2021-10-12
 
 #include "search_metrics.h"
 #include <warthog/io/log.h>
@@ -23,6 +27,7 @@ namespace warthog::search
 enum class admissibility_criteria
 {
 	any,
+	optimal,
 	w_admissible,
 	eps_admissible
 };
@@ -36,17 +41,38 @@ enum class admissibility_criteria
 // @param lb: node that establishes the current lower bound
 // @param ub: node with the best solution so far
 
-template<admissibility_criteria A>
+template<admissibility_criteria A = admissibility_criteria::any>
 inline bool
-admissible(cost_t lb, cost_t ub, search_parameters* par)
+admissible(cost_t lb, cost_t ub, search_parameters* par);
+
+/// any:
+/// the any admissible approach always returns true solution; i.e.,
+/// a solution is admissible if it is feasible.
+template<>
+inline bool
+admissible<admissibility_criteria::any>(
+	cost_t lb, cost_t ub, search_parameters* par)
 {
 	// default admissibility: any solution at all
 	return ub != warthog::COST_MAX;
 }
 
-// w_admissibility:
-// the current upperbound is not more than w * lowerbound, with w a user
-// defined parameter (w=1 guarantees optimality).
+/// optimal:
+/// the optimal admissible approach returns when the lower-bound has
+/// reached or exceeded the upper bound i.e., no better solution
+/// exists in the queue.
+template<>
+inline bool
+admissible<admissibility_criteria::optimal>(
+	cost_t lb, cost_t ub, search_parameters* par)
+{
+	// default admissibility: any solution at all
+	return lb >= ub;
+}
+
+/// w_admissibility:
+/// the current upperbound is not more than w * lowerbound, with w a user
+/// defined parameter (w=1 guarantees optimality).
 template<>
 inline bool
 admissible<admissibility_criteria::w_admissible>(
@@ -55,12 +81,12 @@ admissible<admissibility_criteria::w_admissible>(
 	// TODO: precision issues can arise here. rounding would fix this
 	// but we need to know a minimum cost-delta (round with half of that)
 	assert(par->get_w_admissibility() >= 1.0);
-	return ub <= (par->get_w_admissibility() * lb);
+	return (par->get_w_admissibility() * lb) >= ub;
 }
 
-// eps_admissibility:
-// the current upperbound is not more than eps(ilon) + lowerbound.
-// Here eps is a user defined parameter (eps=0 guarantees optimality).
+/// eps_admissibility:
+/// the current upperbound is not more than eps(ilon) + lowerbound.
+/// Here eps is a user defined parameter (eps=0 guarantees optimality).
 template<>
 inline bool
 admissible<admissibility_criteria::eps_admissible>(
@@ -69,7 +95,7 @@ admissible<admissibility_criteria::eps_admissible>(
 	// TODO: precision issues can arise here. rounding would fix this
 	// but we need to know a minimum cost-delta (round with half of that)
 	assert(par->get_eps_admissibility() >= 0);
-	return ub <= (par->get_eps_admissibility() + lb);
+	return (par->get_eps_admissibility() + lb) >= ub;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -79,13 +105,20 @@ enum class feasibility_criteria
 	until_cutoff
 };
 
-// test if the search is still feasible; i.e., if a solution could still
-// exist. our default approach is to suppose a solution still exists if
-// there are more nodes to expand. other criteria (e.g., termination due
-// to reaching some limit) are handled via specialisation
+/// test if the search is still feasible; i.e., if a solution could still
+/// exist. 
 template<feasibility_criteria T>
 inline bool
-feasible(search_node* next, search_metrics* met, search_parameters* par)
+feasible(search_node* next, search_metrics* met, search_parameters* par);
+
+/// test if the search is still feasible; i.e., if a solution could still
+/// exist. our default approach is to suppose a solution still exists if
+/// there are more nodes to expand. other criteria (e.g., termination due
+/// to reaching some limit) are handled via specialisation
+template<>
+inline bool
+feasible<feasibility_criteria::until_exhaustion>(
+    search_node* next, search_metrics* met, search_parameters* par)
 {
 	// default feasibility: still have unexpanded nodes
 	return next;
@@ -134,9 +167,13 @@ enum class reopen_policy
 
 // decide whether to renopen nodes already expanded (when their g-value
 // can be improved). we handle the positive case via specialisation.
-template<reopen_policy RP>
+template<reopen_policy R = reopen_policy::no>
 inline bool
-reopen()
+reopen();
+
+template<>
+inline bool
+reopen<reopen_policy::no>()
 {
 	return false;
 }
@@ -190,7 +227,7 @@ struct uds_trait_node<Traits>
 template<typename Traits>
 struct uds_trait_observer
 {
-	using type = search_node;
+	using type = std::tuple<>;
 };
 template<typename Traits>
     requires requires { typename Traits::observer; }
