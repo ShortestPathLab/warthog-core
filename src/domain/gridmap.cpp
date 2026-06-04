@@ -15,26 +15,29 @@ namespace warthog::domain
 
 gridmap::gridmap() = default;
 
-gridmap::gridmap(uint32_t h, uint32_t w) : header_(h, w, "octile")
+gridmap::gridmap(uint32_t h, uint32_t w) : header_{h, w}
 {
 	this->init_db();
 }
 
 gridmap::gridmap(std::istream& input)
 {
-	setup_stream_(input);
+	if (!setup_stream_(input))
+		throw std::runtime_error("invalid grid");
 }
 
 gridmap::gridmap(io::bittable_serialize& parser)
 {
-	setup_ser_(parser);
+	if (!setup_ser_(parser))
+		throw std::runtime_error("invalid grid");
 }
 
 gridmap::gridmap(std::filesystem::path&& filename)
 {
 	filename_ = std::move(filename);
 	std::ifstream in(filename_);
-	setup_stream_(in);
+	if (!setup_stream_(in))
+		throw std::runtime_error("invalid grid");
 }
 
 gridmap::gridmap(const std::filesystem::path& filename)
@@ -53,41 +56,45 @@ gridmap::setup(uint32_t h, uint32_t w)
 	this->init_db();
 }
 
-void
+bool
 gridmap::load(std::istream& input)
 {
-	setup_stream_(input);
+	return setup_stream_(input);
 }
-void
+
+bool
 gridmap::load(io::bittable_serialize& parser)
 {
-	setup_ser_(parser);
+	return setup_ser_(parser);
 }
-void
+
+bool
 gridmap::load(std::filesystem::path filename)
 {
 	filename_ = std::move(filename);
 	std::ifstream in(filename_);
-	setup_stream_(in);
-}
-void
-gridmap::load(const char* filename)
-{
-	load(std::filesystem::path(filename));
+	return setup_stream_(in);
 }
 
-void
+bool
+gridmap::load(const char* filename)
+{
+	return load(std::filesystem::path(filename));
+}
+
+bool
 gridmap::save(std::ostream& input, bool padding)
 {
 	io::bittable_serialize parser;
 	if(!parser.open_write(&input))
 	{
 		WARTHOG_GERROR("gridmap save failed with input stream");
-		return;
+		return false;
 	}
-	save(parser, padding);
+	return save(parser, padding);
 }
-void
+
+bool
 gridmap::save(const std::filesystem::path& filename, bool padding)
 {
 	io::bittable_serialize parser;
@@ -96,11 +103,12 @@ gridmap::save(const std::filesystem::path& filename, bool padding)
 	{
 		WARTHOG_GERROR_FMT(
 		    "gridmap save failed to write to file \"{}\"", filename.string());
-		return;
+		return false;
 	}
-	save(parser, padding);
+	return save(parser, padding);
 }
-void
+
+bool
 gridmap::save(const char* filename, bool padding)
 {
 	io::bittable_serialize parser;
@@ -109,25 +117,31 @@ gridmap::save(const char* filename, bool padding)
 	{
 		WARTHOG_GERROR_FMT(
 		    "gridmap save failed to write to file \"{}\"", filename);
-		return;
+		return false;
 	}
-	save(parser, padding);
+	return save(parser, padding);
 }
-void
+
+bool
 gridmap::save(io::bittable_serialize& parser, bool padding)
 {
+	if (!*this)
+	{
+		WARTHOG_GERROR("gridmap save failed due to empty gridmap");
+		return false;
+	}
 	uint32_t lwidth  = padding ? width() : header_width();
 	uint32_t lheight = padding ? height() : header_height();
 	if(!parser.set_type(warthog::io::bittable_type::OCTILE))
 	{
 		WARTHOG_GERROR("gridmap save failed to set type");
-		return;
+		return false;
 	}
 	if(!parser.set_dim(lwidth, lheight))
 	{
 		WARTHOG_GERROR_FMT(
 		    "gridmap save invalid dimensions {}x{}", lwidth, lheight);
-		return;
+		return false;
 	}
 
 	// write gridmap data
@@ -135,48 +149,52 @@ gridmap::save(io::bittable_serialize& parser, bool padding)
 	{
 		WARTHOG_GERROR_FMT(
 		    "gridmap save failed header write errc={}", (int)r.error());
-		return;
+		return false;
 	}
 	if(auto r = parser.write_grid_data(*this, 0, !padding ? PADDED_ROWS : 0);
 	   !r)
 	{
 		WARTHOG_GERROR_FMT(
 		    "gridmap save failed grid write errc={}", (int)r.error());
-		return;
+		return false;
 	}
 	if(auto r = parser.write_end(); !r)
 	{
 		WARTHOG_GERROR_FMT(
 		    "gridmap save failed finalize errc={}", (int)r.error());
-		return;
+		return false;
 	}
+
+	return true;
 }
 
-void
+bool
 gridmap::setup_stream_(std::istream& in)
 {
+	if (!in) return false;
 	io::bittable_serialize parser;
-	if(!parser.open_read(&in)) throw std::runtime_error("invalid grid stream");
-	if(!parser.read_header()) throw std::runtime_error("invalid grid format");
-	setup_ser_(parser);
+	if(!parser.open_read(&in)) return false;
+	if(!parser.read_header()) return false;
+	return setup_ser_(parser);
 }
 
-void
+bool
 gridmap::setup_ser_(io::bittable_serialize& parser)
 {
 	if(!parser.read_grid_header())
-		throw std::runtime_error("invalid grid format");
-	this->header_.type_   = "octile";
+		return false;
 	this->header_.width_  = parser.get_dim().width;
 	this->header_.height_ = parser.get_dim().height;
 
 	init_db();
 	if(!parser.read_grid_data(*this, 0, PADDED_ROWS))
-		throw std::runtime_error("invalid grid format");
+		return false;
 	// calculate traversable
 	num_traversable_ = static_cast<uint32_t>(std::transform_reduce(
 	    db_.get(), db_.get() + db_size_, static_cast<int>(0),
 	    std::plus<uint32_t>(), &std::popcount<dbword>));
+	
+	return true;
 }
 
 void
@@ -218,7 +236,6 @@ gridmap::print(std::ostream& out)
 {
 	out << "printing padded map" << std::endl;
 	out << "-------------------" << std::endl;
-	out << "type " << header_.type_ << std::endl;
 	out << "height " << this->height() << std::endl;
 	out << "width " << this->width() << std::endl;
 	out << "map" << std::endl;

@@ -65,7 +65,6 @@ include/warthog/util/cast.h
 include/warthog/util/cost_table.h
 include/warthog/util/dimacs_parser.h
 include/warthog/util/file_utils.h
-include/warthog/util/gm_header.h
 include/warthog/util/helpers.h
 include/warthog/util/intrin.h
 include/warthog/util/macros.h

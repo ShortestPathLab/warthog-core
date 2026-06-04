@@ -84,8 +84,6 @@ help(std::ostream& out)
 	       "terrain algorithm)\n"
 	    << "\t--cost [type] (optional; force use of selected solution cost of "
 	       "instance, error if not exists)"
-	    << "\t--cost-file [type] (optional; override scenario costs with "
-	       "file, conflicts with --cost)"
 	    << "\t--checkopt (optional; compare solution costs against "
 	       "values in the scen file)\n"
 	    << "\t--verbose (optional; prints debugging info when compiled "
@@ -345,10 +343,7 @@ run_dijkstra(
 	warthog::heuristic::zero_heuristic heuristic;
 	warthog::util::pqueue_min open;
 
-	warthog::search::unidirectional_search<decltype(heuristic), decltype(expander), decltype(open),
-		decltype(listener_type(WARTHOG_POSTHOC_DO(&scen.grid))),
-		warthog::search::admissibility_criteria::optimal>
-	astar(
+	warthog::search::unidirectional_search astar(
 	    &heuristic, &expander, &open,
 	    listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
 
@@ -401,7 +396,6 @@ main(int argc, char** argv)
 	       {"help", no_argument, &print_help, 1},
 	       {"checkopt", no_argument, &checkopt, 1},
 	       {"cost", required_argument, 0, 0},
-	       {"cost-file", required_argument, 0, 0},
 	       {"verbose", no_argument, &verbose, 1},
 	       {"filter", required_argument, &filter_id, 1},
 	       {"dump-map", required_argument, &dump_map_id, 1},
@@ -425,7 +419,6 @@ main(int argc, char** argv)
 	// std::string gen = cfg.get_param_value("gen");
 	std::string mapfile     = cfg.get_param_value("map");
 	std::string costtype    = cfg.get_param_value("cost");
-	std::string costfile    = cfg.get_param_value("cost-file");
 	std::string weightsfile = cfg.get_param_value("grid-weight");
 	dump_map_file           = cfg.get_param_value("dump-map-file");
 
@@ -463,12 +456,6 @@ main(int argc, char** argv)
 
 	// load up the instances
 	warthog::scenario::scenario_manager scenmgr;
-	if(!costtype.empty())
-		if(!costfile.empty())
-		{
-			WARTHOG_GCRIT("cannot mix --cost and --cost-file together");
-			return (int)std::errc::invalid_argument;
-		}
 	scenmgr.set_cost_type(costtype);
 	try
 	{
@@ -477,45 +464,6 @@ main(int argc, char** argv)
 	catch(const std::runtime_error& e)
 	{
 		return (int)std::errc::io_error;
-	}
-
-	// override experiments distance if given
-	if(!costfile.empty())
-	{
-		std::istream* readin;
-		std::optional<std::ifstream> readfile;
-		if(costfile == "/dev/stdin") { readin = &std::cin; }
-		else { readin = &readfile.emplace(costfile); }
-		std::string token;
-		int exp_id = 0;
-		while(*readin >> token)
-		{
-			// will log warning if exp_id >= scenmgr.num_experiments
-			auto* exp = scenmgr.get_experiment(exp_id++);
-			if(exp == nullptr) break;
-			if(token == "-") { exp->distance_.reset(); }
-			else
-			{
-				double d;
-				if(warthog::util::parse_token(token, d) != std::errc{})
-				{
-					WARTHOG_GERROR_FMT(
-					    "invalid distance parsed in provided --cost-file {} "
-					    "at token {}",
-					    costfile, exp_id - 1);
-					break;
-				}
-			}
-		}
-		// reset any remaining instances to unknown result
-		while(true)
-		{
-			auto* exp = scenmgr.get_experiment(exp_id++);
-			if(exp == nullptr) break;
-			exp->distance_.reset();
-		}
-		WARTHOG_GERROR_FMT_IF(
-		    readin->fail(), "--cost-file {} io error", costfile);
 	}
 
 	if(scenmgr.num_experiments() == 0)
@@ -535,8 +483,8 @@ main(int argc, char** argv)
 			help(std::cout);
 			return 0;
 		}
+		WARTHOG_GINFO_FMT("deduced mapfile: ", mapfile);
 	}
-	std::cerr << "mapfile=" << mapfile << std::endl;
 
 	if(alg == "dijkstra") { return run_dijkstra(scenmgr, mapfile, alg); }
 	else if(alg == "astar") { return run_astar(scenmgr, mapfile, alg); }
@@ -545,6 +493,6 @@ main(int argc, char** argv)
 	{
 		return run_wgm_astar(scenmgr, mapfile, alg, weightsfile);
 	}
-	std::cerr << "err; invalid search algorithm: " << alg << "\n";
-	return 1;
+	WARTHOG_GCRIT_FMT("invalid search algorithm: ", alg);
+	return (int)std::errc::invalid_argument;
 }

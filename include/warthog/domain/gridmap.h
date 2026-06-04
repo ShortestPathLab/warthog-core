@@ -23,7 +23,6 @@
 #include <warthog/io/fwd.h>
 #include <warthog/memory/bittable.h>
 #include <warthog/util/cast.h>
-#include <warthog/util/gm_header.h>
 #include <warthog/util/helpers.h>
 #include <warthog/util/intrin.h>
 
@@ -67,22 +66,22 @@ public:
 	void
 	setup(uint32_t height, uint32_t width);
 
-	void
+	bool
 	load(std::istream& input);
-	void
+	bool
 	load(io::bittable_serialize& parser);
-	void
+	bool
 	load(std::filesystem::path filename);
-	void
+	bool
 	load(const char* filename);
 
-	void
+	bool
 	save(std::ostream& input, bool padding = false);
-	void
+	bool
 	save(io::bittable_serialize& parser, bool padding = false);
-	void
+	bool
 	save(const std::filesystem::path& filename, bool padding = false);
-	void
+	bool
 	save(const char* filename, bool padding = false);
 
 	/// @brief convert unpadded id to padded id
@@ -409,13 +408,21 @@ public:
 		return sizeof(*this) + sizeof(warthog::dbword) * db_size_;
 	}
 
+	operator bool() const noexcept
+	{
+		return static_cast<bool>(db_);
+	}
+
 protected:
-	void
+	bool
 	setup_stream_(std::istream& in);
-	void
+	bool
 	setup_ser_(io::bittable_serialize& parser);
 
-	warthog::util::gm_header header_ = {};
+	struct {
+		uint32_t height_;
+		uint32_t width_;
+	} header_ = {};
 	std::unique_ptr<warthog::dbword[]> db_;
 	std::filesystem::path filename_;
 

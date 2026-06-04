@@ -253,8 +253,7 @@ private:
 				if(n->get_search_number() != current->get_search_number())
 				{
 					initialise_node_(n, current->get_id(), gval, pi, par, sol);
-					// <= to ensure target is pushed to the queue
-					if(n->get_f() <= sol->sum_of_edge_costs_)
+					if(n->get_f() < sol->sum_of_edge_costs_)
 					{
 						open_->push(n);
 						WARTHOG_GINFO_FMT_IF(pi->verbose_, "Generate: {}", *n);
