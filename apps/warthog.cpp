@@ -251,10 +251,10 @@ run_astar4c(
 	return ret;
 }
 
-
 struct dijkstra_traits
 {
-	static constexpr auto ac = warthog::search::admissibility_criteria::optimal;
+	static constexpr auto ac
+	    = warthog::search::admissibility_criteria::optimal;
 	using observer = listener_type;
 };
 int
@@ -267,10 +267,12 @@ run_dijkstra(
 	warthog::heuristic::zero_heuristic heuristic;
 	warthog::util::pqueue_min open;
 
-	warthog::search::unidirectional_search<decltype(heuristic), decltype(expander), decltype(open),
-		dijkstra_traits>
-	 dijkstra(
-	    &heuristic, &expander, &open, listener_type(WARTHOG_POSTHOC_DO(&map)));
+	warthog::search::unidirectional_search<
+	    decltype(heuristic), decltype(expander), decltype(open),
+	    dijkstra_traits>
+	    dijkstra(
+	        &heuristic, &expander, &open,
+	        listener_type(WARTHOG_POSTHOC_DO(&map)));
 
 	int ret = run_experiments(
 	    dijkstra, alg_name, scenmgr, verbose, checkopt, std::cout);

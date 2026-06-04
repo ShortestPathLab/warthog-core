@@ -39,8 +39,7 @@ namespace warthog::search
 // used determine if a search should continue or terminate.
 // (default: search for any solution, until OPEN is exhausted)
 template<
-    typename H, typename E, typename Q,
-    typename Traits = uds_default_traits>
+    typename H, typename E, typename Q, typename Traits = uds_default_traits>
 class unidirectional_search
 {
 public:
@@ -57,9 +56,8 @@ public:
 	    : heuristic_(heuristic), expander_(expander), open_(queue),
 	      listeners_(listeners)
 	{ }
-	unidirectional_search(const unidirectional_search& other)
-	    = delete;
-	~unidirectional_search() = default;
+	unidirectional_search(const unidirectional_search& other) = delete;
+	~unidirectional_search()                                  = default;
 
 	unidirectional_search&
 	operator=(const unidirectional_search& other)
@@ -321,14 +319,11 @@ private:
 	}
 };
 
-template<
-    typename H, typename E, typename Q>
+template<typename H, typename E, typename Q>
 unidirectional_search(H* heuristic, E* expander, Q* queue)
     -> unidirectional_search<H, E, Q>;
 
-template<
-    typename H, typename E, typename Q,
-    typename L>
+template<typename H, typename E, typename Q, typename L>
 unidirectional_search(H* heuristic, E* expander, Q* queue, L listeners)
     -> unidirectional_search<H, E, Q, uds_traits<search_node, L>>;
 

@@ -51,7 +51,7 @@ admissible(cost_t lb, cost_t ub, search_parameters* par);
 template<>
 inline bool
 admissible<admissibility_criteria::any>(
-	cost_t lb, cost_t ub, search_parameters* par)
+    cost_t lb, cost_t ub, search_parameters* par)
 {
 	// default admissibility: any solution at all
 	return ub != warthog::COST_MAX;
@@ -64,7 +64,7 @@ admissible<admissibility_criteria::any>(
 template<>
 inline bool
 admissible<admissibility_criteria::optimal>(
-	cost_t lb, cost_t ub, search_parameters* par)
+    cost_t lb, cost_t ub, search_parameters* par)
 {
 	// default admissibility: any solution at all
 	return lb >= ub;
@@ -106,7 +106,7 @@ enum class feasibility_criteria
 };
 
 /// test if the search is still feasible; i.e., if a solution could still
-/// exist. 
+/// exist.
 template<feasibility_criteria T>
 inline bool
 feasible(search_node* next, search_metrics* met, search_parameters* par);
