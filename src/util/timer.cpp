@@ -1,5 +1,6 @@
-#include <stdio.h>
 #include <warthog/util/timer.h>
+
+#include <cstdio>
 
 namespace warthog::util
 {

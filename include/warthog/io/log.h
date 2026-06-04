@@ -1,49 +1,48 @@
 #ifndef WARTHOG_IO_LOG_H
 #define WARTHOG_IO_LOG_H
 
-// io/log.h
-//
-// Logging utility framework, where a user can provide at a high-level
-// data structure with function pointers to log messages as a single string
-// with a specific log level.
-// This will call a user-defined function (if able) that will output this
-// message as the user desires.
-// Default functions (output to stderr or file) are defined here.
-//
-// The log_sink is a non-owning copyable struct that points to the data and
-// logging function calls. All logging is performed through log_sink. All
-// classes here are thread safe, follow comments for outlying cases.
-//
-// Special classes inherit log_sink to provide default functionality.
-// log_sink_std should be used to write to std::cout and std::cerr.
-// log_sink_stream pipe to a stream or open a file stream.
-//
-// The logs are made to be logged to a certain log_level.
-// The WARTHOG_TRACE and others in this header provide interfaces to log to a
-// special logger<> class.  This logger<> class knows at compile time the
-// minimum level to log, and with the use of a macro will be compiled out if
-// that level was not set at compile time when used with the logging macros.
-//
-// The global logger can be acquired with the glog() (logger<>) or glogs()
-// (log_sink), and set with set_glog(log_sink).  The log level of the global
-// logger is set though the WARTHOG_LOG definition, with a default of 1(debug)
-// for debug builds, and 2(information) for release (NDEBUG defined). Macros
-// like WARTHOG_GTRACE will automatically write to the global logger.
-//
-// The _IF will only log if a runtime if true.
-// The _FMT uses the std::format from C++20 to format the output messages.
-// The logging utilities uses dynamic memory std::strings to produce the final
-// log message strings, thus is better to be disabled for release builds
-// through the log level.
-//
-// Log messages produce a messaged as "[TIME LEVEL] msg".
-// The time is formatted in ISO with space (yyyy-mm-dd hh:mm:ss), but can be
-// overridden with define cstring WARTHOG_LOG_TIME. Clock is in local system
-// time, but can be set to UTC by definiong WARTHOG_LOG_CLOCK_UTC.
-//
-// @author: Ryan Hechenberger
-// @created: 2025-09-09
-//
+/// @file log.h
+///
+/// Logging utility framework, where a user can provide at a high-level
+/// data structure with function pointers to log messages as a single string
+/// with a specific log level.
+/// This will call a user-defined function (if able) that will output this
+/// message as the user desires.
+/// Default functions (output to stderr or file) are defined here.
+///
+/// The log_sink is a non-owning copyable struct that points to the data and
+/// logging function calls. All logging is performed through log_sink. All
+/// classes here are thread safe, follow comments for outlying cases.
+///
+/// Special classes inherit log_sink to provide default functionality.
+/// log_sink_std should be used to write to std::cout and std::cerr.
+/// log_sink_stream pipe to a stream or open a file stream.
+///
+/// The logs are made to be logged to a certain log_level.
+/// The WARTHOG_TRACE and others in this header provide interfaces to log to a
+/// special logger<> class.  This logger<> class knows at compile time the
+/// minimum level to log, and with the use of a macro will be compiled out if
+/// that level was not set at compile time when used with the logging macros.
+///
+/// The global logger can be acquired with the glog() (logger<>) or glogs()
+/// (log_sink), and set with set_glog(log_sink).  The log level of the global
+/// logger is set though the WARTHOG_LOG definition, with a default of 1(debug)
+/// for debug builds, and 2(information) for release (NDEBUG defined). Macros
+/// like WARTHOG_GTRACE will automatically write to the global logger.
+///
+/// The _IF will only log if a runtime if true.
+/// The _FMT uses the std::format from C++20 to format the output messages.
+/// The logging utilities uses dynamic memory std::strings to produce the final
+/// log message strings, thus is better to be disabled for release builds
+/// through the log level.
+///
+/// Log messages produce a messaged as "[TIME LEVEL] msg".
+/// The time is formatted in ISO with space (yyyy-mm-dd hh:mm:ss), but can be
+/// overridden with define cstring WARTHOG_LOG_TIME. Clock is in local system
+/// time, but can be set to UTC by defining WARTHOG_LOG_CLOCK_UTC.
+///
+/// @author: Ryan Hechenberger
+/// @created: 2025-09-09
 
 #include <array>
 #include <filesystem>
@@ -55,6 +54,16 @@
 #include <string_view>
 #include <utility>
 #include <warthog/constants.h>
+
+// define utility for help with log messages
+#define WARTHOG_STRING_(x) #x
+#define WARTHOG_STRING(x) WARTHOG_STRING_(x)
+#define WARTHOG_STRING2(x) WARTHOG_STRING(x)
+#define WARTHOG_STRING3(x) WARTHOG_STRING(x)
+#define WARTHOG_STRING4(x) WARTHOG_STRING(x)
+
+#define WARTHOG_LINE WARTHOG_STRING2(__LINE__)
+#define WARTHOG_FILENAME_LINE __FILE__ "@" WARTHOG_LINE
 
 // default log levels, also for global logger
 #ifdef WARTHOG_LOG

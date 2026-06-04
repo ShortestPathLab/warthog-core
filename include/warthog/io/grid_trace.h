@@ -1,15 +1,15 @@
 #ifndef WARTHOG_IO_GRID_TRACE_H
 #define WARTHOG_IO_GRID_TRACE_H
 
-// io/grid_trace.h
-//
-// Basic posthoc_trace for use with gridmap.
-//
-// @author: Ryan Hechenberger
-// @created: 2025-08-07
-//
+/// @file grid_trace.h
+///
+/// Basic posthoc_trace for use with gridmap.
+///
+/// @author: Ryan Hechenberger
+/// @created: 2025-08-07
 
 #include "posthoc_trace.h"
+
 #include <exception>
 #include <warthog/domain/gridmap.h>
 #include <warthog/search/problem_instance.h>

@@ -1,5 +1,6 @@
-#include <warthog/constants.h>
 #include <warthog/util/dimacs_parser.h>
+
+#include <warthog/constants.h>
 
 #include <cassert>
 #include <cstdint>
