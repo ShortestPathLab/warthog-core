@@ -270,9 +270,14 @@ private:
 				// for the node is less than the current upperbound
 				if(gval < n->get_g())
 				{
-					if((gval + n->get_f() - n->get_g())
+					if((gval + (n->get_f() - n->get_g()))
 					   < sol->sum_of_edge_costs_)
 					{
+						// if target node, update solution cost
+						if(sol->s_node_ == n)
+						{
+							sol->sum_of_edge_costs_ = gval;
+						}
 						n->relax(gval, current->get_id());
 						io::observer_relax_node(listeners_, *n);
 
