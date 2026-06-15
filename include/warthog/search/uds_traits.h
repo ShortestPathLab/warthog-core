@@ -193,10 +193,10 @@ struct uds_default_traits
 {
 	using node = search_node;
 	using observer = std::tuple<>;
-	static constexpr admissibility_criteria ac = admissibility_criteria::any;
-	static constexpr feasibility_criteria fc
-	    = feasibility_criteria::until_exhaustion;
-	static constexpr reopen_policy rp = reopen_policy::no;
+
+	static consteval admissibility_criteria ac() { return admissibility_criteria::any; }
+	static consteval feasibility_criteria fc() { return feasibility_criteria::until_exhaustion; }
+	static consteval reopen_policy rp() { return reopen_policy::no; }
 };
 
 /// Modify search behaviour of unidirectional_search.
@@ -207,16 +207,17 @@ struct uds_default_traits
 template<
     typename N = uds_default_traits::node,
 	typename L = uds_default_traits::observer,
-    admissibility_criteria AC = uds_default_traits::ac,
-    feasibility_criteria FC   = uds_default_traits::fc,
-    reopen_policy RP          = uds_default_traits::rp>
+    admissibility_criteria AC = uds_default_traits::ac(),
+    feasibility_criteria FC   = uds_default_traits::fc(),
+    reopen_policy RP          = uds_default_traits::rp()>
 struct uds_traits
 {
-	using node                                 = N;
-	using observer                             = L;
-	static constexpr admissibility_criteria ac = AC;
-	static constexpr feasibility_criteria fc   = FC;
-	static constexpr reopen_policy rp          = RP;
+	using node     = N;
+	using observer = L;
+
+	static consteval admissibility_criteria ac() { return AC; }
+	static consteval feasibility_criteria fc() { return FC; }
+	static consteval reopen_policy rp() { return RP; }
 };
 
 namespace details
@@ -248,53 +249,85 @@ struct uds_trait_observer<Traits>
 
 } // namespace details
 
+/// @brief deduce typename node from Traits if exists, or uds_default_traits::node otherwise
 template<typename Traits>
 using uds_trait_node = typename details::uds_trait_node<Traits>::type;
 
+/// @brief deduce typename observer from Traits if exists, or uds_default_traits::observer otherwise
 template<typename Traits>
 using uds_trait_observer = typename details::uds_trait_observer<Traits>::type;
 
+/// @return admissibility_criteria value Traits::ac() if exists, or uds_default_traits::ac() otherwise
 template<typename Traits>
-inline consteval admissibility_criteria
+consteval admissibility_criteria
 uds_trait_ac() noexcept
 {
+	// ensure user overrides trait correctly
+	static_assert(!(requires {
+			    	{ Traits::ac };
+	             }) || (requires {
+					{
+			    		Traits::ac()
+					} -> util::same_as_rmref<admissibility_criteria>;
+	             }), "optional Traits::ac must be a static consteval function that returns admissibility_criteria.");
+
 	if constexpr(requires {
 		             {
-			             Traits::ac
+			             Traits::ac()
 		             } -> util::same_as_rmref<admissibility_criteria>;
 	             })
 	{
-		return Traits::ac;
+		return Traits::ac();
 	}
-	else { return uds_default_traits::ac; }
+	else { return uds_default_traits::ac(); }
 }
 
+/// @return admissibility_criteria value Traits::fc() if exists, or uds_default_traits::fc() otherwise
 template<typename Traits>
-inline consteval feasibility_criteria
+consteval feasibility_criteria
 uds_trait_fc() noexcept
 {
+	// ensure user overrides trait correctly
+	static_assert(!(requires {
+			    	{ Traits::fc };
+	             }) || (requires {
+					{
+			    		Traits::fc()
+					} -> util::same_as_rmref<feasibility_criteria>;
+	             }), "optional Traits::fc must be a static consteval function that returns feasibility_criteria.");
+
 	if constexpr(requires {
 		             {
-			             Traits::fc
+			             Traits::fc()
 		             } -> util::same_as_rmref<feasibility_criteria>;
 	             })
 	{
-		return Traits::fc;
+		return Traits::fc();
 	}
-	else { return uds_default_traits::fc; }
+	else { return uds_default_traits::fc(); }
 }
 
+/// @return admissibility_criteria value Traits::rp() if exists, or uds_default_traits::rp() otherwise
 template<typename Traits>
-inline consteval reopen_policy
+consteval reopen_policy
 uds_trait_rp() noexcept
 {
+	// ensure user overrides trait correctly
+	static_assert(!(requires {
+			    	{ Traits::rp };
+	             }) || (requires {
+					{
+			    		Traits::rp()
+					} -> util::same_as_rmref<reopen_policy>;
+	             }), "optional Traits::rp must be a static consteval function that returns reopen_policy.");
+
 	if constexpr(requires {
-		             { Traits::rp } -> util::same_as_rmref<reopen_policy>;
+		             { Traits::rp() } -> util::same_as_rmref<reopen_policy>;
 	             })
 	{
-		return Traits::rp;
+		return Traits::rp();
 	}
-	else { return uds_default_traits::rp; }
+	else { return uds_default_traits::rp(); }
 }
 
 } // namespace warthog::search

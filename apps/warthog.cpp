@@ -251,12 +251,6 @@ run_astar4c(
 	return ret;
 }
 
-struct dijkstra_traits
-{
-	static constexpr auto ac
-	    = warthog::search::admissibility_criteria::optimal;
-	using observer = listener_type;
-};
 int
 run_dijkstra(
     warthog::util::scenario_manager& scenmgr, std::string mapname,
@@ -267,6 +261,11 @@ run_dijkstra(
 	warthog::heuristic::zero_heuristic heuristic;
 	warthog::util::pqueue_min open;
 
+	struct dijkstra_traits
+	{
+		using observer = listener_type;
+		static consteval auto ac() { return warthog::search::admissibility_criteria::optimal; }
+	};
 	warthog::search::unidirectional_search<
 	    decltype(heuristic), decltype(expander), decltype(open),
 	    dijkstra_traits>
