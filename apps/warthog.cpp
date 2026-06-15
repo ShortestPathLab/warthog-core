@@ -264,7 +264,11 @@ run_dijkstra(
 	struct dijkstra_traits
 	{
 		using observer = listener_type;
-		static consteval auto ac() { return warthog::search::admissibility_criteria::optimal; }
+		static consteval auto
+		ac()
+		{
+			return warthog::search::admissibility_criteria::optimal;
+		}
 	};
 	warthog::search::unidirectional_search<
 	    decltype(heuristic), decltype(expander), decltype(open),

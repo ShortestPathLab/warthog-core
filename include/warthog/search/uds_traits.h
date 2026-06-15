@@ -191,12 +191,24 @@ reopen<reopen_policy::yes>()
 /// and reopen_policy::no are the default values in uds.
 struct uds_default_traits
 {
-	using node = search_node;
+	using node     = search_node;
 	using observer = std::tuple<>;
 
-	static consteval admissibility_criteria ac() { return admissibility_criteria::any; }
-	static consteval feasibility_criteria fc() { return feasibility_criteria::until_exhaustion; }
-	static consteval reopen_policy rp() { return reopen_policy::no; }
+	static consteval admissibility_criteria
+	ac()
+	{
+		return admissibility_criteria::any;
+	}
+	static consteval feasibility_criteria
+	fc()
+	{
+		return feasibility_criteria::until_exhaustion;
+	}
+	static consteval reopen_policy
+	rp()
+	{
+		return reopen_policy::no;
+	}
 };
 
 /// Modify search behaviour of unidirectional_search.
@@ -205,8 +217,8 @@ struct uds_default_traits
 /// These values are optional and a user-provided struct only require
 /// parameter for values that differ to the default.
 template<
-    typename N = uds_default_traits::node,
-	typename L = uds_default_traits::observer,
+    typename N                = uds_default_traits::node,
+    typename L                = uds_default_traits::observer,
     admissibility_criteria AC = uds_default_traits::ac(),
     feasibility_criteria FC   = uds_default_traits::fc(),
     reopen_policy RP          = uds_default_traits::rp()>
@@ -215,9 +227,21 @@ struct uds_traits
 	using node     = N;
 	using observer = L;
 
-	static consteval admissibility_criteria ac() { return AC; }
-	static consteval feasibility_criteria fc() { return FC; }
-	static consteval reopen_policy rp() { return RP; }
+	static consteval admissibility_criteria
+	ac()
+	{
+		return AC;
+	}
+	static consteval feasibility_criteria
+	fc()
+	{
+		return FC;
+	}
+	static consteval reopen_policy
+	rp()
+	{
+		return RP;
+	}
 };
 
 namespace details
@@ -249,27 +273,31 @@ struct uds_trait_observer<Traits>
 
 } // namespace details
 
-/// @brief deduce typename node from Traits if exists, or uds_default_traits::node otherwise
+/// @brief deduce typename node from Traits if exists, or
+/// uds_default_traits::node otherwise
 template<typename Traits>
 using uds_trait_node = typename details::uds_trait_node<Traits>::type;
 
-/// @brief deduce typename observer from Traits if exists, or uds_default_traits::observer otherwise
+/// @brief deduce typename observer from Traits if exists, or
+/// uds_default_traits::observer otherwise
 template<typename Traits>
 using uds_trait_observer = typename details::uds_trait_observer<Traits>::type;
 
-/// @return admissibility_criteria value Traits::ac() if exists, or uds_default_traits::ac() otherwise
+/// @return admissibility_criteria value Traits::ac() if exists, or
+/// uds_default_traits::ac() otherwise
 template<typename Traits>
 consteval admissibility_criteria
 uds_trait_ac() noexcept
 {
 	// ensure user overrides trait correctly
-	static_assert(!(requires {
-			    	{ Traits::ac };
-	             }) || (requires {
-					{
-			    		Traits::ac()
-					} -> util::same_as_rmref<admissibility_criteria>;
-	             }), "optional Traits::ac must be a static consteval function that returns admissibility_criteria.");
+	static_assert(
+	    !(requires {
+		    { Traits::ac };
+	    }) || (requires {
+		    { Traits::ac() } -> util::same_as_rmref<admissibility_criteria>;
+	    }),
+	    "optional Traits::ac must be a static consteval function that returns "
+	    "admissibility_criteria.");
 
 	if constexpr(requires {
 		             {
@@ -282,19 +310,21 @@ uds_trait_ac() noexcept
 	else { return uds_default_traits::ac(); }
 }
 
-/// @return admissibility_criteria value Traits::fc() if exists, or uds_default_traits::fc() otherwise
+/// @return admissibility_criteria value Traits::fc() if exists, or
+/// uds_default_traits::fc() otherwise
 template<typename Traits>
 consteval feasibility_criteria
 uds_trait_fc() noexcept
 {
 	// ensure user overrides trait correctly
-	static_assert(!(requires {
-			    	{ Traits::fc };
-	             }) || (requires {
-					{
-			    		Traits::fc()
-					} -> util::same_as_rmref<feasibility_criteria>;
-	             }), "optional Traits::fc must be a static consteval function that returns feasibility_criteria.");
+	static_assert(
+	    !(requires {
+		    { Traits::fc };
+	    }) || (requires {
+		    { Traits::fc() } -> util::same_as_rmref<feasibility_criteria>;
+	    }),
+	    "optional Traits::fc must be a static consteval function that returns "
+	    "feasibility_criteria.");
 
 	if constexpr(requires {
 		             {
@@ -307,19 +337,21 @@ uds_trait_fc() noexcept
 	else { return uds_default_traits::fc(); }
 }
 
-/// @return admissibility_criteria value Traits::rp() if exists, or uds_default_traits::rp() otherwise
+/// @return admissibility_criteria value Traits::rp() if exists, or
+/// uds_default_traits::rp() otherwise
 template<typename Traits>
 consteval reopen_policy
 uds_trait_rp() noexcept
 {
 	// ensure user overrides trait correctly
-	static_assert(!(requires {
-			    	{ Traits::rp };
-	             }) || (requires {
-					{
-			    		Traits::rp()
-					} -> util::same_as_rmref<reopen_policy>;
-	             }), "optional Traits::rp must be a static consteval function that returns reopen_policy.");
+	static_assert(
+	    !(requires {
+		    { Traits::rp };
+	    }) || (requires {
+		    { Traits::rp() } -> util::same_as_rmref<reopen_policy>;
+	    }),
+	    "optional Traits::rp must be a static consteval function that returns "
+	    "reopen_policy.");
 
 	if constexpr(requires {
 		             { Traits::rp() } -> util::same_as_rmref<reopen_policy>;
