@@ -359,8 +359,8 @@ run_dijkstra(
 	        &heuristic, &expander, &open,
 	        listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
 
-	int ret
-	    = run_experiments(dijkstra, alg_name, scen, verbose, checkopt, std::cout);
+	int ret = run_experiments(
+	    dijkstra, alg_name, scen, verbose, checkopt, std::cout);
 	return ret;
 }
 
