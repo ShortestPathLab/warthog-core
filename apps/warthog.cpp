@@ -343,12 +343,24 @@ run_dijkstra(
 	warthog::heuristic::zero_heuristic heuristic;
 	warthog::util::pqueue_min open;
 
-	warthog::search::unidirectional_search astar(
-	    &heuristic, &expander, &open,
-	    listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
+	struct dijkstra_traits
+	{
+		using observer = listener_type;
+		static consteval auto
+		ac()
+		{
+			return warthog::search::admissibility_criteria::optimal;
+		}
+	};
+	warthog::search::unidirectional_search<
+	    decltype(heuristic), decltype(expander), decltype(open),
+	    dijkstra_traits>
+	    dijkstra(
+	        &heuristic, &expander, &open,
+	        listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
 
 	int ret
-	    = run_experiments(astar, alg_name, scen, verbose, checkopt, std::cout);
+	    = run_experiments(dijkstra, alg_name, scen, verbose, checkopt, std::cout);
 	return ret;
 }
 
