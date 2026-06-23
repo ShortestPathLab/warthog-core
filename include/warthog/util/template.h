@@ -14,6 +14,7 @@
 namespace warthog::util
 {
 
+// implementation details, user function after namespace
 namespace details
 {
 
