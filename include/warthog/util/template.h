@@ -14,6 +14,7 @@
 namespace warthog::util
 {
 
+// implementation details, user function after namespace
 namespace details
 {
 
@@ -107,6 +108,13 @@ choose_integer_sequence(auto value, TemplateFunc&& tfunc)
 	return details::for_each_integer_sequence<IST>::template apply_if<Ret>(
 	    value, std::forward<TemplateFunc>(tfunc));
 }
+
+template<typename T, typename T2>
+concept same_as_rmref
+    = std::same_as<std::remove_reference_t<T>, std::remove_reference_t<T2>>;
+template<typename T, typename T2>
+concept same_as_rmcvref
+    = std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<T2>>;
 
 } // namespace warthog::util
 

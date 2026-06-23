@@ -19,7 +19,6 @@
 #include <warthog/heuristic/heuristic_value.h>
 #include <warthog/io/observer.h>
 #include <warthog/memory/cpool.h>
-#include <warthog/util/pqueue.h>
 #include <warthog/util/timer.h>
 #include <warthog/util/vec_io.h>
 
@@ -40,21 +39,29 @@ namespace warthog::search
 // used determine if a search should continue or terminate.
 // (default: search for any solution, until OPEN is exhausted)
 template<
-    typename H, typename E, typename Q = util::pqueue_min,
-    typename L                = std::tuple<>,
-    admissibility_criteria AC = admissibility_criteria::any,
-    feasibility_criteria FC   = feasibility_criteria::until_exhaustion,
-    reopen_policy RP          = reopen_policy::no>
+    typename H, typename E, typename Q, typename Traits = uds_default_traits>
 class unidirectional_search
 {
 public:
+	using traits      = Traits;
+	using search_node = uds_trait_node<Traits>;
+	using L           = uds_trait_observer<Traits>;
+
+	static constexpr admissibility_criteria AC = uds_trait_ac<Traits>();
+	static constexpr feasibility_criteria FC   = uds_trait_fc<Traits>();
+	static constexpr reopen_policy RP          = uds_trait_rp<Traits>();
+
 	unidirectional_search(
 	    H* heuristic, E* expander, Q* queue, L listeners = L{})
 	    : heuristic_(heuristic), expander_(expander), open_(queue),
 	      listeners_(listeners)
 	{ }
+	unidirectional_search(const unidirectional_search& other) = delete;
+	~unidirectional_search()                                  = default;
 
-	~unidirectional_search() { }
+	unidirectional_search&
+	operator=(const unidirectional_search& other)
+	    = delete;
 
 	void
 	get_pathcost(problem_instance* pi, search_parameters* par, solution* sol)
@@ -137,14 +144,6 @@ private:
 	E* expander_;
 	Q* open_;
 	[[no_unique_address]] L listeners_;
-
-	// no copy ctor
-	unidirectional_search(const unidirectional_search& other) { }
-	unidirectional_search&
-	operator=(const unidirectional_search& other)
-	{
-		return *this;
-	}
 
 	/**
 	 * Initialise a new 'search_node' for the ongoing search given the parent
@@ -320,11 +319,13 @@ private:
 	}
 };
 
-template<
-    typename H, typename E, typename Q = util::pqueue_min,
-    typename L = std::tuple<>>
-unidirectional_search(H* heuristic, E* expander, Q* queue, L listeners = L{})
-    -> unidirectional_search<H, E, Q, L>;
+template<typename H, typename E, typename Q>
+unidirectional_search(H* heuristic, E* expander, Q* queue)
+    -> unidirectional_search<H, E, Q>;
+
+template<typename H, typename E, typename Q, typename L>
+unidirectional_search(H* heuristic, E* expander, Q* queue, L listeners)
+    -> unidirectional_search<H, E, Q, uds_traits<search_node, L>>;
 
 } // namespace warthog::search
 
