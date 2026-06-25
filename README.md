@@ -121,6 +121,73 @@ The `warthog_module_declare` version makes it simple, although it only supports 
 The optional second parameter sets the version to pull, by default is `main` branch.
 This system only support warthog 0.5 or greater.
 
+# The Warthog Application
+
+## Compile
+
+Invoke CMake build to compile.
+
+Example release build commands, from project root:
+
+```
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release
+cmake --build build -j
+```
+
+To enable posthoc trace generation, it must be enabled through CMake (adds small overhead).
+Example setting (and then rebuild):
+
+```
+cmake build -DWARTHOG_POSTHOC=On
+cmake --build build -j
+```
+
+Many parameters are configurable (most in built library not application).
+They all prefixed `WARTHOTG_`.
+
+### Advanced Features
+
+Library includes support for x86 intrinsics instruction support, which may
+improve performance of some algorithms.
+To enable, compiler must have these instructions enabled, and they must be
+enabled in CMake, either `WARTHOG_INTRIN_ALL` for all or a specific
+supported instruction set, more to be added when required.
+
+Even if BMI2 may be supported by a CPU, the instructions may be implemented
+by microcode which may reduce performance instead; e.g. Zen 3 arch has some
+microcode, Zen 4 supports full BMI2.
+User must determine manually if enabling is applicable.
+Example below (works with gcc or clang, other systems may differ):
+```
+cmake build -DWARTHOG_INTRIN_ALL=On -DCMAKE_CXX_FLAGS="-march=native"
+cmake --build build -j
+```
+
+## Run
+
+Run application `build/warthog` from build commands.
+See overview of commands with `build/warthog --help`.
+
+### Command line options overview
+
+`--alg [name]`
+Used to specify a named search algorithm.
+
+`--checkopt`
+Set this parameter to compare the length of each computed path against an
+optimal length value specified by the scenario file at hand.
+
+`--help`
+Set this parameter to print all available program options.
+
+`--scen [file]`
+Used to specify a scenario file for experiments.
+
+`--verbose`
+Set this parameter to print debugging information (use in conjunction with 
+'make dev').
+
+
 # Resources
 
 - [Moving AI Lab](https://movingai.com/): pathfinding benchmark and tools
