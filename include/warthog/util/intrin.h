@@ -14,6 +14,8 @@
 // Check
 // https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html
 
+#include <warthog/defines.h>
+
 #if defined(__x86_64__) && __has_include(<immintrin.h>)
 #include <immintrin.h>
 #define WARTHOG_INTRIN
