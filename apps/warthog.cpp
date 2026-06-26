@@ -7,6 +7,8 @@
 // @created: 2016-11-23
 //
 
+#include <warthog/config.h>
+
 #include <warthog/constants.h>
 #include <warthog/domain/gridmap.h>
 #include <warthog/domain/labelled_gridmap.h>
@@ -29,7 +31,6 @@
 
 #include "cfg.h"
 #include <getopt.h>
-#include <warthog/config.h>
 
 #include <cmath>
 #include <filesystem>
@@ -160,6 +161,12 @@ struct gridmap_scenario
 		if(!patches.load(map)) { return false; }
 		return run.gridmap_init(grid, patches);
 	}
+	
+	bool
+	apply_patches()
+	{
+		return run.gridmap_apply_patches(grid, patches) >= 0;
+	}
 };
 
 template<typename Search>
@@ -188,7 +195,7 @@ run_experiments(
 		if(exp == nullptr) { break; }
 		if(patch_count != 0)
 		{
-			if(scen.run.gridmap_apply_patches(scen.grid, scen.patches) < 0)
+			if(!scen.apply_patches())
 			{
 				// failed to apply patches, exit
 				WARTHOG_GCRIT("dynamic patch error: failed to apply patches");
