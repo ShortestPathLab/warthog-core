@@ -1,8 +1,8 @@
 version 2
 height 512
 width 512
-cost 1 octile
-patch ./03.patch
+cost 1 8c-ncc
+patch NovaStation_Berlin.patch
 commands
 P 0 0 0 0
 Q 0 473 219 81 93 669.97979746447
