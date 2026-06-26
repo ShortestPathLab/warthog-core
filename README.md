@@ -170,26 +170,63 @@ See overview of commands with `build/warthog --help`.
 
 ### Command line options overview
 
+`--help`
+Set this parameter to print all available program options.
+
 `--alg [name]`
 Used to specify a named search algorithm.
+Current supported: astar, astar_wgm, astar4c, dijkstra
+
+`--scen [file]`
+Used to specify a scenario file for experiments.
+Support for v1 & v2 scenario format, see benchmark in resources.
+
+`--map [file]`
+Overrides map filename used in scenario.
+
+`--cost [type]`
+Used with v2 (dynamic) scenario format.
+Scenario file holds string values for different instance (query) costs,
+check repo in resource for more details.
+If cost is not specified, use the first cost (if present).
+If cost is specified, but scenario does not have it, program errors.
+
+`--grid-weight [file]`
+For use with weighted terrain algorithm (e.g. astar_wgm).
+Provide grid weights.
 
 `--checkopt`
 Set this parameter to compare the length of each computed path against an
 optimal length value specified by the scenario file at hand.
 
-`--help`
-Set this parameter to print all available program options.
-
-`--scen [file]`
-Used to specify a scenario file for experiments.
-
 `--verbose`
-Set this parameter to print debugging information (use in conjunction with 
-'make dev').
+Set this parameter to print debugging information (must be in debug config).
 
+`--filter [id]`
+Run only instance `id` from scenario.
+
+`--trace [.trace.yaml file]`
+Requires `WARTHOG_POSTHOC=On`.
+Generate a trace file output for use with posthoc (see resources).
+The trace is only for first instance, use with `--filter` to choose instance.
+
+`--dump-map [id]`
+Dump the gridmap at beginning of instance `id` to stdout.
+Useful in dynamic scenario to see current state of grid, especially if used with `--trace`.
+
+`--dump-map-file [file]`
+Use in conjuction with `--dump-map`, output to `file` instead of stdout.
+
+## Examples
+
+```
+./build/warthog --alg astar --scen examples/arena2.map.scen --checkopt
+./build/warthog --alg 4c --scen examples/NovaStation_Berlin.scen --cost 4c --checkopt
+```
 
 # Resources
 
 - [Moving AI Lab](https://movingai.com/): pathfinding benchmark and tools
 - [Posthoc](https://posthoc-app.pathfinding.ai/): visualiser and debugger for pathfinding
 - [Pathfinding Benchmarks](https://benchmarks.pathfinding.ai/): git repo for benchmarks
+- [Dynamic Benchmarks](https://github.com/gppc-dev/benchmarks/): git repo for v2 scenarios
