@@ -1,5 +1,7 @@
 #include <warthog/util/cost_table.h>
 
+#include <warthog/io/log.h>
+
 #include <cmath>
 #include <limits>
 
@@ -11,10 +13,8 @@ cost_table::cost_table(const char* filename) : cost_table()
 	std::ifstream file(filename, std::fstream::in);
 	if(!file.is_open())
 	{
-		std::cerr << "err; cost_table::cost_table "
-		             "cannot open costs file: "
-		          << filename << std::endl;
-		exit(1);
+		WARTHOG_GERROR_FMT("cost_table cannot open costs file {}", filename);
+		throw std::runtime_error("cost_table");
 	}
 
 	while(!file.eof())
@@ -24,25 +24,18 @@ cost_table::cost_table(const char* filename) : cost_table()
 		file >> terrain >> cost;
 		if(!file.good())
 		{
-			std::cerr << "err; cost_table::cost_table "
-			             "failed to parse cost for terrain `"
-			          << terrain << "`" << std::endl;
-			exit(1);
+			WARTHOG_GERROR_FMT("cost_table failed to parse cost for terrain `{}`", terrain);
+			throw std::runtime_error("cost_table");
 		}
 		if(costs_[terrain] == costs_[terrain])
 		{
-			std::cerr
-			    << "err; cost_table::cost_table "
-			       "costs file contains multiple definitions for terrain `"
-			    << terrain << "`" << std::endl;
-			exit(1);
+			WARTHOG_GERROR_FMT("cost_table multiple definitions for terrain `{}`", terrain);
+			throw std::runtime_error("cost_table");
 		}
 		if(cost < 0.0)
 		{
-			std::cerr << "err; cost_table::cost_table "
-			             "costs file specifies a negative cost for terrain `"
-			          << terrain << "`" << std::endl;
-			exit(1);
+			WARTHOG_GERROR_FMT("cost_table has negative cost for terrain `{}` at {}", terrain, cost);
+			throw std::runtime_error("cost_table");
 		}
 		costs_[terrain] = cost;
 		file >> std::ws;

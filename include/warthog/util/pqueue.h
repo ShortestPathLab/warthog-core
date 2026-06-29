@@ -221,9 +221,8 @@ private:
 		newsize = newsize >= 4 ? newsize : 4;
 		if(newsize < queuesize_)
 		{
-			std::cerr << "err; pqueue::resize newsize < queuesize "
-			          << std::endl;
-			exit(1);
+			WARTHOG_GCRIT_FMT("pqueue::resize newsize({}) < queuesize({})", newsize, queuesize_);
+			throw std::logic_error("newsize < queuesize_");
 		}
 
 		search::search_node** tmp = new search::search_node* [newsize] {};
