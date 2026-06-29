@@ -28,7 +28,6 @@ search/vl_gridmap_expansion_policy.cpp
 
 util/cost_table.cpp
 util/dimacs_parser.cpp
-util/file_utils.cpp
 util/helpers.cpp
 util/timer.cpp
 )
