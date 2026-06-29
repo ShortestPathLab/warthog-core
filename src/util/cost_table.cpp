@@ -1,6 +1,7 @@
 #include <warthog/util/cost_table.h>
 
 #include <cmath>
+#include <limits>
 
 namespace warthog::util
 {
@@ -56,7 +57,7 @@ cost_table::cost_table(const char* filename) : cost_table()
 cost_t
 cost_table::lowest_cost(domain::vl_gridmap& map)
 {
-	warthog::cost_t lowest = INFINITY;
+	warthog::cost_t lowest = std::numeric_limits<warthog::cost_t>::infinity();
 	for(uint32_t id = 0; id < map.width() * map.height(); id++)
 	{
 		auto cost = costs_[map.get_label(id)];
