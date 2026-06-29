@@ -70,5 +70,4 @@ include/warthog/util/pqueue.h
 include/warthog/util/string.h
 include/warthog/util/template.h
 include/warthog/util/timer.h
-include/warthog/util/vec_io.h
 )
