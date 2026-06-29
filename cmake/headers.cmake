@@ -46,8 +46,6 @@ include/warthog/scenario/grid_patch_set.h
 include/warthog/scenario/scenario_manager.h
 include/warthog/scenario/scenario_runner.h
 
-include/warthog/search/dummy_filter.h
-include/warthog/search/dummy_listener.h
 include/warthog/search/expansion_policy.h
 include/warthog/search/gridmap_expansion_policy.h
 include/warthog/search/noop_search.h
