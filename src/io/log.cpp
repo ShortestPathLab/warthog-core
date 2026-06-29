@@ -1,7 +1,8 @@
+#include <warthog/io/log.h>
+
 #include <chrono>
 #include <format>
 #include <iostream>
-#include <warthog/io/log.h>
 
 namespace warthog::io
 {

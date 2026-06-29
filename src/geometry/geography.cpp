@@ -1,6 +1,8 @@
-#include <cmath>
-#include <warthog/constants.h>
 #include <warthog/geometry/geography.h>
+
+#include <warthog/constants.h>
+
+#include <cmath>
 
 /* Writes result sine result sin(πa) to the location pointed to by sp
    Writes result cosine result cos(πa) to the location pointed to by cp
