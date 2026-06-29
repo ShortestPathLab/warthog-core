@@ -162,12 +162,11 @@ struct gridmap_scenario
 		if(!patches.load(map)) { return false; }
 		return run.gridmap_init(grid, patches);
 	}
-	
+
 	bool
 	apply_patches()
 	{
-		if (!dynamic)
-			return true;
+		if(!dynamic) return true;
 		return run.gridmap_apply_patches(grid, patches) >= 0;
 	}
 };
