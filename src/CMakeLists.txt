@@ -4,7 +4,6 @@ target_sources(warthog_core PRIVATE
 domain/gridmap.cpp
 
 geometry/geography.cpp
-geometry/geom.cpp
 
 io/bittable_serialize.cpp
 io/grid_trace.cpp
