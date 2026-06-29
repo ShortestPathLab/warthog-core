@@ -2,9 +2,6 @@
 #include <warthog/constants.h>
 #include <warthog/geometry/geography.h>
 
-#define PI_360 0.00872664625997
-#define PI_180 0.017453292519943295
-
 /* Writes result sine result sin(πa) to the location pointed to by sp
    Writes result cosine result cos(πa) to the location pointed to by cp
 
@@ -19,6 +16,9 @@ namespace warthog::geometry
 
 namespace
 {
+constexpr double PI_360 = 0.008'726'646'259'971'647'884'618'453'842'443'063'567;
+constexpr double PI_180 = 0.017'453'292'519'943'295'769'236'907'684'886'127'134;
+
 void
 sincospi(double a, double* sp, double* cp)
 {
@@ -71,19 +71,11 @@ sincospi(double a, double* sp, double* cp)
 	*cp = c;
 }
 
-#ifdef NDEBUG
-inline double
+double
 deg_to_rad(double deg)
 {
 	return deg * PI_180;
 }
-#else
-double
-deg_to_rad(double deg)
-{
-	return deg * M_PI / 180;
-}
-#endif
 
 double
 rad_to_deg(double rad)
