@@ -145,6 +145,7 @@ check_optimality(
 // convenience wrapper around initialisation code
 struct gridmap_scenario
 {
+	bool dynamic = false;
 	const warthog::scenario::scenario_manager* mgr;
 	warthog::scenario::scenario_runner run;
 	warthog::domain::gridmap grid;
@@ -157,8 +158,17 @@ struct gridmap_scenario
 	bool
 	load_map(const std::filesystem::path map)
 	{
+		dynamic = true;
 		if(!patches.load(map)) { return false; }
 		return run.gridmap_init(grid, patches);
+	}
+	
+	bool
+	apply_patches()
+	{
+		if (!dynamic)
+			return true;
+		return run.gridmap_apply_patches(grid, patches) >= 0;
 	}
 };
 
@@ -188,7 +198,7 @@ run_experiments(
 		if(exp == nullptr) { break; }
 		if(patch_count != 0)
 		{
-			if(scen.run.gridmap_apply_patches(scen.grid, scen.patches) < 0)
+			if(!scen.apply_patches())
 			{
 				// failed to apply patches, exit
 				WARTHOG_GCRIT("dynamic patch error: failed to apply patches");
