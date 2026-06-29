@@ -193,7 +193,9 @@ If cost is specified, but scenario does not have it, program errors.
 
 `--grid-weight [file]`
 For use with weighted terrain algorithm (e.g. astar_wgm).
-Provide grid weights.
+Provide grid weights, provided `examples/grid.weight` for scenario grid
+weights and `examples/terrain.weight` for MovingAI terrain maps, as
+used in the jpsw paper.
 
 `--checkopt`
 Set this parameter to compare the length of each computed path against an
@@ -225,6 +227,7 @@ cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DWARTHOG_POSTHOC=On && cmake --b
 ./build/warthog --alg astar --scen examples/NovaStation_Berlin.scen --checkopt
 ./build/warthog --alg astar4c --scen examples/NovaStation_Berlin.scen --cost 4c --checkopt
 ./build/warthog --alg astar --scen examples/NovaStation_Berlin.scen --filter=201 --dump-map=201 --dump-map-file=test.map --trace=test.trace.yaml
+./build/warthog --alg astar_wgm --scen examples/arena2.map.scen --grid-weight examples/grid.weight
 ```
 
 # Resources
