@@ -24,17 +24,21 @@ cost_table::cost_table(const char* filename) : cost_table()
 		file >> terrain >> cost;
 		if(!file.good())
 		{
-			WARTHOG_GERROR_FMT("cost_table failed to parse cost for terrain `{}`", terrain);
+			WARTHOG_GERROR_FMT(
+			    "cost_table failed to parse cost for terrain `{}`", terrain);
 			throw std::runtime_error("cost_table");
 		}
 		if(costs_[terrain] == costs_[terrain])
 		{
-			WARTHOG_GERROR_FMT("cost_table multiple definitions for terrain `{}`", terrain);
+			WARTHOG_GERROR_FMT(
+			    "cost_table multiple definitions for terrain `{}`", terrain);
 			throw std::runtime_error("cost_table");
 		}
 		if(cost < 0.0)
 		{
-			WARTHOG_GERROR_FMT("cost_table has negative cost for terrain `{}` at {}", terrain, cost);
+			WARTHOG_GERROR_FMT(
+			    "cost_table has negative cost for terrain `{}` at {}", terrain,
+			    cost);
 			throw std::runtime_error("cost_table");
 		}
 		costs_[terrain] = cost;

@@ -221,7 +221,9 @@ private:
 		newsize = newsize >= 4 ? newsize : 4;
 		if(newsize < queuesize_)
 		{
-			WARTHOG_GCRIT_FMT("pqueue::resize newsize({}) < queuesize({})", newsize, queuesize_);
+			WARTHOG_GCRIT_FMT(
+			    "pqueue::resize newsize({}) < queuesize({})", newsize,
+			    queuesize_);
 			throw std::logic_error("newsize < queuesize_");
 		}
 
