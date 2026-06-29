@@ -220,8 +220,11 @@ Use in conjuction with `--dump-map`, output to `file` instead of stdout.
 ## Examples
 
 ```
-./build/warthog --alg astar --scen examples/arena2.map.scen --checkopt
-./build/warthog --alg 4c --scen examples/NovaStation_Berlin.scen --cost 4c --checkopt
+cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DWARTHOG_POSTHOC=On && cmake --build build -j
+./build/warthog --alg dijkstra --scen examples/arena2.map.scen --checkopt
+./build/warthog --alg astar --scen examples/NovaStation_Berlin.scen --checkopt
+./build/warthog --alg astar4c --scen examples/NovaStation_Berlin.scen --cost 4c --checkopt
+./build/warthog --alg astar --scen examples/NovaStation_Berlin.scen --filter=201 --dump-map=201 --dump-map-file=test.map --trace=test.trace.yaml
 ```
 
 # Resources
