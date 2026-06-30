@@ -7,6 +7,8 @@
 // @created: 2016-11-23
 //
 
+#include <warthog/config.h>
+
 #include <warthog/constants.h>
 #include <warthog/domain/gridmap.h>
 #include <warthog/domain/labelled_gridmap.h>
@@ -29,7 +31,6 @@
 
 #include "cfg.h"
 #include <getopt.h>
-#include <warthog/config.h>
 
 #include <cmath>
 #include <filesystem>
