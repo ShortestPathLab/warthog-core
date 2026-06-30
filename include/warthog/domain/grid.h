@@ -572,10 +572,18 @@ dir_unit_point(direction_id d) noexcept
 	    | (0b0000 << NORTHWEST_ID * 4) | (0b1010 << SOUTHEAST_ID * 4)
 	    | (0b1000 << SOUTHWEST_ID * 4);
 #if WARTHOG_INTRIN_HAS(BMI2)
-	res.v = _pdep_u32(packed_reldir >> d * 4, 0xC000'C000u);
-#else
-	res.p.x = (packed_reldir >> d * 4) & 0b11;
-	res.p.y = (packed_reldir >> (d * 4 + 2)) & 0b11;
+	if !consteval
+	{
+		// _pdep_u32 may not be constexpr
+		res.v = _pdep_u32(packed_reldir >> d * 4, 0xC000'C000u);
+	}
+	else
+	{
+#endif
+		res.p.x = (packed_reldir >> d * 4) & 0b11;
+		res.p.y = (packed_reldir >> (d * 4 + 2)) & 0b11;
+#if WARTHOG_INTRIN_HAS(BMI2)
+	} // end if !consteval
 #endif
 	res.p.x -= 1;
 	res.p.y -= 1;
@@ -605,10 +613,18 @@ dir_unit_point_secic(direction_id d) noexcept
 	// for second-intercardinal, return the intercardinal
 	d = d < 8 ? d : secic_intercardinal(d);
 #if WARTHOG_INTRIN_HAS(BMI2)
-	res.v = _pdep_u32(packed_reldir >> d * 4, 0xC000'C000u);
-#else
-	res.p.x = (packed_reldir >> d * 4) & 0b11;
-	res.p.y = (packed_reldir >> (d * 4 + 2)) & 0b11;
+	if !consteval
+	{
+		// _pdep_u32 may not be constexpr
+		res.v = _pdep_u32(packed_reldir >> d * 4, 0xC000'C000u);
+	}
+	else
+	{
+#endif
+		res.p.x = (packed_reldir >> d * 4) & 0b11;
+		res.p.y = (packed_reldir >> (d * 4 + 2)) & 0b11;
+#if WARTHOG_INTRIN_HAS(BMI2)
+	} // end if !consteval
 #endif
 	res.p.x -= 1;
 	res.p.y -= 1;
