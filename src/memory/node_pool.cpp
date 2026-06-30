@@ -1,4 +1,5 @@
 #include <warthog/memory/node_pool.h>
+
 #include <warthog/search/search_node.h>
 #include <warthog/util/helpers.h>
 

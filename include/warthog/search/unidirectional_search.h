@@ -20,7 +20,6 @@
 #include <warthog/io/observer.h>
 #include <warthog/memory/cpool.h>
 #include <warthog/util/timer.h>
-#include <warthog/util/vec_io.h>
 
 #include <functional>
 #include <iostream>

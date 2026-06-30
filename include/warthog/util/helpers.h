@@ -47,36 +47,6 @@ load_integer_labels_dimacs(
 void
 value_index_swap_array(std::vector<uint32_t>& vec);
 
-struct thread_params
-{
-	// thread data
-	uint32_t thread_id_;
-	uint32_t max_threads_;
-	bool thread_finished_;
-	void* (*fn_worker_)(void*);
-
-	// task data
-	uint32_t nprocessed_;
-	uint32_t first_id_;
-	uint32_t last_id_;
-	void* shared_;
-};
-
-// helper code for simple parallel computations.
-// simple in this case means no synchronisation between threads.
-// @param fn_worker: the actual precompute function:
-//          - it takes as input a pointer whose actual type is
-//          warthog::label::thread_params
-//          - it returns a (possibly null) pointer to a result
-// @param shared_data:
-//         a pointer to data which will be shared among all worker
-//         threads
-// @param task_total: the total number of tasks in the workload
-// @return: 0 (the function always succeeds)
-void*
-parallel_compute(
-    void* (*fn_worker)(void*), void* shared_data, uint32_t task_total);
-
 } // namespace warthog::util
 
 #endif // WARTHOG_UTIL_HELPERS_H

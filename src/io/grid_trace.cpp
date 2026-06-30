@@ -1,6 +1,7 @@
+#include <warthog/io/grid_trace.h>
+
 #include <exception>
 #include <format>
-#include <warthog/io/grid_trace.h>
 
 namespace warthog::io
 {

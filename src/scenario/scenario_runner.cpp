@@ -1,7 +1,6 @@
 #include <warthog/scenario/scenario_runner.h>
 
 #include <warthog/io/log.h>
-#include <warthog/search/dummy_listener.h>
 #include <warthog/search/problem_instance.h>
 
 #include <cstdlib>

@@ -46,8 +46,6 @@ include/warthog/scenario/grid_patch_set.h
 include/warthog/scenario/scenario_manager.h
 include/warthog/scenario/scenario_runner.h
 
-include/warthog/search/dummy_filter.h
-include/warthog/search/dummy_listener.h
 include/warthog/search/expansion_policy.h
 include/warthog/search/gridmap_expansion_policy.h
 include/warthog/search/noop_search.h
@@ -64,13 +62,10 @@ include/warthog/search/vl_gridmap_expansion_policy.h
 include/warthog/util/cast.h
 include/warthog/util/cost_table.h
 include/warthog/util/dimacs_parser.h
-include/warthog/util/file_utils.h
 include/warthog/util/helpers.h
 include/warthog/util/intrin.h
-include/warthog/util/macros.h
 include/warthog/util/pqueue.h
 include/warthog/util/string.h
 include/warthog/util/template.h
 include/warthog/util/timer.h
-include/warthog/util/vec_io.h
 )

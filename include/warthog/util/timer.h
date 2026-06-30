@@ -45,18 +45,6 @@ public:
 	}
 	clock::time_point
 	get_time();
-	// std::chrono::nanoseconds
-	// get_time_nano();
-	// double
-	// get_time_micro()
-	// {
-	// 	return get_time_nano().count() * 1e-3;
-	// }
-	// double
-	// get_time_sec()
-	// {
-	// 	return get_time_nano().count() * 1e-9;
-	// }
 
 private:
 	clock::time_point start_time;

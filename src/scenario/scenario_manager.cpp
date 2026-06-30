@@ -2,7 +2,6 @@
 
 #include <warthog/io/log.h>
 #include <warthog/io/scenario_serialize.h>
-#include <warthog/search/dummy_listener.h>
 #include <warthog/search/problem_instance.h>
 
 #include <cstdlib>

@@ -1,7 +1,6 @@
 #include <warthog/io/scenario_serialize.h>
 
 #include <warthog/io/bittable_serialize.h>
-// #include <warthog/scenario/scenario_manager.h>
 
 #include <cmath>
 #include <cstring>

@@ -4,7 +4,6 @@ target_sources(warthog_core PRIVATE
 domain/gridmap.cpp
 
 geometry/geography.cpp
-geometry/geom.cpp
 
 io/bittable_serialize.cpp
 io/grid_trace.cpp
@@ -28,7 +27,6 @@ search/vl_gridmap_expansion_policy.cpp
 
 util/cost_table.cpp
 util/dimacs_parser.cpp
-util/file_utils.cpp
 util/helpers.cpp
 util/timer.cpp
 )

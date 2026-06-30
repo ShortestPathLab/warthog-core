@@ -7,9 +7,6 @@
 #include <cstdint>
 #include <fstream>
 #include <iostream>
-#include <pthread.h>
-#include <thread>
-#include <unistd.h>
 
 namespace warthog::util
 {
@@ -51,83 +48,6 @@ load_integer_labels_dimacs(const char* filename, std::vector<uint32_t>& labels)
 	// add the dummy so we can use the dimacs ids without conversion
 	labels.push_back(0);
 	return load_integer_labels(filename, labels);
-}
-
-void*
-parallel_compute(
-    void* (*fn_worker)(void*), void* shared_data, uint32_t task_total)
-{
-	std::cerr << "parallel compute begin. tasks to process: " << task_total
-	          << "\n";
-	if(task_total == 0) { return 0; }
-
-// OK, let's fork some threads
-// TODO: detect cores with std::thread::hardware_concurrency();
-#ifdef SINGLE_THREADED
-	const uint32_t NUM_THREADS = 1;
-#else
-	const uint32_t NUM_THREADS = (uint32_t)std::thread::hardware_concurrency();
-#endif
-
-	std::vector<pthread_t> threads(NUM_THREADS);
-	std::vector<thread_params> task_data(NUM_THREADS);
-
-	void* (*fn_task_wrapper)(void*) = [](void* in) -> void* {
-		thread_params* par    = (thread_params*)in;
-		par->thread_finished_ = false;
-		void* retval          = par->fn_worker_(in);
-		par->thread_finished_ = true;
-		return retval;
-	};
-
-	for(uint32_t i = 0; i < NUM_THREADS; i++)
-	{
-		// define workloads
-		task_data[i].thread_id_   = i;
-		task_data[i].max_threads_ = NUM_THREADS;
-		task_data[i].nprocessed_  = 0;
-		task_data[i].shared_      = shared_data;
-		task_data[i].fn_worker_   = fn_worker;
-
-		// gogogogo
-		pthread_create(
-		    &threads[i], NULL, fn_task_wrapper, (void*)&task_data[i]);
-	}
-	std::cerr << "forked " << NUM_THREADS << " threads \n";
-
-	std::cerr << "progress: [";
-	for(uint32_t i = 0; i < 100; i++)
-	{
-		std::cerr << " ";
-	}
-	std::cerr << "]\rprogress: [";
-	uint32_t pct_done = 0;
-	while(true)
-	{
-		// check progress
-		uint32_t nprocessed = 0;
-		uint32_t nfinished  = 0;
-		for(uint32_t i = 0; i < NUM_THREADS; i++)
-		{
-			nprocessed += task_data[i].nprocessed_;
-			nfinished  += task_data[i].thread_finished_;
-		}
-
-		uint32_t pct_progress = (nprocessed * 100) / task_total;
-		if(pct_progress > pct_done)
-		{
-			for(uint32_t i = 0; i < (pct_progress - pct_done); i++)
-			{
-				std::cerr << "=";
-			}
-			pct_done = pct_progress;
-		}
-
-		if(nfinished == NUM_THREADS) { break; }
-		else { sleep(0.5); }
-	}
-	std::cerr << "\nparallel compute; end\n";
-	return 0;
 }
 
 void
