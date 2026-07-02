@@ -102,6 +102,7 @@ help(std::ostream& out)
 #endif
 	    << "Invoking the program this way solves all instances in [scen "
 	       "file] with algorithm [alg]\n"
+	    << "Currently recognised values for [alg]:\n"
 	    << "\tastar, astar_wgm, astar4c, dijkstra\n"
 	    << "Using --cost requires that cost to exist within a v2 scenario\n"
 	    << "\texcept when --cost=-, which will removes all costs for any "
