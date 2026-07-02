@@ -19,7 +19,7 @@ scenario_runner::scenario_runner(const scenario_manager* scen)
 scenario_runner::~scenario_runner() = default;
 
 std::pair<const experiment*, int>
-scenario_runner::experiment_next(uint32_t count)
+scenario_runner::experiment_next(uint32_t count, bool progress)
 {
 	assert(scenario_ != nullptr);
 	auto commands = scenario_->get_commands();
@@ -34,10 +34,10 @@ scenario_runner::experiment_next(uint32_t count)
 		{
 		case scenario_command::SNAPSHOT:
 		case scenario_command::PATCH:
-			patch_count += snapshot_patches();
+			patch_count += snapshot_patches(false);
 			break;
 		case scenario_command::INST:
-			if(const experiment* inst = snapshot_inst(); inst != nullptr)
+			if(const experiment* inst = snapshot_inst(count > 1 ? true : progress); inst != nullptr)
 			{
 				if(--count == 0) return {inst, patch_count};
 			}
@@ -92,7 +92,8 @@ scenario_runner::snapshot_next(bool clear_patch)
 			// current snapshot, goto next snapshot
 			[[fallthrough]];
 		case scenario_command::INST:
-			++experiment_at_;
+			command_at_    += 1;
+			experiment_at_ += 1;
 			break;
 		case scenario_command::PATCH:
 			snapshot_patches(false);
@@ -138,22 +139,25 @@ scenario_runner::snapshot_patches(bool clear_patch)
 }
 
 const experiment*
-scenario_runner::snapshot_inst()
+scenario_runner::snapshot_inst(bool progress)
 {
 	assert(scenario_ != nullptr);
 	auto commands = scenario_->get_commands();
 	if(command_at_ >= commands.size()) return nullptr;
 	auto cmd = commands[command_at_];
 	if(cmd.type != scenario_command::INST) return nullptr;
-	command_at_    += 1;
-	experiment_at_ += 1;
+	int32_t exp_at = experiment_at_ + 1;
+	if (progress) {
+		command_at_    += 1;
+		experiment_at_ += 1;
+	}
 	if(cmd.cmd.inst.experiment_id >= scenario_->num_experiments()
-	   || cmd.cmd.inst.experiment_id != (uint32_t)experiment_at_)
+	   || cmd.cmd.inst.experiment_id != (uint32_t)exp_at)
 	{
 		WARTHOG_GERROR_FMT(
 		    "scenario_runner::snapshot_inst invalid experiment_id {} to "
 		    "experiment, expected {} (max {}) in {}",
-		    cmd.cmd.inst.experiment_id, experiment_at_,
+		    cmd.cmd.inst.experiment_id, exp_at,
 		    scenario_->num_experiments(), WARTHOG_FILENAME_LINE);
 		return nullptr;
 	}

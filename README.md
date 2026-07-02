@@ -185,11 +185,10 @@ Support for v1 & v2 scenario format, see benchmark in resources.
 Overrides map filename used in scenario.
 
 `--cost [type]`
-Used with v2 (dynamic) scenario format.
-Scenario file holds string values for different instance (query) costs,
-check repo in resource for more details.
-If cost is not specified, use the first cost (if present).
-If cost is specified, but scenario does not have it, program errors.
+Scenario v2 files holds several costs for instances, specify these costs here.
+If given `-`, then remove all costs (works for both v1 and v2).
+Otherwise requires v2 scenario and cost to exist or error.
+If `--cost` is not supplied, uses the first cost (if present) for v2.
 
 `--grid-weight [file]`
 For use with weighted terrain algorithm (e.g. astar_wgm).
@@ -204,20 +203,25 @@ optimal length value specified by the scenario file at hand.
 `--verbose`
 Set this parameter to print debugging information (must be in debug config).
 
-`--filter [id]`
-Run only instance `id` from scenario.
+`--snapshot [id]`
+Only run instances from snapshot `id`.
+Scenario will be considered a static scenario.
+
+`--filter [id|num]`
+Only run instance `id` from scenario.
+If used with `--snapshot`, then run instance number `num` in specified snapshot.
+e.g. `--snapshot=10 --filter=0` will run the first instance on snapshot 10.
+Scenario will be considered a static scenario.
 
 `--trace [.trace.yaml file]`
 Requires `WARTHOG_POSTHOC=On`.
 Generate a trace file output for use with posthoc (see resources).
 The trace is only for first instance, use with `--filter` to choose instance.
 
-`--dump-map [id]`
-Dump the gridmap at beginning of instance `id` to stdout.
+`--dump-map [file]`
+Dump the gridmap at the beginning of search to `file`.
+Use with `--filter` or `--snapshot` to choose the map to dump.
 Useful in dynamic scenario to see current state of grid, especially if used with `--trace`.
-
-`--dump-map-file [file]`
-Use in conjuction with `--dump-map`, output to `file` instead of stdout.
 
 ## Examples
 
@@ -226,7 +230,8 @@ cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DWARTHOG_POSTHOC=On && cmake --b
 ./build/warthog --alg dijkstra --scen examples/arena2.map.scen --checkopt
 ./build/warthog --alg astar --scen examples/NovaStation_Berlin.scen --checkopt
 ./build/warthog --alg astar4c --scen examples/NovaStation_Berlin.scen --cost 4c --checkopt
-./build/warthog --alg astar --scen examples/NovaStation_Berlin.scen --filter=201 --dump-map=201 --dump-map-file=test.map --trace=test.trace.yaml
+./build/warthog --alg astar --scen examples/NovaStation_Berlin.scen --filter=201 --dump-map=test.map --trace=test.trace.yaml
+./build/warthog --alg astar --scen examples/NovaStation_Berlin.scen --snapshot=40 --filter=1
 ./build/warthog --alg astar_wgm --scen examples/arena2.map.scen --grid-weight examples/grid.weight
 ```
 
