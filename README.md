@@ -8,17 +8,12 @@ Github houses the newer version, the legacy version is available at: https://bit
 
 Warthog is split in several repos, all official repos will be located within [Shortest Path Lab](https://github.com/ShortestPathLab).
 
-### Core
-
 Repo [warthog-core](https://github.com/ShortestPathLab/warthog-core) houses the core library of the project.
-Any warthog library will require this dependency.
-It contains domain, search, heuristic, scenario loaders and other core utilities.
+Any project which employs warthog features will require this dependency.
 See `/apps` for pre-setup application that can run standard scenarios.
 
-### JPS
-
-Repo [warthog-jps](https://github.com/ShortestPathLab/warthog-jps) houses jps implementation.
-Requires `warthog-core` as a dependency.
+Current downstream SPL projects which rely on warthog-core:
+ - [warthog-jps](https://github.com/ShortestPathLab/warthog-jps)
 
 # Using warthog
 

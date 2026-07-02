@@ -42,8 +42,6 @@
 #include <sstream>
 #include <unordered_map>
 
-// #include "time_constraints.h"
-
 namespace
 {
 // check computed solutions are optimal
@@ -140,7 +138,13 @@ check_optimality(
 #define WARTHOG_POSTHOC_DO(f)
 #endif
 
-// convenience wrapper around initialisation code
+/// @brief general wrapper around scenario runner and gridmap management
+///
+/// Gets given a scenario manager and handles program management of running 
+/// with user-provided parameters and algorithm support.
+///
+/// Owns and update the gridmap over a dynamic scenario for algorithms that 
+/// support dynamic scenarios.
 struct gridmap_scenario
 {
 	bool grid_managed = false; ///< grid is managed by this class
@@ -152,7 +156,9 @@ struct gridmap_scenario
 
 	gridmap_scenario(const warthog::scenario::scenario_manager& scen)
 	    : mgr(&scen), run(&scen)
-	{ }
+	{
+		static_scenario = mgr->is_static_scenario();
+	}
 
 	/// @brief loads the map to current state
 	/// @param file map filename (single or patches)
@@ -163,7 +169,6 @@ struct gridmap_scenario
 		grid_managed = true;
 		if(!patches.load(file)) { return false; }
 		if(!run.gridmap_init(grid, patches)) { return false; }
-		static_scenario = mgr->is_static_scenario();
 		return true;
 	}
 
@@ -472,6 +477,11 @@ run_wgm_astar(
 {
 	gridmap_scenario scen(scenmgr);
 	// do not load map here
+	if(!scen.static_scenario)
+	{
+		WARTHOG_GCRIT_FMT("algorithm {} requires scenario to be static", alg_name);
+		return (int)std::errc::io_error;
+	}
 	// init runner to start at correct instance and update the map
 	if(!scen.setup_runner(snapshot_id, filter_id))
 	{
