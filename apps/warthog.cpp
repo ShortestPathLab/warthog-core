@@ -152,7 +152,7 @@ check_optimality(
 /// support dynamic scenarios.
 struct gridmap_scenario
 {
-	bool scenario_v1     = true; ///< scenario is v1
+	bool scenario_v1     = true;  ///< scenario is v1
 	bool grid_managed    = false; ///< grid is managed by this class
 	bool static_scenario = false; ///< scenario is static
 	const warthog::scenario::scenario_manager* mgr;
@@ -163,7 +163,8 @@ struct gridmap_scenario
 	gridmap_scenario(const warthog::scenario::scenario_manager& scen)
 	    : mgr(&scen), run(&scen)
 	{
-		scenario_v1 = mgr->get_version() == warthog::io::scenario_version::VERSION_1;
+		scenario_v1
+		    = mgr->get_version() == warthog::io::scenario_version::VERSION_1;
 		static_scenario = mgr->is_static_scenario();
 	}
 
