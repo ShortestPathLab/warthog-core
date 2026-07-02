@@ -224,7 +224,7 @@ public:
 	}
 
 	io::scenario_version
-	get_version()
+	get_version() const noexcept
 	{
 		return version_;
 	}
