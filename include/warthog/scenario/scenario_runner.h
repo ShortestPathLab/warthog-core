@@ -40,13 +40,15 @@ public:
 	restart();
 
 	/// @brief get the current scenario
-	const scenario_manager* get_scenario() const noexcept
+	const scenario_manager*
+	get_scenario() const noexcept
 	{
 		return scenario_;
 	}
 
 	/// @brief clear() and set the current scenario
-	void set_scenario(const scenario_manager* scen) noexcept
+	void
+	set_scenario(const scenario_manager* scen) noexcept
 	{
 		clear();
 		scenario_ = scen;

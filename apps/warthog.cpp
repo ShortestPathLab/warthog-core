@@ -83,15 +83,19 @@ help(std::ostream& out)
 	       "terrain algorithm)\n"
 	    << "\t--cost [type] (optional; force use of selected solution cost of "
 	       "instance, error if not exists;\n"
-		<< "\t\tpass '-' to discard all provided solution costs)\n"
+	    << "\t\tpass '-' to discard all provided solution costs)\n"
 	    << "\t--checkopt (optional; compare solution costs against "
 	       "values in the scen file)\n"
 	    << "\t--verbose (optional; prints debugging info when compiled "
 	       "with debug symbols)\n"
-		<< "\t--snapshot [id] (optional; only run instances on snapshot id; is static scenario)\n"
-		<< "\t--filter [id] (optional; run only inst [id]; is static scenario;\n"
-		<< "\t\tif used with --snapshot, run instance number [id] from instances in snapshot)\n"
-	    << "\t--dump-map [file] (optional; dump gridmap at first instance to [file], use with --snapshot or --filter)\n"
+	    << "\t--snapshot [id] (optional; only run instances on snapshot id; "
+	       "is static scenario)\n"
+	    << "\t--filter [id] (optional; run only inst [id]; is static "
+	       "scenario;\n"
+	    << "\t\tif used with --snapshot, run instance number [id] from "
+	       "instances in snapshot)\n"
+	    << "\t--dump-map [file] (optional; dump gridmap at first instance to "
+	       "[file], use with --snapshot or --filter)\n"
 #ifdef WARTHOG_POSTHOC
 	    << "\t--trace [.trace.yaml file] (optional; write posthoc trace for "
 	       "first instance to [file])\n"
@@ -100,7 +104,8 @@ help(std::ostream& out)
 	       "file] with algorithm [alg]\n"
 	    << "\tastar, astar_wgm, astar4c, dijkstra\n"
 	    << "Using --cost requires that cost to exist within a v2 scenario\n"
-		<< "\texcept when --cost=-, which will removes all costs for any scenario\n";
+	    << "\texcept when --cost=-, which will removes all costs for any "
+	       "scenario\n";
 }
 
 bool
@@ -140,14 +145,14 @@ check_optimality(
 
 /// @brief general wrapper around scenario runner and gridmap management
 ///
-/// Gets given a scenario manager and handles program management of running 
+/// Gets given a scenario manager and handles program management of running
 /// with user-provided parameters and algorithm support.
 ///
-/// Owns and update the gridmap over a dynamic scenario for algorithms that 
+/// Owns and update the gridmap over a dynamic scenario for algorithms that
 /// support dynamic scenarios.
 struct gridmap_scenario
 {
-	bool grid_managed = false; ///< grid is managed by this class
+	bool grid_managed    = false; ///< grid is managed by this class
 	bool static_scenario = false; ///< scenario is static
 	const warthog::scenario::scenario_manager* mgr;
 	warthog::scenario::scenario_runner run;
@@ -176,56 +181,69 @@ struct gridmap_scenario
 	/// @param snapshot_id set map to match snapshot
 	/// @param filter_id if snapshot_id==-1, set map to match at instance id
 	/// @return true on success, false otherwise
-	bool setup_runner(int snapshot_id, int filter_id)
+	bool
+	setup_runner(int snapshot_id, int filter_id)
 	{
-		if (snapshot_id != -1) {
+		if(snapshot_id != -1)
+		{
 			// goto snapshot_id
 			static_scenario = true;
-			while (run.get_snapshot_at() != snapshot_id)
+			while(run.get_snapshot_at() != snapshot_id)
 			{
 				// ran out of snapshots
-				if (run.complete()) {
-					WARTHOG_GWARN_FMT("scenario complete before reaching snapshot {}", snapshot_id);
+				if(run.complete())
+				{
+					WARTHOG_GWARN_FMT(
+					    "scenario complete before reaching snapshot {}",
+					    snapshot_id);
 					return false;
 				}
 				// apply snapshot
 				run.snapshot_next(true);
 				run.snapshot_patches(false);
-				if (!apply_patches()) {
-					return false;
-				}
+				if(!apply_patches()) { return false; }
 			}
 		}
 
-		if (filter_id != -1) {
+		if(filter_id != -1)
+		{
 			// skip next filter_id instances
-			static_scenario = true;
-			auto [exp,patches] = run.experiment_next(filter_id+1, false);
-			if (run.complete() || exp == nullptr) {
-				WARTHOG_GWARN_FMT("scenario complete before reaching filter {}", filter_id);
+			static_scenario     = true;
+			auto [exp, patches] = run.experiment_next(filter_id + 1, false);
+			if(run.complete() || exp == nullptr)
+			{
+				WARTHOG_GWARN_FMT(
+				    "scenario complete before reaching filter {}", filter_id);
 				return false;
 			}
-			if (snapshot_id != -1 && run.get_snapshot_at() != snapshot_id) {
-				WARTHOG_GWARN_FMT("scenario filter {} exceeded snapshot {} instances", filter_id, snapshot_id);
+			if(snapshot_id != -1 && run.get_snapshot_at() != snapshot_id)
+			{
+				WARTHOG_GWARN_FMT(
+				    "scenario filter {} exceeded snapshot {} instances",
+				    filter_id, snapshot_id);
 				return false;
 			}
 		}
 
 		// update gridmap to match patch
-		if (!apply_patches()) { return false; }
+		if(!apply_patches()) { return false; }
 
 		return true;
 	}
 
 	/// @brief apply patches from runner to owned grid (if managed)
 	/// @return true on success, false otherwise
-	bool apply_patches()
+	bool
+	apply_patches()
 	{
 		if(!grid_managed) return true;
-		if (int c = run.gridmap_apply_patches(grid, patches); c < 0) {
-			c = -c - 1;
+		if(int c = run.gridmap_apply_patches(grid, patches); c < 0)
+		{
+			c      = -c - 1;
 			auto p = run.get_patches()[c];
-			WARTHOG_GWARN_FMT("failed to apply patch {} at ({},{})", p.patch_id, p.topleft_x, p.topleft_y);
+			WARTHOG_GWARN_FMT(
+			    "failed to apply patch {} at ({},{})", p.patch_id, p.topleft_x,
+			    p.topleft_y);
 			return false;
 		}
 		return true;
@@ -266,11 +284,12 @@ run_experiments(
 		auto [exp, patch_count] = scen.run.experiment_next();
 		if(exp == nullptr) { break; }
 		// check if only run one instance
-		if(filter_id >= 0 && i != 0)
-		{ break; }
+		if(filter_id >= 0 && i != 0) { break; }
 		// check if instance is on snapshot
-		if (snapshot_id >= 0 && scen.run.get_snapshot_at() != snapshot_id)
-		{ break; }
+		if(snapshot_id >= 0 && scen.run.get_snapshot_at() != snapshot_id)
+		{
+			break;
+		}
 
 		if(patch_count != 0)
 		{
@@ -286,10 +305,7 @@ run_experiments(
 		if(i == 0)
 		{
 			// print map
-			if (!dump_map.empty())
-			{
-				scen.grid.save(dump_map, false);
-			}
+			if(!dump_map.empty()) { scen.grid.save(dump_map, false); }
 			// trace
 #ifdef WARTHOG_POSTHOC
 			if constexpr(std::same_as<
@@ -335,11 +351,12 @@ run_experiments(
 		}
 #endif
 
-		out << scen.run.get_experiment_at() << "\t" << scen.run.get_snapshot_at() << "\t" << alg_name
-		    << "\t" << sol.met_.nodes_expanded_ << "\t"
-		    << sol.met_.nodes_generated_ << "\t" << sol.met_.nodes_reopen_
-		    << "\t" << sol.met_.nodes_surplus_ << "\t" << sol.met_.heap_ops_
-		    << "\t" << sol.met_.time_elapsed_nano_.count() << "\t"
+		out << scen.run.get_experiment_at() << "\t"
+		    << scen.run.get_snapshot_at() << "\t" << alg_name << "\t"
+		    << sol.met_.nodes_expanded_ << "\t" << sol.met_.nodes_generated_
+		    << "\t" << sol.met_.nodes_reopen_ << "\t"
+		    << sol.met_.nodes_surplus_ << "\t" << sol.met_.heap_ops_ << "\t"
+		    << sol.met_.time_elapsed_nano_.count() << "\t"
 		    << (!sol.path_.empty() ? sol.path_.size() - 1 : 0) << "\t"
 		    << sol.sum_of_edge_costs_ << "\t";
 		if(exp->distance())
@@ -479,7 +496,8 @@ run_wgm_astar(
 	// do not load map here
 	if(!scen.static_scenario)
 	{
-		WARTHOG_GCRIT_FMT("algorithm {} requires scenario to be static", alg_name);
+		WARTHOG_GCRIT_FMT(
+		    "algorithm {} requires scenario to be static", alg_name);
 		return (int)std::errc::io_error;
 	}
 	// init runner to start at correct instance and update the map
@@ -553,7 +571,8 @@ main(int argc, char** argv)
 
 	if(snapshot_id == 1)
 	{
-		if(warthog::util::parse_token(cfg.get_param_value("snapshot"), snapshot_id)
+		if(warthog::util::parse_token(
+		       cfg.get_param_value("snapshot"), snapshot_id)
 		   != std::errc{})
 		{
 			WARTHOG_GERROR_FMT("invalid --snapshot argument {}", snapshot_id);

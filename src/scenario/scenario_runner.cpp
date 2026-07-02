@@ -37,7 +37,9 @@ scenario_runner::experiment_next(uint32_t count, bool progress)
 			patch_count += snapshot_patches(false);
 			break;
 		case scenario_command::INST:
-			if(const experiment* inst = snapshot_inst(count > 1 ? true : progress); inst != nullptr)
+			if(const experiment* inst
+			   = snapshot_inst(count > 1 ? true : progress);
+			   inst != nullptr)
 			{
 				if(--count == 0) return {inst, patch_count};
 			}
@@ -147,7 +149,8 @@ scenario_runner::snapshot_inst(bool progress)
 	auto cmd = commands[command_at_];
 	if(cmd.type != scenario_command::INST) return nullptr;
 	int32_t exp_at = experiment_at_ + 1;
-	if (progress) {
+	if(progress)
+	{
 		command_at_    += 1;
 		experiment_at_ += 1;
 	}
@@ -157,8 +160,8 @@ scenario_runner::snapshot_inst(bool progress)
 		WARTHOG_GERROR_FMT(
 		    "scenario_runner::snapshot_inst invalid experiment_id {} to "
 		    "experiment, expected {} (max {}) in {}",
-		    cmd.cmd.inst.experiment_id, exp_at,
-		    scenario_->num_experiments(), WARTHOG_FILENAME_LINE);
+		    cmd.cmd.inst.experiment_id, exp_at, scenario_->num_experiments(),
+		    WARTHOG_FILENAME_LINE);
 		return nullptr;
 	}
 	return scenario_->get_experiment(cmd.cmd.inst.experiment_id);

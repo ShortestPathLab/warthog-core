@@ -21,9 +21,9 @@ scenario_manager::clear()
 	experiments_.clear();
 	experiments_res_.release();
 	mfile_.clear();
-	inst_count_ = 0;
-	patch_count_ = 0;
-	snapshot_count_ = 0;
+	inst_count_            = 0;
+	patch_count_           = 0;
+	snapshot_count_        = 0;
 	static_scenario_start_ = -1;
 }
 
@@ -119,14 +119,18 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 	bool use_cost = true;
 	if(!cost_type_.empty())
 	{
-		if (cost_type_ == "-") {
+		if(cost_type_ == "-")
+		{
 			// use no cost type
 			use_cost = false;
-		} else {
+		}
+		else
+		{
 			// user-provided cost, error for v1
 			WARTHOG_GERROR_FMT(
-				"scenario_manager v1 does not support cost type, was provided {}",
-				cost_type_);
+			    "scenario_manager v1 does not support cost type, was provided "
+			    "{}",
+			    cost_type_);
 			return std::unexpected(std::errc::invalid_argument);
 		}
 	}
@@ -134,8 +138,8 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 	// setup commands header for static scenario
 	commands_.push_back(scenario_command::make_snapshot(0, 0));
 	commands_.push_back(scenario_command::make_patch(0, 0, 0, 0));
-	patch_count_ += 1;
-	snapshot_count_ += 1;
+	patch_count_          += 1;
+	snapshot_count_       += 1;
 	static_scenario_start_ = (int32_t)commands_.size();
 	// read queries until done
 	bool first = true;
@@ -168,7 +172,8 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 				map_string = copy_string(current_map);
 			}
 			std::optional<double> cost_value;
-			if (use_cost) {
+			if(use_cost)
+			{
 				// add cost
 				cost_value.emplace(Q.cost[0]);
 			}
@@ -223,17 +228,21 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 	int cost_index = si.get_cost_type().size() != 0 ? 0 : -1;
 	if(!cost_type_.empty())
 	{
-		if (cost_type_ == "-") {
+		if(cost_type_ == "-")
+		{
 			// use no cost type
 			cost_index = -1;
-		} else {
+		}
+		else
+		{
 			// user-provided cost index
 			cost_index = si.find_cost_index(cost_type_);
 			if(cost_index < 0)
 			{
 				WARTHOG_GERROR_FMT(
-					"scenario_manager v2 failed to find user-provided cost: {}",
-					cost_type_);
+				    "scenario_manager v2 failed to find user-provided cost: "
+				    "{}",
+				    cost_type_);
 				return std::unexpected(std::errc::invalid_argument);
 			}
 		}
@@ -242,8 +251,8 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 	// read queries until done
 	io::scenario_instance Q;
 	io::scenario_patch P;
-	int last_type      = -1;
-	int last_bucket    = -1;
+	int last_type   = -1;
+	int last_bucket = -1;
 	while(true)
 	{
 		// try reading a inst line
@@ -263,10 +272,12 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 				commands_.push_back(scenario_command::make_snapshot(
 				    Q.bucket, snapshot_count_++));
 			}
-			if(last_type == -1 || last_type == io::scenario_serialize::CMD_PATCH)
+			if(last_type == -1
+			   || last_type == io::scenario_serialize::CMD_PATCH)
 			{
 				// set as static scenario (for now)
-				static_scenario_start_ = static_cast<int32_t>(commands_.size());
+				static_scenario_start_
+				    = static_cast<int32_t>(commands_.size());
 			}
 			last_type   = io::scenario_serialize::CMD_INST;
 			last_bucket = Q.bucket;
@@ -322,7 +333,8 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 	}
 
 	// check if still static scenario
-	if (snapshot_count_ != 1) {
+	if(snapshot_count_ != 1)
+	{
 		// set to dynamic scenario
 		static_scenario_start_ = -1;
 	}

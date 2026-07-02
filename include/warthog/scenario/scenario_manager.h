@@ -223,25 +223,29 @@ public:
 		scenario_height_ = height;
 	}
 
-	io::scenario_version get_version()
+	io::scenario_version
+	get_version()
 	{
 		return version_;
 	}
 
 	/// @return number of instances, should be equiv to num_experiments()
-	uint32_t get_inst_count() const noexcept
+	uint32_t
+	get_inst_count() const noexcept
 	{
 		return inst_count_;
 	}
 
 	/// @return number of patches, v1 will always be 1
-	uint32_t get_patch_count() const noexcept
+	uint32_t
+	get_patch_count() const noexcept
 	{
 		return patch_count_;
 	}
 
 	/// @return number of patches, static scenarios will be 1
-	uint32_t get_snapshot_count() const noexcept
+	uint32_t
+	get_snapshot_count() const noexcept
 	{
 		return snapshot_count_;
 	}
