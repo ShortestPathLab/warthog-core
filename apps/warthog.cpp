@@ -500,7 +500,7 @@ run_wgm_astar(
 	{
 		WARTHOG_GCRIT_FMT(
 		    "algorithm {} requires scenario file to be version 1", alg_name);
-		return (int)std::errc::io_error;
+		return (int)std::errc::invalid_argument;
 	}
 	// init runner to start at correct instance and update the map
 	if(!scen.setup_runner(snapshot_id, filter_id))

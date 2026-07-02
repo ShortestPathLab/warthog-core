@@ -82,12 +82,12 @@ scenario_manager::load_gppc_scenario(std::istream& scenfile)
 		    si.get_line_num());
 		return std::unexpected(r.error());
 	}
-	auto version = si.get_version();
-	if(version == io::scenario_version::VERSION_1)
+	version_ = si.get_version();
+	if(version_ == io::scenario_version::VERSION_1)
 	{
 		return load_gppc_scenario_body_v1(si);
 	}
-	else if(version == io::scenario_version::VERSION_2)
+	else if(version_ == io::scenario_version::VERSION_2)
 	{
 		return load_gppc_scenario_body_v2(si);
 	}
