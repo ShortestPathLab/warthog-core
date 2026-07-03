@@ -9,9 +9,10 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v4
-    - uses: DoozyX/clang-format-lint-action@v0.18.1
+    - uses: actions/checkout@v6
+    - uses: DoozyX/clang-format-lint-action@v0.20
       with:
         source: '.'
         exclude: './extern ./libs'
-        clangFormatVersion: 18.1.3
+        extensions: 'h,cpp,c'
+        clangFormatVersion: 20
