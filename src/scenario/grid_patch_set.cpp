@@ -54,8 +54,9 @@ grid_patch_set::load(io::bittable_serialize& S, int max_grids, uint32_t flags)
 		// header not read
 		if((flags & SKIP_HEADER) != 0)
 		{
-			WARTHOG_GWARN("grid patch SKIP_HEADER for serializer when header "
-			              "has not been read.");
+			WARTHOG_GWARN(
+			    "grid patch SKIP_HEADER for serializer when header "
+			    "has not been read.");
 			return -1;
 		}
 		if(auto r = S.read_header(); !r)
@@ -70,8 +71,9 @@ grid_patch_set::load(io::bittable_serialize& S, int max_grids, uint32_t flags)
 		// header has been read, check
 		if((flags & FORCE_HEADER) != 0)
 		{
-			WARTHOG_GWARN("grid patch FORCE_HEADER for serializer when header "
-			              "has already been read.");
+			WARTHOG_GWARN(
+			    "grid patch FORCE_HEADER for serializer when header "
+			    "has already been read.");
 			return -1;
 		}
 	}

@@ -46,8 +46,9 @@ scenario_runner::experiment_next(uint32_t count, bool progress)
 		default:
 			// should never be reached
 			++command_at_;
-			WARTHOG_GDEBUG("scenario_runner::experiment_next invalid command "
-			               "type in " WARTHOG_FILENAME_LINE);
+			WARTHOG_GDEBUG(
+			    "scenario_runner::experiment_next invalid command "
+			    "type in " WARTHOG_FILENAME_LINE);
 		}
 		// exits loop
 	}
@@ -101,8 +102,9 @@ scenario_runner::snapshot_next(bool clear_patch)
 			// snapshot_patches increments snapshot_at_
 			break;
 		default:
-			WARTHOG_GDEBUG("scenario_runner::snapshot_next invalid command "
-			               "type in " WARTHOG_FILENAME_LINE);
+			WARTHOG_GDEBUG(
+			    "scenario_runner::snapshot_next invalid command "
+			    "type in " WARTHOG_FILENAME_LINE);
 		}
 	}
 	return false;
