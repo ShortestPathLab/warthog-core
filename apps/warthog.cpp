@@ -67,7 +67,7 @@ using listener_type = std::tuple<>;
 void
 help(std::ostream& out)
 {
-	out << "warthog version " << WARTHOG_VERSION << "\n";
+	out << "warthog version " WARTHOG_VERSION "\n";
 	out << "==> manual <==\n"
 	    << "This program solves/generates grid-based pathfinding "
 	       "problems using the\n"
@@ -81,19 +81,16 @@ help(std::ostream& out)
 	       "values in scen file) \n"
 	    << "\t--grid-weight [file] (required if using a weighted "
 	       "terrain algorithm)\n"
-	    << "\t--cost [type] (optional; force use of selected solution cost of "
-	       "instance, error if not exists;\n"
+	    << "\t--cost [type] (default first cost from scenario if exists;\n"
+		   "\t\tuse cost type for solution from scenario or error if not exists\n"
 	    << "\t\tpass '-' to discard all provided solution costs)\n"
 	    << "\t--checkopt (optional; compare solution costs against "
 	       "values in the scen file)\n"
 	    << "\t--verbose (optional; prints debugging info when compiled "
 	       "with debug symbols)\n"
-	    << "\t--snapshot [id] (optional; only run instances on snapshot id; "
-	       "is static scenario)\n"
-	    << "\t--filter [id] (optional; run only inst [id]; is static "
-	       "scenario;\n"
-	    << "\t\tif used with --snapshot, run instance number [id] from "
-	       "instances in snapshot)\n"
+	    << "\t--snapshot [id] (default -1; select all instances (-1) or only instances on snapshot id)\n"
+	    << "\t--filter [num] (default -1; run all instances (-1) or run instance num;\n"
+	    << "\t\tif used with --snapshot, is instance num in snapshot id)\n"
 	    << "\t--dump-map [file] (optional; dump gridmap at first instance to "
 	       "[file], use with --snapshot or --filter)\n"
 #ifdef WARTHOG_POSTHOC
@@ -103,10 +100,7 @@ help(std::ostream& out)
 	    << "Invoking the program this way solves all instances in [scen "
 	       "file] with algorithm [alg]\n"
 	    << "Currently recognised values for [alg]:\n"
-	    << "\tastar, astar_wgm, astar4c, dijkstra\n"
-	    << "Using --cost requires that cost to exist within a v2 scenario\n"
-	    << "\texcept when --cost=-, which will removes all costs for any "
-	       "scenario\n";
+	    << "\tastar, astar_wgm, astar4c, dijkstra\n";
 }
 
 bool
