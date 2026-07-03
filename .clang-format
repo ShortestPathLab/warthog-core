@@ -1,6 +1,6 @@
 ---
 Language: Cpp
-Standard: c++23
+Standard: Latest
 BasedOnStyle: GNU
 AccessModifierOffset: -4
 PointerAlignment: Left

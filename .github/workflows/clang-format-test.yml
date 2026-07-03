@@ -5,19 +5,14 @@ on:
     types: [opened, edited, reopened, synchronize]
 
 jobs:
-  formatting-check:
+  build:
     runs-on: ubuntu-latest
-
-    strategy:
-      matrix:
-        path:
-          - 'include'
-          - 'src'
-          - 'apps'
 
     steps:
     - uses: actions/checkout@v6
-    - uses: jidicula/clang-format-action@v4.18.0
+    - uses: DoozyX/clang-format-lint-action@v0.20
       with:
-        clang-format-version: '22'
-        check-path: ${{ matrix.path }}
+        source: '.'
+        exclude: './extern ./libs'
+        extensions: 'h,cpp,c'
+        clangFormatVersion: 20
