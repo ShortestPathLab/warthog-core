@@ -227,7 +227,7 @@ private:
 			throw std::logic_error("newsize < queuesize_");
 		}
 
-		search::search_node** tmp = new search::search_node* [newsize] {};
+		search::search_node** tmp = new search::search_node* [newsize] { };
 		for(unsigned int i = 0; i < queuesize_; i++)
 		{
 			tmp[i] = elts_[i];

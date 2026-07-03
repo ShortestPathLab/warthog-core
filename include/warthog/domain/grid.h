@@ -246,8 +246,9 @@ dir_cw90(direction d) noexcept
 	    | ((uint64_t)(SOUTHEAST) << (NORTHEAST_ID << 3))
 	    | ((uint64_t)(SOUTHWEST) << (SOUTHEAST_ID << 3))
 	    | ((uint64_t)(NORTHWEST) << (SOUTHWEST_ID << 3));
-	int index = std::countr_zero(static_cast<uint16_t>(
-	    d | 256u)); // |256u to ensure no branch in compiler
+	int index = std::countr_zero(
+	    static_cast<uint16_t>(
+	        d | 256u)); // |256u to ensure no branch in compiler
 	return static_cast<direction>(sel >> index * 8);
 }
 
@@ -279,8 +280,9 @@ dir_cw45(direction d) noexcept
 	    | ((uint64_t)(SOUTHEAST) << (EAST_ID << 3))
 	    | ((uint64_t)(SOUTHWEST) << (SOUTH_ID << 3))
 	    | ((uint64_t)(NORTHWEST) << (WEST_ID << 3));
-	int index = std::countr_zero(static_cast<uint16_t>(
-	    d | 256u)); // |256u to ensure no branch in compiler
+	int index = std::countr_zero(
+	    static_cast<uint16_t>(
+	        d | 256u)); // |256u to ensure no branch in compiler
 	return static_cast<direction>(sel >> index * 8);
 }
 
@@ -312,8 +314,9 @@ dir_ccw90(direction d) noexcept
 	    | ((uint64_t)(SOUTHEAST) << (SOUTHWEST_ID << 3))
 	    | ((uint64_t)(SOUTHWEST) << (NORTHWEST_ID << 3))
 	    | ((uint64_t)(NORTHWEST) << (NORTHEAST_ID << 3));
-	int index = std::countr_zero(static_cast<uint16_t>(
-	    d | 256u)); // |256u to ensure no branch in compiler
+	int index = std::countr_zero(
+	    static_cast<uint16_t>(
+	        d | 256u)); // |256u to ensure no branch in compiler
 	return static_cast<direction>(sel >> index * 8);
 }
 
@@ -345,8 +348,9 @@ dir_ccw45(direction d) noexcept
 	    | ((uint64_t)(SOUTHEAST) << (SOUTH_ID << 3))
 	    | ((uint64_t)(SOUTHWEST) << (WEST_ID << 3))
 	    | ((uint64_t)(NORTHWEST) << (NORTH_ID << 3));
-	int index = std::countr_zero(static_cast<uint16_t>(
-	    d | 256u)); // |256u to ensure no branch in compiler
+	int index = std::countr_zero(
+	    static_cast<uint16_t>(
+	        d | 256u)); // |256u to ensure no branch in compiler
 	return static_cast<direction>(sel >> index * 8);
 }
 
@@ -378,8 +382,9 @@ dir_flip(direction d) noexcept
 	    | ((uint64_t)(SOUTHEAST) << (NORTHWEST_ID << 3))
 	    | ((uint64_t)(SOUTHWEST) << (NORTHEAST_ID << 3))
 	    | ((uint64_t)(NORTHWEST) << (SOUTHEAST_ID << 3));
-	int index = std::countr_zero(static_cast<uint16_t>(
-	    d | 256u)); // |256u to ensure no branch in compiler
+	int index = std::countr_zero(
+	    static_cast<uint16_t>(
+	        d | 256u)); // |256u to ensure no branch in compiler
 	return static_cast<direction>(sel >> index * 8);
 }
 

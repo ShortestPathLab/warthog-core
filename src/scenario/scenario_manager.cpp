@@ -183,8 +183,10 @@ scenario_manager::load_gppc_scenario_body_v1(io::scenario_serialize& si)
 			    (uint32_t)Q.goal_y, si.get_map_width(), si.get_map_height(),
 			    cost_value, map_string);
 			experiments_.push_back(ex);
-			commands_.push_back(scenario_command::make_inst(
-			    Q.bucket, inst_count_++, (uint32_t)(experiments_.size() - 1)));
+			commands_.push_back(
+			    scenario_command::make_inst(
+			        Q.bucket, inst_count_++,
+			        (uint32_t)(experiments_.size() - 1)));
 		}
 		else if(*con == io::scenario_serialize::FINAL) { break; }
 		else
@@ -268,8 +270,9 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			if(last_type == -1)
 			{
 				// only used if first command is a inst
-				commands_.push_back(scenario_command::make_snapshot(
-				    Q.bucket, snapshot_count_++));
+				commands_.push_back(
+				    scenario_command::make_snapshot(
+				        Q.bucket, snapshot_count_++));
 			}
 			if(last_type == -1
 			   || last_type == io::scenario_serialize::CMD_PATCH)
@@ -289,8 +292,10 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			    Q.start_x, Q.start_y, Q.goal_x, Q.goal_y, si.get_map_width(),
 			    si.get_map_height(), ex_cost, map_string);
 			experiments_.push_back(ex);
-			commands_.push_back(scenario_command::make_inst(
-			    Q.bucket, inst_count_++, (uint32_t)(experiments_.size() - 1)));
+			commands_.push_back(
+			    scenario_command::make_inst(
+			        Q.bucket, inst_count_++,
+			        (uint32_t)(experiments_.size() - 1)));
 		}
 		else if(*con == io::scenario_serialize::CMD_PATCH)
 		{
@@ -305,14 +310,16 @@ scenario_manager::load_gppc_scenario_body_v2(io::scenario_serialize& si)
 			if(last_type != io::scenario_serialize::CMD_PATCH
 			   || last_bucket != P.bucket)
 			{
-				commands_.push_back(scenario_command::make_snapshot(
-				    P.bucket, snapshot_count_++));
+				commands_.push_back(
+				    scenario_command::make_snapshot(
+				        P.bucket, snapshot_count_++));
 			}
 			last_type   = io::scenario_serialize::CMD_PATCH;
 			last_bucket = P.bucket;
 
-			commands_.push_back(scenario_command::make_patch(
-			    P.bucket, P.patch_id, P.loc_x, P.loc_y));
+			commands_.push_back(
+			    scenario_command::make_patch(
+			        P.bucket, P.patch_id, P.loc_x, P.loc_y));
 		}
 		else if(*con == io::scenario_serialize::FINAL) { break; }
 		else
