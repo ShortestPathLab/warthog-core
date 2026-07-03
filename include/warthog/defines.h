@@ -12,4 +12,13 @@
 
 #endif // <warthog/config.h>
 
+// add missing config
+
+#ifndef WARTHOG_VERSION
+#define WARTHOG_VERSION "0.0.0"
+#define WARTHOG_VERSION_MAJOR 0
+#define WARTHOG_VERSION_MINOR 0
+#define WARTHOG_VERSION_REVISON 0
+#endif
+
 #endif // WARTHOG_DEFINES_H

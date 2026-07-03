@@ -223,6 +223,33 @@ public:
 		scenario_height_ = height;
 	}
 
+	io::scenario_version
+	get_version() const noexcept
+	{
+		return version_;
+	}
+
+	/// @return number of instances, should be equiv to num_experiments()
+	uint32_t
+	get_inst_count() const noexcept
+	{
+		return inst_count_;
+	}
+
+	/// @return number of patches, v1 will always be 1
+	uint32_t
+	get_patch_count() const noexcept
+	{
+		return patch_count_;
+	}
+
+	/// @return number of patches, static scenarios will be 1
+	uint32_t
+	get_snapshot_count() const noexcept
+	{
+		return snapshot_count_;
+	}
+
 protected:
 	std::expected<void, std::errc>
 	load_gppc_scenario(std::istream& scenfile);
@@ -247,6 +274,7 @@ protected:
 	uint32_t scenario_height_     = 0;
 	uint32_t inst_count_          = 0;
 	uint32_t patch_count_         = 0;
+	uint32_t snapshot_count_      = 0;
 	int32_t static_scenario_start_
 	    = -1; ///< >=0: is static scenario where inst commands start at pos,
 	          ///< else is dynamic scenario

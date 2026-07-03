@@ -7,6 +7,8 @@
 // @created: 2016-11-23
 //
 
+#include <warthog/config.h>
+
 #include <warthog/constants.h>
 #include <warthog/domain/gridmap.h>
 #include <warthog/domain/labelled_gridmap.h>
@@ -29,7 +31,6 @@
 
 #include "cfg.h"
 #include <getopt.h>
-#include <warthog/config.h>
 
 #include <cmath>
 #include <filesystem>
@@ -41,8 +42,6 @@
 #include <sstream>
 #include <unordered_map>
 
-// #include "time_constraints.h"
-
 namespace
 {
 // check computed solutions are optimal
@@ -51,11 +50,11 @@ int checkopt = 0;
 int verbose = 0;
 // display program help on startup
 int print_help = 0;
+// run only this snapshot, or -1 for all
+int snapshot_id = -1;
 // run only this inst, or -1 for all
 int filter_id = -1;
-// dump map at id if set
-int dump_map_id = -1;
-std::string dump_map_file;
+std::string dump_map;
 #ifdef WARTHOG_POSTHOC
 // write trace to file, empty string to disable
 std::string trace_file;
@@ -68,7 +67,7 @@ using listener_type = std::tuple<>;
 void
 help(std::ostream& out)
 {
-	out << "warthog version " << WARTHOG_VERSION << "\n";
+	out << "warthog version " WARTHOG_VERSION "\n";
 	out << "==> manual <==\n"
 	    << "This program solves/generates grid-based pathfinding "
 	       "problems using the\n"
@@ -82,17 +81,21 @@ help(std::ostream& out)
 	       "values in scen file) \n"
 	    << "\t--grid-weight [file] (required if using a weighted "
 	       "terrain algorithm)\n"
-	    << "\t--cost [type] (optional; force use of selected solution cost of "
-	       "instance, error if not exists)"
+	    << "\t--cost [type] (default first cost from scenario if exists;\n"
+	       "\t\tuse cost type for solution from scenario or error if not "
+	       "exists\n"
+	    << "\t\tpass '-' to discard all provided solution costs)\n"
 	    << "\t--checkopt (optional; compare solution costs against "
 	       "values in the scen file)\n"
 	    << "\t--verbose (optional; prints debugging info when compiled "
 	       "with debug symbols)\n"
-	    << "\t--filter [id] (optional; run only inst [id])\n"
-	    << "\t--dump-map [id] (optional; dump current gridmap at start of "
-	       "inst id to stderr default)\n"
-	    << "\t--dump-map-file [filename] (optional; override dump map to "
-	       "file)\n"
+	    << "\t--snapshot [id] (default -1; select all instances (-1) or only "
+	       "instances on snapshot id)\n"
+	    << "\t--filter [num] (default -1; run all instances (-1) or run "
+	       "instance num;\n"
+	    << "\t\tif used with --snapshot, is instance num in snapshot id)\n"
+	    << "\t--dump-map [file] (optional; dump gridmap at first instance to "
+	       "[file], use with --snapshot or --filter)\n"
 #ifdef WARTHOG_POSTHOC
 	    << "\t--trace [.trace.yaml file] (optional; write posthoc trace for "
 	       "first instance to [file])\n"
@@ -100,11 +103,7 @@ help(std::ostream& out)
 	    << "Invoking the program this way solves all instances in [scen "
 	       "file] with algorithm [alg]\n"
 	    << "Currently recognised values for [alg]:\n"
-	    << "\tastar, astar_wgm, astar4c, dijkstra\n"
-	    << "Currently recognised values for [v2-cost]:\n"
-	    << "8c-ncc (default), 8c-cc, 4c, aa-ncc, aa-cc\n"
-	    << "8c = 8-connected, 4c = 4-connected, aa = anyangle, ncc = "
-	       "no-corner-cut, cc = corner-cut\n";
+	    << "\tastar, astar_wgm, astar4c, dijkstra\n";
 }
 
 bool
@@ -142,9 +141,18 @@ check_optimality(
 #define WARTHOG_POSTHOC_DO(f)
 #endif
 
-// convenience wrapper around initialisation code
+/// @brief general wrapper around scenario runner and gridmap management
+///
+/// Gets given a scenario manager and handles program management of running
+/// with user-provided parameters and algorithm support.
+///
+/// Owns and update the gridmap over a dynamic scenario for algorithms that
+/// support dynamic scenarios.
 struct gridmap_scenario
 {
+	bool scenario_v1     = true;  ///< scenario is v1
+	bool grid_managed    = false; ///< grid is managed by this class
+	bool static_scenario = false; ///< scenario is static
 	const warthog::scenario::scenario_manager* mgr;
 	warthog::scenario::scenario_runner run;
 	warthog::domain::gridmap grid;
@@ -152,13 +160,103 @@ struct gridmap_scenario
 
 	gridmap_scenario(const warthog::scenario::scenario_manager& scen)
 	    : mgr(&scen), run(&scen)
-	{ }
-
-	bool
-	load_map(const std::filesystem::path map)
 	{
-		if(!patches.load(map)) { return false; }
-		return run.gridmap_init(grid, patches);
+		scenario_v1
+		    = mgr->get_version() == warthog::io::scenario_version::VERSION_1;
+		static_scenario = mgr->is_static_scenario();
+	}
+
+	/// @brief loads the map to current state
+	/// @param file map filename (single or patches)
+	/// @return true on success, false otherwise
+	bool
+	load_map(const std::filesystem::path file)
+	{
+		grid_managed = true;
+		if(!patches.load(file)) { return false; }
+		if(!run.gridmap_init(grid, patches)) { return false; }
+		return true;
+	}
+
+	/// @brief will update to runner based on user-provided parameters
+	/// @param snapshot_id set map to match snapshot
+	/// @param filter_id if snapshot_id==-1, set map to match at instance id
+	/// @return true on success, false otherwise
+	bool
+	setup_runner(int snapshot_id, int filter_id)
+	{
+		if(snapshot_id != -1)
+		{
+			// goto snapshot_id
+			static_scenario = true;
+			while(run.get_snapshot_at() != snapshot_id)
+			{
+				// ran out of snapshots
+				if(run.complete())
+				{
+					WARTHOG_GWARN_FMT(
+					    "scenario complete before reaching snapshot {}",
+					    snapshot_id);
+					return false;
+				}
+				// apply snapshot
+				run.snapshot_next(true);
+				run.snapshot_patches(false);
+				if(!apply_patches()) { return false; }
+			}
+		}
+
+		if(filter_id != -1)
+		{
+			// skip next filter_id instances
+			static_scenario     = true;
+			auto [exp, patches] = run.experiment_next(filter_id + 1, false);
+			if(run.complete() || exp == nullptr)
+			{
+				WARTHOG_GWARN_FMT(
+				    "scenario complete before reaching filter {}", filter_id);
+				return false;
+			}
+			if(snapshot_id != -1 && run.get_snapshot_at() != snapshot_id)
+			{
+				WARTHOG_GWARN_FMT(
+				    "scenario filter {} exceeded snapshot {} instances",
+				    filter_id, snapshot_id);
+				return false;
+			}
+		}
+
+		// update gridmap to match patch
+		if(!apply_patches()) { return false; }
+
+		return true;
+	}
+
+	/// @brief apply patches from runner to owned grid (if managed)
+	/// @return true on success, false otherwise
+	bool
+	apply_patches()
+	{
+		if(!grid_managed) return true;
+		if(int c = run.gridmap_apply_patches(grid, patches); c < 0)
+		{
+			c      = -c - 1;
+			auto p = run.get_patches()[c];
+			WARTHOG_GWARN_FMT(
+			    "failed to apply patch {} at ({},{})", p.patch_id, p.topleft_x,
+			    p.topleft_y);
+			return false;
+		}
+		return true;
+	}
+
+	/// @brief will update the grid for dynamic scenarios
+	/// @return true on success, false otherwise
+	bool
+	dynamic_grid_update()
+	{
+		if(!grid_managed) return true;
+		return apply_patches();
 	}
 };
 
@@ -186,9 +284,17 @@ run_experiments(
 #endif
 		auto [exp, patch_count] = scen.run.experiment_next();
 		if(exp == nullptr) { break; }
+		// check if only run one instance
+		if(filter_id >= 0 && i != 0) { break; }
+		// check if instance is on snapshot
+		if(snapshot_id >= 0 && scen.run.get_snapshot_at() != snapshot_id)
+		{
+			break;
+		}
+
 		if(patch_count != 0)
 		{
-			if(scen.run.gridmap_apply_patches(scen.grid, scen.patches) < 0)
+			if(!scen.dynamic_grid_update())
 			{
 				// failed to apply patches, exit
 				WARTHOG_GCRIT("dynamic patch error: failed to apply patches");
@@ -196,14 +302,11 @@ run_experiments(
 			}
 		}
 
-		if(i == dump_map_id)
+		// special actions on first scenario
+		if(i == 0)
 		{
 			// print map
-			scen.grid.save(dump_map_file, false);
-		}
-
-		if(filter_id >= 0 && i == filter_id)
-		{
+			if(!dump_map.empty()) { scen.grid.save(dump_map, false); }
 			// trace
 #ifdef WARTHOG_POSTHOC
 			if constexpr(std::same_as<
@@ -221,7 +324,6 @@ run_experiments(
 			}
 #endif
 		}
-		else if(filter_id >= 0) { continue; }
 
 		warthog::pack_id startid
 		    = expander->get_pack(exp->startx(), exp->starty());
@@ -250,11 +352,12 @@ run_experiments(
 		}
 #endif
 
-		out << i << "\t" << scen.run.get_snapshot_at() << "\t" << alg_name
-		    << "\t" << sol.met_.nodes_expanded_ << "\t"
-		    << sol.met_.nodes_generated_ << "\t" << sol.met_.nodes_reopen_
-		    << "\t" << sol.met_.nodes_surplus_ << "\t" << sol.met_.heap_ops_
-		    << "\t" << sol.met_.time_elapsed_nano_.count() << "\t"
+		out << scen.run.get_experiment_at() << "\t"
+		    << scen.run.get_snapshot_at() << "\t" << alg_name << "\t"
+		    << sol.met_.nodes_expanded_ << "\t" << sol.met_.nodes_generated_
+		    << "\t" << sol.met_.nodes_reopen_ << "\t"
+		    << sol.met_.nodes_surplus_ << "\t" << sol.met_.heap_ops_ << "\t"
+		    << sol.met_.time_elapsed_nano_.count() << "\t"
 		    << (!sol.path_.empty() ? sol.path_.size() - 1 : 0) << "\t"
 		    << sol.sum_of_edge_costs_ << "\t";
 		if(exp->distance())
@@ -284,9 +387,16 @@ run_astar(
     std::string alg_name)
 {
 	gridmap_scenario scen(scenmgr);
+	// load the base map/patch set
 	if(!scen.load_map(std::filesystem::path(mapname)))
 	{
 		WARTHOG_GCRIT("failed to load map");
+		return (int)std::errc::io_error;
+	}
+	// init runner to start at correct instance and update the map
+	if(!scen.setup_runner(snapshot_id, filter_id))
+	{
+		WARTHOG_GCRIT("failed to setup scenario");
 		return (int)std::errc::io_error;
 	}
 	warthog::search::gridmap_expansion_policy expander(&scen.grid);
@@ -309,9 +419,16 @@ run_astar4c(
     std::string alg_name)
 {
 	gridmap_scenario scen(scenmgr);
+	// load the base map/patch set
 	if(!scen.load_map(std::filesystem::path(mapname)))
 	{
 		WARTHOG_GCRIT("failed to load map");
+		return (int)std::errc::io_error;
+	}
+	// init runner to start at correct instance and update the map
+	if(!scen.setup_runner(snapshot_id, filter_id))
+	{
+		WARTHOG_GCRIT("failed to setup scenario");
 		return (int)std::errc::io_error;
 	}
 	warthog::search::gridmap_expansion_policy expander(&scen.grid, true);
@@ -334,9 +451,16 @@ run_dijkstra(
     std::string alg_name)
 {
 	gridmap_scenario scen(scenmgr);
+	// load the base map/patch set
 	if(!scen.load_map(std::filesystem::path(mapname)))
 	{
 		WARTHOG_GCRIT("failed to load map");
+		return (int)std::errc::io_error;
+	}
+	// init runner to start at correct instance and update the map
+	if(!scen.setup_runner(snapshot_id, filter_id))
+	{
+		WARTHOG_GCRIT("failed to setup scenario");
 		return (int)std::errc::io_error;
 	}
 	warthog::search::gridmap_expansion_policy expander(&scen.grid);
@@ -371,6 +495,18 @@ run_wgm_astar(
 {
 	gridmap_scenario scen(scenmgr);
 	// do not load map here
+	if(!scen.scenario_v1)
+	{
+		WARTHOG_GCRIT_FMT(
+		    "algorithm {} requires scenario file to be version 1", alg_name);
+		return (int)std::errc::invalid_argument;
+	}
+	// init runner to start at correct instance and update the map
+	if(!scen.setup_runner(snapshot_id, filter_id))
+	{
+		WARTHOG_GCRIT("failed to setup scenario");
+		return (int)std::errc::io_error;
+	}
 	warthog::util::cost_table costs(costfile.c_str());
 	warthog::domain::vl_gridmap map(mapname.c_str());
 	warthog::search::vl_gridmap_expansion_policy expander(&map, costs);
@@ -409,9 +545,9 @@ main(int argc, char** argv)
 	       {"checkopt", no_argument, &checkopt, 1},
 	       {"cost", required_argument, 0, 0},
 	       {"verbose", no_argument, &verbose, 1},
+	       {"snapshot", required_argument, &snapshot_id, 1},
 	       {"filter", required_argument, &filter_id, 1},
-	       {"dump-map", required_argument, &dump_map_id, 1},
-	       {"dump-map-file", required_argument, 0, 0},
+	       {"dump-map", required_argument, 0, 0},
 #ifdef WARTHOG_POSTHOC
 	       {"trace", required_argument, 0, 0},
 #endif
@@ -432,8 +568,18 @@ main(int argc, char** argv)
 	std::string mapfile     = cfg.get_param_value("map");
 	std::string costtype    = cfg.get_param_value("cost");
 	std::string weightsfile = cfg.get_param_value("grid-weight");
-	dump_map_file           = cfg.get_param_value("dump-map-file");
+	dump_map                = cfg.get_param_value("dump-map");
 
+	if(snapshot_id == 1)
+	{
+		if(warthog::util::parse_token(
+		       cfg.get_param_value("snapshot"), snapshot_id)
+		   != std::errc{})
+		{
+			WARTHOG_GERROR_FMT("invalid --snapshot argument {}", snapshot_id);
+			return (int)std::errc::invalid_argument;
+		}
+	}
 	if(filter_id == 1)
 	{
 		if(warthog::util::parse_token(cfg.get_param_value("filter"), filter_id)
@@ -453,18 +599,6 @@ main(int argc, char** argv)
 		help(std::cout);
 		return 0;
 	}
-
-	if(dump_map_id == 1)
-	{
-		if(warthog::util::parse_token(
-		       cfg.get_param_value("dump-map"), dump_map_id)
-		   != std::errc{})
-		{
-			WARTHOG_GCRIT_FMT("invalid --dump-map argument {}", dump_map_id);
-			return (int)std::errc::invalid_argument;
-		}
-	}
-	if(dump_map_file.empty()) { dump_map_file = "/dev/stderr"; }
 
 	// load up the instances
 	warthog::scenario::scenario_manager scenmgr;

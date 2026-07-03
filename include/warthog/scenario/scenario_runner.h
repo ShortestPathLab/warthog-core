@@ -31,7 +31,7 @@ public:
 	scenario_runner(const scenario_manager* scen);
 	~scenario_runner();
 
-	/// @brief reset scenario to first command
+	/// @brief clear scenario and reset the class
 	void
 	clear();
 
@@ -39,17 +39,34 @@ public:
 	void
 	restart();
 
+	/// @brief get the current scenario
+	const scenario_manager*
+	get_scenario() const noexcept
+	{
+		return scenario_;
+	}
+
+	/// @brief clear() and set the current scenario
+	void
+	set_scenario(const scenario_manager* scen) noexcept
+	{
+		clear();
+		scenario_ = scen;
+	}
+
 	/// @brief progress from current to count experiment away and return it
-	/// @param count
-	/// @return pair of the reached inst and snapshot id.
+	/// @param count get number of experiments away
+	/// @param progress progress past last count experiment if true
+	/// @return pair of the reached inst and number of patches encounted
 	///
 	/// Will progress through commands until count queries are encounted,
 	/// returning the final inst. When count == 1, is exactly the next inst.
 	/// All patches required
 	std::pair<const experiment*, int>
-	experiment_next(uint32_t count = 1);
+	experiment_next(uint32_t count = 1, bool progress = true);
 
 	/// @brief goto the start of the next snapshot (SNAPSHOT command)
+	/// @param clear_patch clears get_patches()
 	/// @return snapshot id reached, or -1 if at end of commands (no more
 	/// snapshots)
 	///
@@ -73,7 +90,8 @@ public:
 	snapshot_patches(bool clear_patch = true);
 
 	/// @brief returns the current inst experiment if at inst and progress to
-	/// next command
+	/// next command (if progress)
+	/// @param progress progress to next command if true, false stay on inst
 	/// @return the current inst experiment if command is inst, otherwise
 	/// nullptr
 	///
@@ -81,7 +99,7 @@ public:
 	/// If INST, returns corrisponding experiment and goto next command.
 	/// Does not affect get_patches().
 	const experiment*
-	snapshot_inst();
+	snapshot_inst(bool progress = true);
 
 	/// @brief progress from current to count experiment away and return it
 	/// @param clear_patch clears get_patches()
@@ -132,7 +150,7 @@ public:
 	/// @brief setup grid and contain snapshot 0
 	/// @param grid the gridmap to setup
 	/// @param patch_set the patch set to
-	/// @param setup_grid
+	/// @param setup_grid re-create the grid to match scenario size
 	/// @return true if operation is successful
 	bool
 	gridmap_init(
