@@ -50,7 +50,7 @@ add_subdirectory(apps)
 #
 
 warthog_top_level()
-if(_is_top)
+if(${_warthog_is_top})
 	option(BUILD_TESTING "Building testing suite" OFF)
 	include(CTest)
 	include(FetchContent)
