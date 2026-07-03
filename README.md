@@ -52,7 +52,7 @@ See overview of commands with `build/warthog --help`.
     ./build/warthog --alg astar4c --scen examples/NovaStation_Berlin.scen --cost 4c --checkopt
     ./build/warthog --alg astar --scen examples/NovaStation_Berlin.scen --filter=201 --dump-map=test.map --trace=test.trace.yaml
     ./build/warthog --alg astar --scen examples/NovaStation_Berlin.scen --snapshot=40 --filter=1
-    ./build/warthog --alg astar_wgm --scen examples/arena2.map.scen --grid-weight examples/grid.weight
+    ./build/warthog --alg astar_wgm --scen examples/arena2.map.scen --grid-weight examples/grid.weight --cost=-
 
 ### Command line options overview
 
