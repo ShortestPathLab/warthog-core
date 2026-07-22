@@ -32,7 +32,7 @@ test_bittable_vector(const bt& b, const vec& v)
 TEMPLATE_TEST_CASE_SIG(
     "bittable random testing", "[bittable][rng]",
     ((typename T, size_t B), T, B), (uint8_t, 1), (uint8_t, 2), (uint8_t, 8),
-    (uint32_t, 1), (uint32_t, 16), (uint64_t, 32), (uint64_t, 64))
+    (uint32_t, 1), (uint32_t, 8), (uint64_t, 4), (uint64_t, 8))
 {
 	using bittable = warthog::memory::bittable<uint32_t, T, B>;
 	auto width     = GENERATE(1, 128, 1000);

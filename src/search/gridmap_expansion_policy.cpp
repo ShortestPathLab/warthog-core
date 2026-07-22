@@ -1,4 +1,5 @@
 #include <warthog/search/gridmap_expansion_policy.h>
+
 #include <warthog/search/problem_instance.h>
 #include <warthog/util/helpers.h>
 

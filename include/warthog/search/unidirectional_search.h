@@ -10,7 +10,6 @@
 // @created: 2021-10-13
 //
 
-#include "dummy_listener.h"
 #include "problem_instance.h"
 #include "search.h"
 #include "search_parameters.h"
@@ -18,11 +17,9 @@
 #include "uds_traits.h"
 #include <warthog/constants.h>
 #include <warthog/heuristic/heuristic_value.h>
+#include <warthog/io/observer.h>
 #include <warthog/memory/cpool.h>
-#include <warthog/util/log.h>
-#include <warthog/util/pqueue.h>
 #include <warthog/util/timer.h>
-#include <warthog/util/vec_io.h>
 
 #include <functional>
 #include <iostream>
@@ -41,20 +38,29 @@ namespace warthog::search
 // used determine if a search should continue or terminate.
 // (default: search for any solution, until OPEN is exhausted)
 template<
-    class H, class E, class Q = util::pqueue_min, class L = dummy_listener,
-    admissibility_criteria AC = admissibility_criteria::any,
-    feasibility_criteria FC   = feasibility_criteria::until_exhaustion,
-    reopen_policy RP          = reopen_policy::no>
+    typename H, typename E, typename Q, typename Traits = uds_default_traits>
 class unidirectional_search
 {
 public:
-	unidirectional_search(
-	    H* heuristic, E* expander, Q* queue, L* listener = nullptr)
-	    : heuristic_(heuristic), expander_(expander), open_(queue),
-	      listener_(listener)
-	{ }
+	using traits      = Traits;
+	using search_node = uds_trait_node<Traits>;
+	using L           = uds_trait_observer<Traits>;
 
-	~unidirectional_search() { }
+	static constexpr admissibility_criteria AC = uds_trait_ac<Traits>();
+	static constexpr feasibility_criteria FC   = uds_trait_fc<Traits>();
+	static constexpr reopen_policy RP          = uds_trait_rp<Traits>();
+
+	unidirectional_search(
+	    H* heuristic, E* expander, Q* queue, L listeners = L{})
+	    : heuristic_(heuristic), expander_(expander), open_(queue),
+	      listeners_(listeners)
+	{ }
+	unidirectional_search(const unidirectional_search& other) = delete;
+	~unidirectional_search()                                  = default;
+
+	unidirectional_search&
+	operator=(const unidirectional_search& other)
+	    = delete;
 
 	void
 	get_pathcost(problem_instance* pi, search_parameters* par, solution* sol)
@@ -96,27 +102,12 @@ public:
 			    sol->s_node_->get_id(), spi->target_, &sol->path_);
 			heuristic_->h(&hv);
 		}
-
-		DO_ON_DEBUG_IF(spi->verbose_)
-		{
-			for(auto& node_id : sol->path_)
-			{
-				int32_t x, y;
-				expander_->get_xy(node_id, x, y);
-				std::cerr << "final path: (" << x << ", " << y << ")...";
-				search_node* n
-				    = expander_->generate(expander_->unget_state(node_id));
-				assert(n->get_search_number() == spi->instance_id_);
-				n->print(std::cerr);
-				std::cerr << std::endl;
-			}
-		}
 	}
 
-	void
-	set_listener(L* listener)
+	L&
+	get_listeners() noexcept
 	{
-		listener_ = listener;
+		return listeners_;
 	}
 
 	E*
@@ -151,15 +142,7 @@ private:
 	H* heuristic_;
 	E* expander_;
 	Q* open_;
-	L* listener_;
-
-	// no copy ctor
-	unidirectional_search(const unidirectional_search& other) { }
-	unidirectional_search&
-	operator=(const unidirectional_search& other)
-	{
-		return *this;
-	}
+	[[no_unique_address]] L listeners_;
 
 	/**
 	 * Initialise a new 'search_node' for the ongoing search given the parent
@@ -199,8 +182,8 @@ private:
 		if(n->get_ub() < sol->met_.ub_)
 		{
 			sol->met_.ub_ = n->get_ub();
-			debug(
-			    pi->verbose_, "NEW UB:", "Incumbent Cost",
+			WARTHOG_GDEBUG_FMT_IF(
+			    pi->verbose_, "NEW UB: Incumbent Cost {}",
 			    sol->sum_of_edge_costs_);
 		}
 	}
@@ -211,6 +194,9 @@ private:
 		util::timer mytimer;
 		mytimer.start();
 		open_->clear();
+
+		io::observer_begin_search(
+		    listeners_, static_cast<int>(pi->instance_id_), *pi);
 
 		// initialise the start node and push to OPEN
 		{
@@ -223,9 +209,10 @@ private:
 
 			initialise_node_(start, pad_id::max(), 0, pi, par, sol);
 			open_->push(start);
-			listener_->generate_node(0, start, 0, UINT32_MAX);
-			user(pi->verbose_, pi);
-			trace(pi->verbose_, "Start node:", *start);
+			io::observer_generate_node(
+			    listeners_, nullptr, *start, 0, UINT32_MAX);
+			WARTHOG_GINFO_FMT_IF(pi->verbose_, "{}", *pi);
+			WARTHOG_GINFO_FMT_IF(pi->verbose_, "Start node: {}", *start);
 			update_ub(start, sol, pi);
 		}
 
@@ -247,8 +234,8 @@ private:
 			current->set_expanded(true); // NB: set before generating succ
 			sol->met_.nodes_expanded_++;
 			sol->met_.lb_ = current->get_f();
-			listener_->expand_node(current);
-			trace(pi->verbose_, "Expanding:", *current);
+			io::observer_expand_node(listeners_, *current);
+			WARTHOG_GINFO_FMT_IF(pi->verbose_, "Expanding: {}", *current);
 
 			// Generate successors of the current node
 			search_node* n   = nullptr;
@@ -258,7 +245,6 @@ private:
 				expander_->get_successor(i, n, cost_to_n);
 				sol->met_.nodes_generated_++;
 				cost_t gval = current->get_g() + cost_to_n;
-				listener_->generate_node(current, n, gval, i);
 
 				// Generate new search nodes, provided they're not
 				// dominated by the current upperbound
@@ -268,8 +254,10 @@ private:
 					if(n->get_f() < sol->sum_of_edge_costs_)
 					{
 						open_->push(n);
-						trace(pi->verbose_, "Generate:", *n);
+						WARTHOG_GINFO_FMT_IF(pi->verbose_, "Generate: {}", *n);
 						update_ub(current, sol, pi);
+						io::observer_generate_node(
+						    listeners_, current, *n, gval, i);
 						continue;
 					}
 				}
@@ -278,16 +266,22 @@ private:
 				// for the node is less than the current upperbound
 				if(gval < n->get_g())
 				{
-					if((gval + n->get_f() - n->get_g())
+					if((gval + (n->get_f() - n->get_g()))
 					   < sol->sum_of_edge_costs_)
 					{
+						// if target node, update solution cost
+						if(sol->s_node_ == n)
+						{
+							sol->sum_of_edge_costs_ = gval;
+						}
 						n->relax(gval, current->get_id());
-						listener_->relax_node(n);
+						io::observer_relax_node(listeners_, *n);
 
 						if(open_->contains(n))
 						{
 							open_->decrease_key(n);
-							trace(pi->verbose_, "Updating;", *n);
+							WARTHOG_GINFO_FMT_IF(
+							    pi->verbose_, "Updating: {}", *n);
 							update_ub(current, sol, pi);
 							continue;
 						}
@@ -295,42 +289,42 @@ private:
 						if(reopen<RP>())
 						{
 							open_->push(n);
-							trace(pi->verbose_, "Reopen;", *n);
+							WARTHOG_GINFO_FMT_IF(
+							    pi->verbose_, "Reopen: {}", *n);
 							update_ub(current, sol, pi);
 							sol->met_.nodes_reopen_++;
 							continue;
 						}
 					}
 				}
-				trace(pi->verbose_, "Dominated;", *n);
+				WARTHOG_GINFO_FMT_IF(pi->verbose_, "Dominated: {}", *n);
 			}
 			if constexpr(FC == feasibility_criteria::until_cutoff)
 			{
 				// patched until AC FC RP reworked
 				sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();
 			}
+			io::observer_close_node(listeners_, *current);
+			WARTHOG_GINFO_FMT_IF(pi->verbose_, "Expanded: {}", *current);
 		}
 
 		sol->met_.time_elapsed_nano_ = mytimer.elapsed_time_nano();
 		sol->met_.nodes_surplus_     = open_->size();
 		sol->met_.heap_ops_          = open_->get_heap_ops();
 
-		DO_ON_DEBUG_IF(pi->verbose_)
-		{
-			if(sol->sum_of_edge_costs_ == warthog::COST_MAX)
-			{
-				warning(pi->verbose_, "Search failed; no solution exists.");
-			}
-			else { user(pi->verbose_, "Solution found", *sol->s_node_); }
-		}
+		WARTHOG_GINFO_IF(
+		    pi->verbose_ && sol->sum_of_edge_costs_ == warthog::COST_MAX,
+		    "Search failed; no solution exists.");
 	}
 };
 
-template<
-    class H, class E, class Q = util::pqueue_min, class L = dummy_listener>
-unidirectional_search(
-    H* heuristic, E* expander, Q* queue,
-    L* listener = nullptr) -> unidirectional_search<H, E, Q, L>;
+template<typename H, typename E, typename Q>
+unidirectional_search(H* heuristic, E* expander, Q* queue)
+    -> unidirectional_search<H, E, Q>;
+
+template<typename H, typename E, typename Q, typename L>
+unidirectional_search(H* heuristic, E* expander, Q* queue, L listeners)
+    -> unidirectional_search<H, E, Q, uds_traits<search_node, L>>;
 
 } // namespace warthog::search
 

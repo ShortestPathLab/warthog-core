@@ -1,19 +1,24 @@
 #ifndef WARTHOG_SEARCH_UDS_TRAITS_H
 #define WARTHOG_SEARCH_UDS_TRAITS_H
 
-// search/uds_traits.h
-//
-// Traits that specify how a Uni-Directional Search should behave:
-//   - to determine admissibility
-//   - to determine termination
-//   - to determine whether to reopen
-//
-// @author: dharabor
-// @created: 2021-10-12
-//
+/// @file uds_traits.h
+///
+/// Traits that specify how a Uni-Directional Search should behave:
+///   - to determine admissibility
+///   - to determine termination
+///   - to determine whether to reopen
+///
+/// Traits are applied through a trait class, see uds_traits for an example
+/// of a complete (and user definable) class of all traits.
+/// Every trait has a default value, and thus are optional to include, i.e.
+/// an empty struct is the same as uds_default_traits.
+///
+/// @author: dharabor & Ryan Hechenberger
+/// @created: 2021-10-12
 
 #include "search_metrics.h"
-#include <warthog/util/log.h>
+#include <warthog/io/log.h>
+#include <warthog/util/template.h>
 
 namespace warthog::search
 {
@@ -22,6 +27,7 @@ namespace warthog::search
 enum class admissibility_criteria
 {
 	any,
+	optimal,
 	w_admissible,
 	eps_admissible
 };
@@ -37,15 +43,36 @@ enum class admissibility_criteria
 
 template<admissibility_criteria A>
 inline bool
-admissible(cost_t lb, cost_t ub, search_parameters* par)
+admissible(cost_t lb, cost_t ub, search_parameters* par);
+
+/// any:
+/// the any admissible approach always returns true solution; i.e.,
+/// a solution is admissible if it is feasible.
+template<>
+inline bool
+admissible<admissibility_criteria::any>(
+    cost_t lb, cost_t ub, search_parameters* par)
 {
-	// default admissibility: any solution at all
-	return ub != warthog::COST_MAX;
+	// default admissibility: lower bound meets upper bound
+	return lb >= ub;
 }
 
-// w_admissibility:
-// the current upperbound is not more than w * lowerbound, with w a user
-// defined parameter (w=1 guarantees optimality).
+/// optimal:
+/// the optimal admissible approach returns when the lower-bound has
+/// reached or exceeded the upper bound i.e., no better solution
+/// exists in the queue.
+template<>
+inline bool
+admissible<admissibility_criteria::optimal>(
+    cost_t lb, cost_t ub, search_parameters* par)
+{
+	// default admissibility: any solution at all
+	return lb >= ub;
+}
+
+/// w_admissibility:
+/// the current upperbound is not more than w * lowerbound, with w a user
+/// defined parameter (w=1 guarantees optimality).
 template<>
 inline bool
 admissible<admissibility_criteria::w_admissible>(
@@ -54,12 +81,12 @@ admissible<admissibility_criteria::w_admissible>(
 	// TODO: precision issues can arise here. rounding would fix this
 	// but we need to know a minimum cost-delta (round with half of that)
 	assert(par->get_w_admissibility() >= 1.0);
-	return ub <= (par->get_w_admissibility() * lb);
+	return (par->get_w_admissibility() * lb) >= ub;
 }
 
-// eps_admissibility:
-// the current upperbound is not more than eps(ilon) + lowerbound.
-// Here eps is a user defined parameter (eps=0 guarantees optimality).
+/// eps_admissibility:
+/// the current upperbound is not more than eps(ilon) + lowerbound.
+/// Here eps is a user defined parameter (eps=0 guarantees optimality).
 template<>
 inline bool
 admissible<admissibility_criteria::eps_admissible>(
@@ -68,7 +95,7 @@ admissible<admissibility_criteria::eps_admissible>(
 	// TODO: precision issues can arise here. rounding would fix this
 	// but we need to know a minimum cost-delta (round with half of that)
 	assert(par->get_eps_admissibility() >= 0);
-	return ub <= (par->get_eps_admissibility() + lb);
+	return (par->get_eps_admissibility() + lb) >= ub;
 }
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -78,13 +105,20 @@ enum class feasibility_criteria
 	until_cutoff
 };
 
-// test if the search is still feasible; i.e., if a solution could still
-// exist. our default approach is to suppose a solution still exists if
-// there are more nodes to expand. other criteria (e.g., termination due
-// to reaching some limit) are handled via specialisation
+/// test if the search is still feasible; i.e., if a solution could still
+/// exist.
 template<feasibility_criteria T>
 inline bool
-feasible(search_node* next, search_metrics* met, search_parameters* par)
+feasible(search_node* next, search_metrics* met, search_parameters* par);
+
+/// test if the search is still feasible; i.e., if a solution could still
+/// exist. our default approach is to suppose a solution still exists if
+/// there are more nodes to expand. other criteria (e.g., termination due
+/// to reaching some limit) are handled via specialisation
+template<>
+inline bool
+feasible<feasibility_criteria::until_exhaustion>(
+    search_node* next, search_metrics* met, search_parameters* par)
 {
 	// default feasibility: still have unexpanded nodes
 	return next;
@@ -99,24 +133,24 @@ feasible<feasibility_criteria::until_cutoff>(
 
 	if(next->get_f() > par->get_max_cost_cutoff())
 	{
-		info(
-		    par->verbose_, "cost cutoff", next->get_f(), ">",
+		WARTHOG_GINFO_FMT_IF(
+		    par->verbose_, "cost cutoff {} > {}", next->get_f(),
 		    par->get_max_cost_cutoff());
 		return false;
 	}
 
 	if(met->nodes_expanded_ >= par->get_max_expansions_cutoff())
 	{
-		info(
-		    par->verbose_, "expansions cutoff", met->nodes_expanded_, ">",
+		WARTHOG_GINFO_FMT_IF(
+		    par->verbose_, "expansions cutoff {} > {}", met->nodes_expanded_,
 		    par->get_max_expansions_cutoff());
 		return false;
 	}
 
 	if(met->time_elapsed_nano_ > par->get_max_time_cutoff())
 	{
-		info(
-		    par->verbose_, "time cutoff", met->time_elapsed_nano_, ">",
+		WARTHOG_GINFO_FMT_IF(
+		    par->verbose_, "time cutoff {} > {}", met->time_elapsed_nano_,
 		    par->get_max_time_cutoff());
 		return false;
 	}
@@ -133,9 +167,13 @@ enum class reopen_policy
 
 // decide whether to renopen nodes already expanded (when their g-value
 // can be improved). we handle the positive case via specialisation.
-template<reopen_policy RO>
+template<reopen_policy R>
 inline bool
-reopen()
+reopen();
+
+template<>
+inline bool
+reopen<reopen_policy::no>()
 {
 	return false;
 }
@@ -145,6 +183,183 @@ inline bool
 reopen<reopen_policy::yes>()
 {
 	return true;
+}
+
+/// The default parameters given in the class for uds traits.
+/// Is equivalent to an empty struct in behaviour, as
+/// admissibility_criteria::any, feasibility_criteria::until_exhaustion
+/// and reopen_policy::no are the default values in uds.
+struct uds_default_traits
+{
+	using node     = search_node;
+	using observer = std::tuple<>;
+
+	static consteval admissibility_criteria
+	ac()
+	{
+		return admissibility_criteria::any;
+	}
+	static consteval feasibility_criteria
+	fc()
+	{
+		return feasibility_criteria::until_exhaustion;
+	}
+	static consteval reopen_policy
+	rp()
+	{
+		return reopen_policy::no;
+	}
+};
+
+/// Modify search behaviour of unidirectional_search.
+/// To be passed as template parameters with compile-time values
+/// and types.
+/// These values are optional and a user-provided struct only require
+/// parameter for values that differ to the default.
+template<
+    typename N                = uds_default_traits::node,
+    typename L                = uds_default_traits::observer,
+    admissibility_criteria AC = uds_default_traits::ac(),
+    feasibility_criteria FC   = uds_default_traits::fc(),
+    reopen_policy RP          = uds_default_traits::rp()>
+struct uds_traits
+{
+	using node     = N;
+	using observer = L;
+
+	static consteval admissibility_criteria
+	ac()
+	{
+		return AC;
+	}
+	static consteval feasibility_criteria
+	fc()
+	{
+		return FC;
+	}
+	static consteval reopen_policy
+	rp()
+	{
+		return RP;
+	}
+};
+
+namespace details
+{
+
+template<typename Traits>
+struct uds_trait_node
+{
+	using type = uds_default_traits::node;
+};
+template<typename Traits>
+    requires requires { typename Traits::node; }
+struct uds_trait_node<Traits>
+{
+	using type = typename Traits::node;
+};
+
+template<typename Traits>
+struct uds_trait_observer
+{
+	using type = uds_default_traits::observer;
+};
+template<typename Traits>
+    requires requires { typename Traits::observer; }
+struct uds_trait_observer<Traits>
+{
+	using type = typename Traits::observer;
+};
+
+} // namespace details
+
+/// @brief deduce typename node from Traits if exists, or
+/// uds_default_traits::node otherwise
+template<typename Traits>
+using uds_trait_node = typename details::uds_trait_node<Traits>::type;
+
+/// @brief deduce typename observer from Traits if exists, or
+/// uds_default_traits::observer otherwise
+template<typename Traits>
+using uds_trait_observer = typename details::uds_trait_observer<Traits>::type;
+
+/// @return admissibility_criteria value Traits::ac() if exists, or
+/// uds_default_traits::ac() otherwise
+template<typename Traits>
+consteval admissibility_criteria
+uds_trait_ac() noexcept
+{
+	// ensure user overrides trait correctly
+	static_assert(
+	    !(requires {
+		    { Traits::ac };
+	    }) || (requires {
+		    { Traits::ac() } -> util::same_as_rmref<admissibility_criteria>;
+	    }),
+	    "optional Traits::ac must be a static consteval function that returns "
+	    "admissibility_criteria.");
+
+	if constexpr(requires {
+		             {
+			             Traits::ac()
+		             } -> util::same_as_rmref<admissibility_criteria>;
+	             })
+	{
+		return Traits::ac();
+	}
+	else { return uds_default_traits::ac(); }
+}
+
+/// @return admissibility_criteria value Traits::fc() if exists, or
+/// uds_default_traits::fc() otherwise
+template<typename Traits>
+consteval feasibility_criteria
+uds_trait_fc() noexcept
+{
+	// ensure user overrides trait correctly
+	static_assert(
+	    !(requires {
+		    { Traits::fc };
+	    }) || (requires {
+		    { Traits::fc() } -> util::same_as_rmref<feasibility_criteria>;
+	    }),
+	    "optional Traits::fc must be a static consteval function that returns "
+	    "feasibility_criteria.");
+
+	if constexpr(requires {
+		             {
+			             Traits::fc()
+		             } -> util::same_as_rmref<feasibility_criteria>;
+	             })
+	{
+		return Traits::fc();
+	}
+	else { return uds_default_traits::fc(); }
+}
+
+/// @return admissibility_criteria value Traits::rp() if exists, or
+/// uds_default_traits::rp() otherwise
+template<typename Traits>
+consteval reopen_policy
+uds_trait_rp() noexcept
+{
+	// ensure user overrides trait correctly
+	static_assert(
+	    !(requires {
+		    { Traits::rp };
+	    }) || (requires {
+		    { Traits::rp() } -> util::same_as_rmref<reopen_policy>;
+	    }),
+	    "optional Traits::rp must be a static consteval function that returns "
+	    "reopen_policy.");
+
+	if constexpr(requires {
+		             { Traits::rp() } -> util::same_as_rmref<reopen_policy>;
+	             })
+	{
+		return Traits::rp();
+	}
+	else { return uds_default_traits::rp(); }
 }
 
 } // namespace warthog::search

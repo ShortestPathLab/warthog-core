@@ -1,5 +1,5 @@
-#ifndef WARTHOG_UTIL_EXPERIMENT_H
-#define WARTHOG_UTIL_EXPERIMENT_H
+#ifndef WARTHOG_SCENARIO_EXPERIMENT_H
+#define WARTHOG_SCENARIO_EXPERIMENT_H
 
 // experiment.h
 //
@@ -23,20 +23,24 @@
 #include <warthog/search/problem_instance.h>
 
 #include <iostream>
-#include <string>
+#include <string_view>
 
-namespace warthog::util
+namespace warthog::scenario
 {
 
-class experiment
+struct experiment
 {
-public:
 	experiment(
 	    uint32_t sx, uint32_t sy, uint32_t gx, uint32_t gy, uint32_t mapwidth,
-	    uint32_t mapheight, double d, std::string m)
+	    uint32_t mapheight, std::optional<double> d, std::string_view m)
 	    : startx_(sx), starty_(sy), goalx_(gx), goaly_(gy),
-	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d), map_(m),
-	      precision_(4)
+	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d), map_(m)
+	{ }
+	experiment(
+	    double sx, double sy, double gx, double gy, uint32_t mapwidth,
+	    uint32_t mapheight, std::optional<double> d, std::string_view m)
+	    : startx_(sx), starty_(sy), goalx_(gx), goaly_(gy),
+	      mapwidth_(mapwidth), mapheight_(mapheight), distance_(d), map_(m)
 	{ }
 
 	// no copy
@@ -50,11 +54,21 @@ public:
 	uint32_t
 	startx() const noexcept
 	{
+		return static_cast<uint32_t>(startx_);
+	}
+	double
+	startx_f() const noexcept
+	{
 		return startx_;
 	}
 
 	uint32_t
 	starty() const noexcept
+	{
+		return static_cast<uint32_t>(starty_);
+	}
+	double
+	starty_f() const noexcept
 	{
 		return starty_;
 	}
@@ -62,22 +76,32 @@ public:
 	uint32_t
 	goalx() const noexcept
 	{
+		return static_cast<uint32_t>(goalx_);
+	}
+	double
+	goalx_f() const noexcept
+	{
 		return goalx_;
 	}
 
 	uint32_t
 	goaly() const noexcept
 	{
+		return static_cast<uint32_t>(goaly_);
+	}
+	double
+	goaly_f() const noexcept
+	{
 		return goaly_;
 	}
 
-	double
+	std::optional<double>
 	distance() const noexcept
 	{
 		return distance_;
 	}
 
-	const std::string&
+	std::string_view
 	map() const noexcept
 	{
 		return map_;
@@ -95,18 +119,6 @@ public:
 		return mapheight_;
 	}
 
-	int32_t
-	precision() const noexcept
-	{
-		return precision_;
-	}
-
-	void
-	set_precision(int32_t prec) noexcept
-	{
-		precision_ = prec;
-	}
-
 	void
 	print(std::ostream& out);
 
@@ -114,18 +126,33 @@ public:
 	get_instance() const noexcept
 	{
 		return search::problem_instance(
-		    pack_id{starty_ * mapwidth_ + startx_},
-		    pack_id{goaly_ * mapwidth_ + goalx_});
+		    pack_id{starty() * mapwidth_ + startx()},
+		    pack_id{goaly() * mapwidth_ + goalx()});
 	}
 
-private:
-	uint32_t startx_, starty_, goalx_, goaly_;
+	double startx_, starty_, goalx_, goaly_;
 	uint32_t mapwidth_, mapheight_;
-	double distance_;
-	std::string map_;
-	int32_t precision_;
+	std::optional<double>
+	    distance_; ///< -1 = no solution, non-init = unknown solution
+	std::string_view map_;
 };
 
-} // namespace warthog::util
+inline void
+experiment::print(std::ostream& out)
+{
+	out << this->map() << "\t";
+	out << this->mapwidth() << "\t";
+	out << this->mapheight() << "\t";
+	out << this->startx() << "\t";
+	out << this->starty() << "\t";
+	out << this->goalx() << "\t";
+	out << this->goaly() << "\t";
+	if(this->distance())
+		out << std::setprecision(10) << *this->distance();
+	else
+		out << '-';
+}
 
-#endif // WARTHOG_UTIL_EXPERIMENT_H
+} // namespace warthog::scenario
+
+#endif // WARTHOG_SCENARIO_EXPERIMENT_H

@@ -221,12 +221,13 @@ private:
 		newsize = newsize >= 4 ? newsize : 4;
 		if(newsize < queuesize_)
 		{
-			std::cerr << "err; pqueue::resize newsize < queuesize "
-			          << std::endl;
-			exit(1);
+			WARTHOG_GCRIT_FMT(
+			    "pqueue::resize newsize({}) < queuesize({})", newsize,
+			    queuesize_);
+			throw std::logic_error("newsize < queuesize_");
 		}
 
-		search::search_node** tmp = new search::search_node* [newsize] {};
+		search::search_node** tmp = new search::search_node* [newsize] { };
 		for(unsigned int i = 0; i < queuesize_; i++)
 		{
 			tmp[i] = elts_[i];

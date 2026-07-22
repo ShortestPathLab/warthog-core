@@ -1,5 +1,6 @@
-#include <warthog/search/problem_instance.h>
 #include <warthog/search/vl_gridmap_expansion_policy.h>
+
+#include <warthog/search/problem_instance.h>
 #include <warthog/util/helpers.h>
 
 namespace warthog::search
