@@ -87,14 +87,20 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactoryOwn | FactoryNoFree; }
+	{
+		return FactoryOwn | FactoryNoFree;
+	}
 
 	constexpr size_type
 	alignment() const noexcept
-	{ return m_slabSet.align(); }
+	{
+		return m_slabSet.align();
+	}
 	constexpr size_type
 	element_size() const noexcept
-	{ return m_slabSet.size(); }
+	{
+		return m_slabSet.size();
+	}
 
 	/// @brief setup(std::tuple<OverflowParams>, ...)
 	template<typename... T>
@@ -172,7 +178,9 @@ public:
 
 	size_type
 	size() const noexcept
-	{ return m_size; }
+	{
+		return m_size;
+	}
 
 	void
 	resize(size_type items) noexcept
@@ -205,10 +213,7 @@ public:
 		{
 			return get_slabs()[slab_id] + slab_index * m_slabSet.size();
 		}
-		else
-		{
-			return nullptr;
-		}
+		else { return nullptr; }
 	}
 	pointer
 	at(size_type index) const
@@ -219,23 +224,26 @@ public:
 		{
 			return get_slabs()[slab_id] + slab_index * m_slabSet.size();
 		}
-		else
-		{
-			throw std::out_of_range("index");
-		}
+		else { throw std::out_of_range("index"); }
 	}
 
 	upstream_factory&
 	upstream() noexcept
-	{ return static_cast<upstream_factory&>(*this); }
+	{
+		return static_cast<upstream_factory&>(*this);
+	}
 	const upstream_factory&
 	upstream() const noexcept
-	{ return static_cast<const upstream_factory&>(*this); }
+	{
+		return static_cast<const upstream_factory&>(*this);
+	}
 
 protected:
 	pointer*
 	get_slabs() const noexcept
-	{ return reinterpret_cast<pointer*>(m_slabs[0]); }
+	{
+		return reinterpret_cast<pointer*>(m_slabs[0]);
+	}
 
 	/// @brief allocate slabs
 	/// @param amount

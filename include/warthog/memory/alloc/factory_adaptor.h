@@ -38,11 +38,15 @@ namespace warthog::memory::alloc
 
 constexpr size_t
 reuse_size(size_t size) noexcept
-{ return std::max(size, sizeof(void*)); }
+{
+	return std::max(size, sizeof(void*));
+}
 template<typename T>
 constexpr size_t
 reuse_size() noexcept
-{ return reuse_size(sizeof(T)); }
+{
+	return reuse_size(sizeof(T));
+}
 
 template<SingleFactory Upstream>
     requires(!FactoryTraitAny<Upstream, FactoryOwn | FactoryPointer>)
@@ -55,7 +59,9 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return (Upstream::traits() & ~FactoryNoFree) | FactoryReuse; }
+	{
+		return (Upstream::traits() & ~FactoryNoFree) | FactoryReuse;
+	}
 
 	using Upstream::alignment;
 	using Upstream::element_size;
@@ -162,7 +168,9 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactoryOwn; }
+	{
+		return FactoryOwn;
+	}
 
 	using Upstream::alignment;
 	using Upstream::element_size;
@@ -198,7 +206,9 @@ public:
 	template<typename... T>
 	constexpr bool
 	setup(T&&... args)
-	{ return Upstream::setup(std::forward<T>(args)...); }
+	{
+		return Upstream::setup(std::forward<T>(args)...);
+	}
 
 	[[nodiscard]] pointer
 	allocate(size_type elems)
@@ -219,10 +229,7 @@ public:
 		{
 			link_next(meta.prev) = meta.next;
 		}
-		else
-		{
-			m_linkStart = meta.next;
-		}
+		else { m_linkStart = meta.next; }
 		if(meta.next != nullptr) [[likely]]
 		{
 			link_prev(meta.next) = meta.prev;
@@ -230,15 +237,14 @@ public:
 		if constexpr(!auto_free)
 		{
 			if constexpr(store_size) { free_(ptr, meta.size); }
-			else
-			{
-				free_(ptr, 0);
-			}
+			else { free_(ptr, 0); }
 		}
 	}
 	void
 	deallocate(pointer ptr, size_type elems)
-	{ deallocate(ptr); }
+	{
+		deallocate(ptr);
+	}
 
 	void
 	release(bool free_upstream [[maybe_unused]] = true)
@@ -252,10 +258,7 @@ public:
 					auto meta   = link_meta(p);
 					auto next_p = meta.next;
 					if constexpr(store_size) { free_(p, meta.size); }
-					else
-					{
-						free_(p, 0);
-					}
+					else { free_(p, 0); }
 					p = next_p;
 				}
 			}
@@ -265,15 +268,21 @@ public:
 
 	upstream_factory&
 	upstream() noexcept
-	{ return static_cast<upstream_factory&>(*this); }
+	{
+		return static_cast<upstream_factory&>(*this);
+	}
 	const upstream_factory&
 	upstream() const noexcept
-	{ return static_cast<const upstream_factory&>(*this); }
+	{
+		return static_cast<const upstream_factory&>(*this);
+	}
 
 protected:
 	static store_meta&
 	link_meta(pointer mem) noexcept
-	{ return *reinterpret_cast<store_meta*>(mem - sizeof(store_meta)); }
+	{
+		return *reinterpret_cast<store_meta*>(mem - sizeof(store_meta));
+	}
 	pointer
 	allocate_(size_type elems)
 	{
@@ -289,10 +298,7 @@ protected:
 		{
 			upstream_factory::deallocate(ptr - sizeof(store_meta), elems);
 		}
-		else
-		{
-			upstream_factory::deallocate(ptr - sizeof(store_meta));
-		}
+		else { upstream_factory::deallocate(ptr - sizeof(store_meta)); }
 	}
 
 protected:
@@ -306,7 +312,9 @@ public:
 	using overflow_type = Overflow;
 	static consteval bool
 	overflow_is_pointer() noexcept
-	{ return FactoryTraitAny<overflow_type, FactoryPointer>; }
+	{
+		return FactoryTraitAny<overflow_type, FactoryPointer>;
+	}
 
 	template<util::Tuple OverflowTuple, typename... T>
 	constexpr bool
@@ -326,19 +334,27 @@ public:
 
 	overflow_type&
 	overflow() noexcept
-	{ return m_overflow; }
+	{
+		return m_overflow;
+	}
 	const overflow_type&
 	overflow() const noexcept
-	{ return m_overflow; }
+	{
+		return m_overflow;
+	}
 
 protected:
 	constexpr typename Overflow::pointer
 	overflow_allocate(typename Overflow::size_type elems)
-	{ return m_overflow.allocate(elems); }
+	{
+		return m_overflow.allocate(elems);
+	}
 	constexpr void
 	overflow_deallocate(
 	    typename Overflow::pointer ptr, typename Overflow::size_type elems)
-	{ return m_overflow.deallocate(ptr, elems); }
+	{
+		return m_overflow.deallocate(ptr, elems);
+	}
 
 protected:
 	[[no_unique_address]] Overflow m_overflow;
@@ -357,10 +373,7 @@ protected:
 	overflow_upstream(Fact& upsteam_fact) noexcept
 	{
 		if constexpr(ByteFactory<Fact>) { return upsteam_fact; }
-		else
-		{
-			return overflow_upstream(upsteam_fact.upstream());
-		}
+		else { return overflow_upstream(upsteam_fact.upstream()); }
 	}
 
 	template<Factory Fact>
@@ -381,23 +394,33 @@ public:
 	    std::declval<Upstream>().upstream()))>;
 	static consteval bool
 	overflow_is_pointer() noexcept
-	{ return overflow_is_pointer_upstream<Upstream>; }
+	{
+		return overflow_is_pointer_upstream<Upstream>;
+	}
 
 	overflow_type&
 	overflow() noexcept
-	{ return overflow_upstream(Upstream::upstream()); }
+	{
+		return overflow_upstream(Upstream::upstream());
+	}
 	const overflow_type&
 	overflow() const noexcept
-	{ return overflow_upstream(Upstream::upstream()); }
+	{
+		return overflow_upstream(Upstream::upstream());
+	}
 
 protected:
 	constexpr typename Overflow::pointer
 	overflow_allocate(typename Overflow::size_type elems)
-	{ return overflow().allocate(elems); }
+	{
+		return overflow().allocate(elems);
+	}
 	constexpr void
 	overflow_deallocate(
 	    typename Overflow::pointer ptr, typename Overflow::size_type elems)
-	{ return overflow().deallocate(ptr, elems); }
+	{
+		return overflow().deallocate(ptr, elems);
+	}
 
 protected:
 	[[no_unique_address]] Overflow m_overflow;
@@ -417,10 +440,14 @@ struct dynamic_size
 	static_assert(Elems > 0 && MinElems > 0, "Elems must be greater than 0");
 	constexpr uint32_t
 	elements() const noexcept
-	{ return std::max(Elems, MinElems); }
+	{
+		return std::max(Elems, MinElems);
+	}
 	constexpr uint32_t
 	align() const noexcept
-	{ return Align; }
+	{
+		return Align;
+	}
 
 	/// @brief mainly a check that array can support size an align
 	bool
@@ -437,15 +464,21 @@ struct dynamic_size<0, Align, MinElems>
 	static constexpr bool dynamic = true;
 	constexpr uint32_t
 	elements() const noexcept
-	{ return m_size; }
+	{
+		return m_size;
+	}
 	constexpr uint32_t
 	align() const noexcept
 	    requires(Align != 0)
-	{ return Align; }
+	{
+		return Align;
+	}
 	constexpr uint32_t
 	align() const noexcept
 	    requires(Align == 0)
-	{ return m_align; }
+	{
+		return m_align;
+	}
 
 	bool
 	set(const ArrayFactory auto& upstream, uint32_t l_size,

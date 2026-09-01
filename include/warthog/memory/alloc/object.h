@@ -57,10 +57,7 @@ pad_type_alignment(size_t size)
 		assert(size == pad_alignment(size, alignof(AlignFrom)));
 		return size;
 	}
-	else
-	{
-		return pad_alignment(size, alignof(AlignTo));
-	}
+	else { return pad_alignment(size, alignof(AlignTo)); }
 }
 
 #define WARTHOG_VAR_STRUCT(type, member)                                      \

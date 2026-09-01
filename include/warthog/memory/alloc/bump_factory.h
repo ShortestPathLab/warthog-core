@@ -53,20 +53,28 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactoryOwn | FactoryNoFree; }
+	{
+		return FactoryOwn | FactoryNoFree;
+	}
 
 	static consteval size_type
 	alignment() noexcept
-	{ return size_set::align(); }
+	{
+		return size_set::align();
+	}
 	static consteval size_type
 	element_size() noexcept
-	{ return size_set::size(); }
+	{
+		return size_set::size();
+	}
 
 	using pattern::setup;
 
 	[[nodiscard]] pointer
 	allocate(size_type elems)
-	{ return allocate(elems, alignment()); }
+	{
+		return allocate(elems, alignment());
+	}
 	[[nodiscard]] pointer
 	allocate(size_type elems, size_type align)
 	{
@@ -75,10 +83,7 @@ public:
 		{
 			return allocate_bump(elems, align);
 		}
-		else
-		{
-			return allocate_overflow(elems);
-		}
+		else { return allocate_overflow(elems); }
 	}
 	void
 	deallocate(pointer ptr [[maybe_unused]], size_type elems [[maybe_unused]])
@@ -114,10 +119,7 @@ public:
 				a->h[1].p64 = nullptr;
 				keep        = a;
 			}
-			else
-			{
-				delete_area_overflow(a);
-			}
+			else { delete_area_overflow(a); }
 			a = anext;
 		}
 		m_bumpPtr     = nullptr;
@@ -127,10 +129,14 @@ public:
 
 	upstream_factory&
 	upstream() noexcept
-	{ return static_cast<upstream_factory&>(*this); }
+	{
+		return static_cast<upstream_factory&>(*this);
+	}
 	const upstream_factory&
 	upstream() const noexcept
-	{ return static_cast<const upstream_factory&>(*this); }
+	{
+		return static_cast<const upstream_factory&>(*this);
+	}
 
 	using pattern::overflow;
 

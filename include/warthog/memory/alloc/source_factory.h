@@ -48,31 +48,45 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactorySource; }
+	{
+		return FactorySource;
+	}
 
 	constexpr malloc_factory() noexcept   = default;
 	malloc_factory(const malloc_factory&) = delete;
 
 	constexpr bool
 	setup() noexcept
-	{ return true; }
+	{
+		return true;
+	}
 
 	static consteval size_type
 	alignment() noexcept
-	{ return alignof(max_align_t); }
+	{
+		return alignof(max_align_t);
+	}
 	static consteval size_type
 	element_size() noexcept
-	{ return 1; }
+	{
+		return 1;
+	}
 
 	[[nodiscard]] pointer
 	allocate(size_type elems)
-	{ return static_cast<pointer>(std::malloc(elems)); }
+	{
+		return static_cast<pointer>(std::malloc(elems));
+	}
 	void
 	deallocate(pointer ptr)
-	{ std::free(ptr); }
+	{
+		std::free(ptr);
+	}
 	void
 	deallocate(pointer ptr, size_type)
-	{ deallocate(ptr); }
+	{
+		deallocate(ptr);
+	}
 };
 
 static_assert(
@@ -93,7 +107,9 @@ public:
 	/// underlying traits
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactorySource; }
+	{
+		return FactorySource;
+	}
 
 	constexpr memory_resource_factory() noexcept            = default;
 	memory_resource_factory(const memory_resource_factory&) = delete;
@@ -108,10 +124,14 @@ public:
 
 	static consteval size_type
 	alignment() noexcept
-	{ return alignof(max_align_t); }
+	{
+		return alignof(max_align_t);
+	}
 	static consteval size_type
 	element_size() noexcept
-	{ return 1; }
+	{
+		return 1;
+	}
 
 	[[nodiscard]] pointer
 	allocate(size_type elems)
@@ -127,14 +147,20 @@ public:
 	}
 	void
 	deallocate(pointer ptr, size_type elems)
-	{ m_memory_resouce->deallocate(ptr, elems); }
+	{
+		m_memory_resouce->deallocate(ptr, elems);
+	}
 	void
 	deallocate(pointer ptr, size_type elems, size_type align)
-	{ m_memory_resouce->deallocate(ptr, elems, align); }
+	{
+		m_memory_resouce->deallocate(ptr, elems, align);
+	}
 
 	std::pmr::memory_resource*
 	get_memory_resource() const noexcept
-	{ return m_memory_resouce; }
+	{
+		return m_memory_resouce;
+	}
 
 private:
 	std::pmr::memory_resource* m_memory_resouce = nullptr;
@@ -196,7 +222,9 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactoryOwn | FactoryNoFree; }
+	{
+		return FactoryOwn | FactoryNoFree;
+	}
 
 private:
 	static constexpr bool overflow_buffer = !VoidFactory<Upstream>;
@@ -220,14 +248,20 @@ public:
 
 	static consteval size_type
 	alignment() noexcept
-	{ return alignof(max_align_t); }
+	{
+		return alignof(max_align_t);
+	}
 	static consteval size_type
 	element_size() noexcept
-	{ return 1; }
+	{
+		return 1;
+	}
 
 	[[nodiscard]] pointer
 	allocate(size_type elems)
-	{ return allocate(elems, alignof(max_align_t)); }
+	{
+		return allocate(elems, alignof(max_align_t));
+	}
 	[[nodiscard]] pointer
 	allocate(size_type elems, size_type align)
 	{
@@ -336,10 +370,14 @@ public:
 
 	upstream_factory&
 	upstream() noexcept
-	{ return static_cast<upstream_factory&>(*this); }
+	{
+		return static_cast<upstream_factory&>(*this);
+	}
 	const upstream_factory&
 	upstream() const noexcept
-	{ return static_cast<const upstream_factory&>(*this); }
+	{
+		return static_cast<const upstream_factory&>(*this);
+	}
 
 private:
 	details::buffer_overflow_slab*

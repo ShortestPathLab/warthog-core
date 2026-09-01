@@ -64,14 +64,20 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactoryDefault; }
+	{
+		return FactoryDefault;
+	}
 
 	constexpr size_type
 	alignment() const noexcept
-	{ return m_size.align(); }
+	{
+		return m_size.align();
+	}
 	constexpr size_type
 	element_size() const noexcept
-	{ return Upstream::element_size() * m_size.elements(); }
+	{
+		return Upstream::element_size() * m_size.elements();
+	}
 
 	/// @brief setup(...)
 	template<typename... T>
@@ -98,10 +104,7 @@ public:
 		{
 			return Upstream::allocate(element_size(), alignment());
 		}
-		else
-		{
-			return Upstream::allocate(element_size());
-		}
+		else { return Upstream::allocate(element_size()); }
 	}
 	void
 	destroy(pointer ptr)
@@ -110,18 +113,19 @@ public:
 		{
 			return Upstream::deallocate(ptr, element_size(), alignment());
 		}
-		else
-		{
-			return Upstream::deallocate(ptr, element_size());
-		}
+		else { return Upstream::deallocate(ptr, element_size()); }
 	}
 
 	constexpr upstream_factory&
 	upstream() noexcept
-	{ return static_cast<upstream_factory&>(*this); }
+	{
+		return static_cast<upstream_factory&>(*this);
+	}
 	constexpr const upstream_factory&
 	upstream() const noexcept
-	{ return static_cast<const upstream_factory&>(*this); }
+	{
+		return static_cast<const upstream_factory&>(*this);
+	}
 
 private:
 	[[no_unique_address]] size_set m_size;

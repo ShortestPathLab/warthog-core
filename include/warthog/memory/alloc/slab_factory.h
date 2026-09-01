@@ -57,14 +57,20 @@ struct alignas(max_align_t) slab_memory : slab_memory_header
 
 	consteval static size_t
 	size() noexcept
-	{ return Size; }
+	{
+		return Size;
+	}
 	consteval static size_t
 	align() noexcept
-	{ return Align; }
+	{
+		return Align;
+	}
 
 	consteval static size_t
 	size_header() noexcept
-	{ return offsetof(slab_memory, data); }
+	{
+		return offsetof(slab_memory, data);
+	}
 	constexpr static size_t
 	size_n(size_t elems) noexcept
 	{
@@ -75,7 +81,9 @@ struct alignas(max_align_t) slab_memory : slab_memory_header
 	template<std::derived_from<slab_memory_header> T>
 	constexpr T*
 	cast() noexcept
-	{ return static_cast<T*>(static_cast<slab_memory_header*>(this)); }
+	{
+		return static_cast<T*>(static_cast<slab_memory_header*>(this));
+	}
 };
 
 template<typename T>
@@ -88,14 +96,18 @@ using slab_memory_bytes = slab_memory<1, alignof(max_align_t)>;
 template<size_t Size, typename Slab = slab_memory_bytes>
 constexpr size_t
 calc_slab_size(size_t Elements) noexcept
-{ return Slab::size_n(Elements); }
+{
+	return Slab::size_n(Elements);
+}
 
 /// @brief Determine the size (in bytes) of slab_memory_type<ElementType> with
 /// number of Elements
 template<typename ElementType>
 constexpr size_t
 calc_slab_size_type(size_t Elements) noexcept
-{ return slab_memory_type<ElementType>::size_n(Elements); }
+{
+	return slab_memory_type<ElementType>::size_n(Elements);
+}
 
 struct slab_factory_params
 {
@@ -124,20 +136,30 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactoryDefault; }
+	{
+		return FactoryDefault;
+	}
 
 	static consteval size_type
 	alignment() noexcept
-	{ return Slab::align(); }
+	{
+		return Slab::align();
+	}
 	static consteval size_type
 	element_size() noexcept
-	{ return Slab::size_n(SlabCount); }
+	{
+		return Slab::size_n(SlabCount);
+	}
 	static consteval size_type
 	item_size() noexcept
-	{ return Slab::size(); }
+	{
+		return Slab::size();
+	}
 	static consteval size_type
 	item_count() noexcept
-	{ return SlabCount; }
+	{
+		return SlabCount;
+	}
 
 	using Upstream::setup;
 	// template <typename... T>
@@ -148,7 +170,9 @@ public:
 
 	pointer
 	create()
-	{ return reinterpret_cast<pointer>(Upstream::allocate(element_size())); }
+	{
+		return reinterpret_cast<pointer>(Upstream::allocate(element_size()));
+	}
 	void
 	destroy(pointer ptr)
 	{
@@ -158,10 +182,14 @@ public:
 
 	upstream_factory&
 	upstream() noexcept
-	{ return static_cast<upstream_factory&>(*this); }
+	{
+		return static_cast<upstream_factory&>(*this);
+	}
 	const upstream_factory&
 	upstream() const noexcept
-	{ return static_cast<const upstream_factory&>(*this); }
+	{
+		return static_cast<const upstream_factory&>(*this);
+	}
 };
 template<ByteFactory Upstream, typename Slab>
 class slab_factory<Upstream, 0, Slab> : private Upstream
@@ -174,24 +202,36 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactoryDefault; }
+	{
+		return FactoryDefault;
+	}
 
 	static consteval size_type
 	alignment() noexcept
-	{ return Slab::align(); }
+	{
+		return Slab::align();
+	}
 	size_type
 	element_size() const noexcept
-	{ return m_elementSize; }
+	{
+		return m_elementSize;
+	}
 	static consteval size_type
 	item_size() noexcept
-	{ return Slab::size(); }
+	{
+		return Slab::size();
+	}
 	size_type
 	item_count() noexcept
-	{ return m_elementCount; }
+	{
+		return m_elementCount;
+	}
 
 	constexpr slab_factory() noexcept : slab_factory(1024) { }
 	constexpr slab_factory(size_type elem_size) noexcept
-	{ element_size(elem_size); }
+	{
+		element_size(elem_size);
+	}
 
 	template<typename... T>
 	bool
@@ -210,7 +250,9 @@ public:
 
 	[[nodiscard]] pointer
 	create()
-	{ return reinterpret_cast<pointer>(Upstream::allocate(element_size())); }
+	{
+		return reinterpret_cast<pointer>(Upstream::allocate(element_size()));
+	}
 	void
 	destroy(pointer ptr)
 	{
@@ -240,10 +282,14 @@ public:
 
 	upstream_factory&
 	upstream() noexcept
-	{ return static_cast<upstream_factory&>(*this); }
+	{
+		return static_cast<upstream_factory&>(*this);
+	}
 	const upstream_factory&
 	upstream() const noexcept
-	{ return static_cast<const upstream_factory&>(*this); }
+	{
+		return static_cast<const upstream_factory&>(*this);
+	}
 
 protected:
 	uint32_t m_elementCount;
@@ -288,35 +334,47 @@ struct slab_link_fn
 	/// @pre slab != nullptr
 	static pointer
 	get_next(pointer slab) noexcept
-	{ return reinterpret_cast<pointer>(slab->h[0].p64); }
+	{
+		return reinterpret_cast<pointer>(slab->h[0].p64);
+	}
 	/// @brief sets the next slab in slab to next_slab
 	/// @pre slab != nullptr
 	static void
 	set_next(pointer slab, pointer next_slab) noexcept
-	{ slab->h[0].p64 = next_slab; }
+	{
+		slab->h[0].p64 = next_slab;
+	}
 
 	/// @return the next slab as stored in slab (h[1].p64)
 	/// @pre slab != nullptr
 	static pointer
 	get_prev(pointer slab) noexcept
-	{ return reinterpret_cast<pointer>(slab->h[1].p64); }
+	{
+		return reinterpret_cast<pointer>(slab->h[1].p64);
+	}
 	/// @brief sets the next slab in slab to next_slab
 	/// @pre slab != nullptr
 	static void
 	set_prev(pointer slab, pointer next_slab) noexcept
-	{ slab->h[1].p64 = next_slab; }
+	{
+		slab->h[1].p64 = next_slab;
+	}
 
 	/// @return list attached to current chain link
 	/// @pre link != nullptr
 	static pointer
 	get_chain_list(pointer link) noexcept
-	{ return reinterpret_cast<pointer>(link->h[0].p64); }
+	{
+		return reinterpret_cast<pointer>(link->h[0].p64);
+	}
 
 	/// @return list attached to current chain link
 	/// @pre link != nullptr
 	static pointer
 	get_chain_link(pointer link) noexcept
-	{ return reinterpret_cast<pointer>(link->h[1].p64); }
+	{
+		return reinterpret_cast<pointer>(link->h[1].p64);
+	}
 
 	/// @brief add a detached slab to a forward list of slab
 	/// @param head current head(root) of list, can be null
@@ -472,7 +530,9 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactoryOwn | FactoryReuse; }
+	{
+		return FactoryOwn | FactoryReuse;
+	}
 
 	using Upstream::alignment;
 	using Upstream::element_size;
@@ -530,19 +590,29 @@ public:
 protected:
 	pointer
 	root() noexcept
-	{ return m_root; }
+	{
+		return m_root;
+	}
 	void
 	push_front(pointer at) noexcept
-	{ m_root = link_fn::dlist_push_detached(m_root, at); }
+	{
+		m_root = link_fn::dlist_push_detached(m_root, at);
+	}
 	void
 	remove_from_list(pointer at) noexcept
-	{ m_root = link_fn::dlist_detach(m_root, at); }
+	{
+		m_root = link_fn::dlist_detach(m_root, at);
+	}
 	void
 	push_reuse(pointer at) noexcept
-	{ m_reuse = link_fn::chain_push_detached(m_reuse, at); }
+	{
+		m_reuse = link_fn::chain_push_detached(m_reuse, at);
+	}
 	void
 	push_reuse_list(pointer front) noexcept
-	{ m_reuse = link_fn::chain_push_list(m_reuse, front); }
+	{
+		m_reuse = link_fn::chain_push_list(m_reuse, front);
+	}
 	[[nodiscard]] pointer
 	pop_reuse() noexcept
 	{
@@ -601,13 +671,19 @@ struct slab_reshape
 	    "Size must be a mulitple of Slab::size()");
 	static constexpr size_t
 	header() noexcept
-	{ return Fact::value_type::size_header(); }
+	{
+		return Fact::value_type::size_header();
+	}
 	static constexpr size_t
 	size() noexcept
-	{ return std::max(Size, MinSize); }
+	{
+		return std::max(Size, MinSize);
+	}
 	static constexpr size_t
 	align() noexcept
-	{ return Align; }
+	{
+		return Align;
+	}
 
 	static constexpr size_t
 	count() noexcept
@@ -629,13 +705,19 @@ struct slab_reshape<Fact, 0, 0, MinSize>
 	static constexpr bool dynamic = true;
 	static constexpr size_t
 	header() noexcept
-	{ return Fact::value_type::size_header(); }
+	{
+		return Fact::value_type::size_header();
+	}
 	constexpr size_t
 	size() const noexcept
-	{ return m_size; }
+	{
+		return m_size;
+	}
 	constexpr size_t
 	align() const noexcept
-	{ return m_align; }
+	{
+		return m_align;
+	}
 	constexpr size_t
 	count(const Fact& F) const noexcept
 	{
@@ -680,7 +762,9 @@ struct ReshapeCountCache
 
 	void
 	set(const Reshape& re, const Fact& fact) noexcept
-	{ m_val = static_cast<uint32_t>(re.count(fact)); }
+	{
+		m_val = static_cast<uint32_t>(re.count(fact));
+	}
 
 	uint32_t
 	operator*() const noexcept
@@ -704,7 +788,9 @@ struct ReshapeCountCache<Reshape, Fact>
 
 	constexpr uint32_t
 	operator*() const noexcept
-	{ return Reshape::count(); }
+	{
+		return Reshape::count();
+	}
 };
 
 } // namespace warthog::memory::alloc

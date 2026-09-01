@@ -67,20 +67,28 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactoryOwn | FactoryNoFree; }
+	{
+		return FactoryOwn | FactoryNoFree;
+	}
 
 	constexpr size_type
 	alignment() const noexcept
-	{ return m_size.align(); }
+	{
+		return m_size.align();
+	}
 	constexpr size_type
 	element_size() const noexcept
-	{ return m_size.size(); }
+	{
+		return m_size.size();
+	}
 
 	template<typename... T>
 	constexpr bool
 	setup(T&&... args)
 	    requires(!size_set::dynamic)
-	{ return pattern::setup(std::forward<T>(args)...); }
+	{
+		return pattern::setup(std::forward<T>(args)...);
+	}
 	template<typename... T>
 	constexpr bool
 	setup(block_factory_params param, T&&... args)
@@ -125,10 +133,14 @@ public:
 
 	upstream_factory&
 	upstream() noexcept
-	{ return static_cast<upstream_factory&>(*this); }
+	{
+		return static_cast<upstream_factory&>(*this);
+	}
 	const upstream_factory&
 	upstream() const noexcept
-	{ return static_cast<const upstream_factory&>(*this); }
+	{
+		return static_cast<const upstream_factory&>(*this);
+	}
 
 protected:
 	void

@@ -103,27 +103,38 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactorySource | FactoryNoFree; }
+	{
+		return FactorySource | FactoryNoFree;
+	}
 
 	constexpr void_factory() noexcept = default;
 	void_factory(const void_factory&) = delete;
 	void_factory
-	operator=(const void_factory&) = delete;
+	operator=(const void_factory&)
+	    = delete;
 
 	constexpr bool
 	setup() noexcept
-	{ return true; }
+	{
+		return true;
+	}
 
 	static consteval size_type
 	alignment() noexcept
-	{ return alignof(max_align_t); }
+	{
+		return alignof(max_align_t);
+	}
 	static consteval size_type
 	element_size() noexcept
-	{ return 1; }
+	{
+		return 1;
+	}
 
 	constexpr pointer
 	allocate(size_type)
-	{ return {}; }
+	{
+		return {};
+	}
 	constexpr void
 	deallocate(pointer)
 	{ }
@@ -227,7 +238,9 @@ concept ReclaimFactory = ReleaseFactory<Fact> && requires(Fact f) {
 /// @return F.upstream()
 Factory auto&
 upstream(Factory auto& F) noexcept
-{ return F.upstream(); }
+{
+	return F.upstream();
+}
 
 /// @brief Gets a upstream factory matching Fact type
 /// @param F factory
@@ -241,10 +254,7 @@ upstream(Factory auto& F) noexcept
 	{
 		return up;
 	}
-	else
-	{
-		return upstream<Fact>(up);
-	}
+	else { return upstream<Fact>(up); }
 }
 
 } // namespace warthog::memory::alloc

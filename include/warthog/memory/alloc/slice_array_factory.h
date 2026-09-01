@@ -139,18 +139,26 @@ public:
 
 	static consteval uint32_t
 	traits() noexcept
-	{ return FactoryOwn | FactoryReuse; }
+	{
+		return FactoryOwn | FactoryReuse;
+	}
 
 	constexpr size_type
 	alignment() const noexcept
-	{ return m_slabSet.align(); }
+	{
+		return m_slabSet.align();
+	}
 	constexpr size_type
 	element_size() const noexcept
-	{ return m_slabSet.size(); }
+	{
+		return m_slabSet.size();
+	}
 
 	constexpr uint32_t
 	max2k() const noexcept
-	{ return *m_slab2kMax; }
+	{
+		return *m_slab2kMax;
+	}
 
 	constexpr uint32_t
 	size2k(size_type elems) const noexcept
@@ -188,10 +196,14 @@ public:
 
 	[[nodiscard]] pointer
 	allocate(size_type elems)
-	{ return allocate_array(elems).first; }
+	{
+		return allocate_array(elems).first;
+	}
 	void
 	deallocate(pointer ptr, size_type elems)
-	{ deallocate_array(ptr, elems); }
+	{
+		deallocate_array(ptr, elems);
+	}
 
 	std::pair<pointer, size_type>
 	allocate_array(size_type min_elems)
@@ -245,10 +257,14 @@ public:
 
 	upstream_factory&
 	upstream() noexcept
-	{ return static_cast<upstream_factory&>(*this); }
+	{
+		return static_cast<upstream_factory&>(*this);
+	}
 	const upstream_factory&
 	upstream() const noexcept
-	{ return static_cast<const upstream_factory&>(*this); }
+	{
+		return static_cast<const upstream_factory&>(*this);
+	}
 
 protected:
 	// handle slabs
@@ -361,8 +377,8 @@ protected:
 		overflow_area* a = reinterpret_cast<overflow_area*>(
 		    p - (overflow_area::size_header() + overflow_area::align()));
 		m_slabOverflow = overflow_fn::dlist_detach(m_slabOverflow, a);
-		if constexpr(
-		    FactoryTraitNone<typename pattern::overflow_type, FactoryNoFree>)
+		if constexpr(FactoryTraitNone<
+		                 typename pattern::overflow_type, FactoryNoFree>)
 		{
 			pattern::overflow_deallocate(
 			    reinterpret_cast<pointer>(a),
@@ -372,8 +388,8 @@ protected:
 	void
 	elem_over_release()
 	{
-		if constexpr(
-		    FactoryTraitNone<typename pattern::overflow_type, FactoryNoFree>)
+		if constexpr(FactoryTraitNone<
+		                 typename pattern::overflow_type, FactoryNoFree>)
 		{
 			// only free overflow if it is supported, otherwise memory is
 			// wasted until released upstream
@@ -394,8 +410,9 @@ protected:
 	overflow_area* m_slabOverflow = nullptr;
 	[[no_unique_address]] size_set m_slabSet;
 	[[no_unique_address]] ReshapeSlice2kCache<
-	    size_set, upstream_factory, Max2k> m_slab2kMax = {};
-	std::array<Slab2k, Max2k - Min2k + 1> m_slabs      = {};
+	    size_set, upstream_factory, Max2k> m_slab2kMax
+	    = {};
+	std::array<Slab2k, Max2k - Min2k + 1> m_slabs = {};
 };
 
 template<
