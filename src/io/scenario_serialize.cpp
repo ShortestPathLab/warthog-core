@@ -461,13 +461,13 @@ scenario_serialize::read_instance_line_v1(
 		   || rint(inst.goal_x) != inst.goal_x
 		   || rint(inst.goal_y) != inst.goal_y)
 			return INVALID;
-		if(inst.start_x < 0 || inst.start_y >= m_map_width || inst.goal_x < 0
+		if(inst.start_x < 0 || inst.start_x >= m_map_width || inst.goal_x < 0
 		   || inst.goal_y >= m_map_height)
 			return INVALID;
 	}
 	else
 	{
-		if(inst.start_x < 0 || inst.start_y > m_map_width || inst.goal_x < 0
+		if(inst.start_x < 0 || inst.start_x > m_map_width || inst.goal_x < 0
 		   || inst.goal_y > m_map_height)
 			return INVALID;
 	}
@@ -539,13 +539,13 @@ scenario_serialize::read_instance_line_v2(
 		   || rint(inst.goal_x) != inst.goal_x
 		   || rint(inst.goal_y) != inst.goal_y)
 			return INVALID;
-		if(inst.start_x < 0 || inst.start_y >= m_map_width || inst.goal_x < 0
+		if(inst.start_x < 0 || inst.start_x >= m_map_width || inst.goal_x < 0
 		   || inst.goal_y >= m_map_height)
 			return INVALID;
 	}
 	else
 	{
-		if(inst.start_x < 0 || inst.start_y > m_map_width || inst.goal_x < 0
+		if(inst.start_x < 0 || inst.start_x > m_map_width || inst.goal_x < 0
 		   || inst.goal_y > m_map_height)
 		{
 			return INVALID;
@@ -613,7 +613,7 @@ scenario_serialize::read_patch_line_v2(scenario_patch& patch, std::istream* in)
 	        .next(patch.loc_y)
 	        .eof())
 		return std::unexpected(par.error());
-	if(patch.loc_x >= m_map_width || patch.loc_y > m_map_height)
+	if(patch.loc_x >= m_map_width || patch.loc_y >= m_map_height)
 		return INVALID;
 
 	return VALID;

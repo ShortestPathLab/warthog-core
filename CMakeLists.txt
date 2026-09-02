@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.13)
 
 project(Warthog
-	VERSION 0.6.0
+	VERSION 0.6.1
 	LANGUAGES CXX C)
 
 set_property(GLOBAL PROPERTY WARTHOG_warthog-core ON)
