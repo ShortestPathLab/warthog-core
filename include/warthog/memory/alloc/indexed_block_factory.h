@@ -70,9 +70,9 @@ template<
     SlabFactory Upstream, ByteFactory Overflow = void_factory,
     size_t SlabCount = 0, size_t Size = 0, size_t Align = 0>
 class indexed_block_factory
-    : private slab_link_pattern<overflow_pattern<Upstream, Overflow>>
+    : private overflow_pattern<slab_link_pattern<Upstream>, Overflow>
 {
-	using pattern  = slab_link_pattern<overflow_pattern<Upstream, Overflow>>;
+	using pattern  = overflow_pattern<slab_link_pattern<Upstream>, Overflow>;
 	using size_set = slab_reshape<Upstream, Size, Align>;
 
 public:

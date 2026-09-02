@@ -27,6 +27,8 @@ SOFTWARE.
 
 #include <concepts>
 #include <cstddef>
+#include <cstdint>
+#include <cassert>
 
 namespace warthog::memory::alloc
 {

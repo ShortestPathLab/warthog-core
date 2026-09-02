@@ -27,6 +27,8 @@ SOFTWARE.
 
 #include <bit>
 #include <memory>
+#include <cassert>
+#include <array>
 
 namespace warthog::memory::alloc
 {
