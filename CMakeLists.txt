@@ -34,7 +34,18 @@ target_include_directories(warthog_core PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 target_link_libraries(warthog_core PUBLIC warthog::compile Threads::Threads)
+
+# headers
 include(cmake/headers.cmake)
+list(TRANSFORM WARTHOG_CORE_HEADERS PREPEND "include/" OUTPUT_VARIABLE WARTHOG_CORE_SOURCE_HEADERS)
+
+configure_file(cmake/config.h.in include/warthog/config.h @ONLY)
+target_sources(warthog_core PUBLIC
+	${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h
+	${WARTHOG_CORE_SOURCE_HEADERS})
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h
+	PUBLIC_HEADER
+	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/warthog)
 
 add_executable(warthog_app)
 add_executable(warthog::warthog ALIAS warthog_app)
