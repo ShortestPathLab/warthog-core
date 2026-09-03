@@ -17,8 +17,8 @@
 /// @created: 2021-10-12
 
 #include "search_metrics.h"
-#include "search_parameters.h"
 #include "search_node.h"
+#include "search_parameters.h"
 #include <warthog/io/log.h>
 #include <warthog/util/template.h>
 
