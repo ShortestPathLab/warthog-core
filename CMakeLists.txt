@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.23)
 
 project(Warthog
 	VERSION 0.6.1
@@ -40,12 +40,17 @@ include(cmake/headers.cmake)
 list(TRANSFORM WARTHOG_CORE_HEADERS PREPEND "include/" OUTPUT_VARIABLE WARTHOG_CORE_SOURCE_HEADERS)
 
 configure_file(cmake/config.h.in include/warthog/config.h @ONLY)
-target_sources(warthog_core PUBLIC
+target_sources(warthog_core
+	PUBLIC
 	${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h
-	${WARTHOG_CORE_SOURCE_HEADERS})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h
-	PUBLIC_HEADER
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/warthog)
+
+	PUBLIC
+	FILE_SET HEADERS
+	BASE_DIRS include ${CMAKE_CURRENT_BINARY_DIR}/include
+	FILES
+		${WARTHOG_CORE_SOURCE_HEADERS}
+		${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h
+	)
 
 add_executable(warthog_app)
 add_executable(warthog::warthog ALIAS warthog_app)
@@ -55,6 +60,17 @@ target_link_libraries(warthog_app PUBLIC warthog::core)
 add_subdirectory(src)
 add_subdirectory(apps)
 
+
+install(TARGETS warthog_core warthog_app
+    RUNTIME 
+        COMPONENT Runtime
+    LIBRARY 
+        COMPONENT Runtime
+    ARCHIVE 
+        COMPONENT Development
+	FILE_SET HEADERS
+        COMPONENT Development
+)
 
 #
 # Testing setup
