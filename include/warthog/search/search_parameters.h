@@ -14,6 +14,8 @@
 
 #include <warthog/constants.h>
 
+#include <chrono>
+
 namespace warthog::search
 {
 
