@@ -119,9 +119,9 @@ Useful in dynamic scenario to see current state of grid, especially if used with
 
 Library includes support for x86 intrinsics instruction support, which may
 improve performance of some algorithms.
-To enable, compiler must have these instructions enabled, and they must be
-enabled in CMake, either `WARTHOG_INTRIN_ALL` for all or a specific
-supported instruction set, more to be added when required.
+To enable, compiler must have these instructions enabled (e.g. -march=native),
+and they must be enabled in CMake, either `WARTHOG_INTRIN_ALL` for all or a
+specific supported instruction set, more to be added when required.
 
 Even if BMI2 may be supported by a CPU, the instructions may be implemented
 by microcode which may reduce performance instead; e.g. Zen 3 arch has some
