@@ -12,6 +12,7 @@
 #include <warthog/memory/alloc/bump_factory.h>
 #include <warthog/memory/alloc/indexed_block_factory.h>
 #include <warthog/memory/alloc/slice_array_factory.h>
+#include <warthog/memory/alloc/factory_pointer.h>
 
 #include <string_view>
 #include <vector>
@@ -42,6 +43,27 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		CHECK_FALSE( ReclaimFactory<release_adaptor<malloc_factory>> );
 		CHECK( ByteFactory< factory_pointer< release_adaptor<malloc_factory>> > );
 		CHECK( SingleFactory< factory_pointer<single_factory<malloc_factory, 4>> > );
+	}
+
+	SECTION( "type check" ) {
+		CHECK ( std::same_as< make_factory_pointer<malloc_factory>, factory_pointer<malloc_factory> > );
+		CHECK ( std::same_as< make_factory_pointer<factory_pointer<malloc_factory>>, factory_pointer<malloc_factory> > );
+		CHECK ( std::same_as< make_factory_pointer<const malloc_factory&>, const factory_pointer<malloc_factory>& > );
+		CHECK ( std::same_as< make_factory_pointer<const factory_pointer<malloc_factory>&>, const factory_pointer<malloc_factory>& > );
+		CHECK ( std::same_as< make_factory_pointer<const volatile malloc_factory&&>, const volatile factory_pointer<malloc_factory>&& > );
+
+		CHECK ( std::same_as< remove_factory_pointer<malloc_factory>, malloc_factory > );
+		CHECK ( std::same_as< remove_factory_pointer<factory_pointer<malloc_factory>>, malloc_factory > );
+		CHECK ( std::same_as< remove_factory_pointer<const malloc_factory&>, const malloc_factory& > );
+		CHECK ( std::same_as< remove_factory_pointer<const factory_pointer<malloc_factory>&>, const malloc_factory& > );
+		CHECK ( std::same_as< remove_factory_pointer<const volatile factory_pointer<malloc_factory>&&>, const volatile malloc_factory&& > );
+		
+		CHECK ( std::same_as< util::copy_cvref<double, int>, int > );
+		CHECK ( std::same_as< util::copy_cvref<double&, int>, int& > );
+		CHECK ( std::same_as< util::copy_cvref<const double&, volatile int>, const int& > );
+		CHECK ( std::same_as< util::copy_ref<double&, int>, int& > );
+		CHECK ( std::same_as< util::copy_ref<double&&, int>, int&& > );
+		CHECK ( std::same_as< util::copy_const<const double&&, int>, const int > );
 	}
 
 	SECTION( "single factory" ) {

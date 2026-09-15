@@ -27,6 +27,8 @@ SOFTWARE.
 
 #include "factory.h"
 
+#include <warthog/util/template.h>
+
 #include <memory_resource>
 
 namespace warthog::memory::alloc
@@ -175,6 +177,48 @@ struct factory_pointer<Fact>
 		return *m_factoryBase;
 	}
 };
+
+namespace details {
+template <typename T>
+struct is_factory_pointer_ : std::false_type
+{};
+template <typename Pto>
+struct is_factory_pointer_<factory_pointer<Pto>> : std::true_type
+{};
+} // namespace details
+
+/// class is factory_pointer<T>
+template <typename T>
+concept PointerFactory = details::is_factory_pointer_<std::remove_cvref_t<T>>::value;
+
+namespace details {
+template <typename T>
+struct make_factory_pointer_
+{
+	using type = factory_pointer<T>;
+};
+template <PointerFactory T>
+struct make_factory_pointer_<T>
+{
+	using type = T;
+};
+template <typename T>
+struct remove_factory_pointer_
+{
+	using type = T;
+};
+template <typename Pto>
+struct remove_factory_pointer_<factory_pointer<Pto>>
+{
+	using type = Pto;
+};
+} // namespace details
+
+template <typename T>
+using make_factory_pointer = util::copy_cvref<T, typename details::make_factory_pointer_<std::remove_cvref_t<T>>::type>;
+
+template <typename T>
+using remove_factory_pointer = util::copy_cvref<T, typename details::remove_factory_pointer_<std::remove_cvref_t<T>>::type>;
 
 } // namespace warthog::memory::alloc
 
