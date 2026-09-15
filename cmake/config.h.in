@@ -10,5 +10,8 @@
 #cmakedefine WARTHOG_INTRIN_ALL
 #cmakedefine WARTHOG_BMI
 #cmakedefine WARTHOG_BMI2
+#cmakedefine WARTHOG_SSE2
+#cmakedefine WARTHOG_AVX
+#cmakedefine WARTHOG_AVX2
 
 #endif // WARTHOG_APP_CONFIG_H
