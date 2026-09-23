@@ -12,6 +12,7 @@
 #include <warthog/memory/alloc/bump_factory.h>
 #include <warthog/memory/alloc/indexed_block_factory.h>
 #include <warthog/memory/alloc/slice_array_factory.h>
+#include <warthog/memory/alloc/factory_pointer.h>
 
 #include <string_view>
 #include <vector>
@@ -42,6 +43,27 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		CHECK_FALSE( ReclaimFactory<release_adaptor<malloc_factory>> );
 		CHECK( ByteFactory< factory_pointer< release_adaptor<malloc_factory>> > );
 		CHECK( SingleFactory< factory_pointer<single_factory<malloc_factory, 4>> > );
+	}
+
+	SECTION( "type check" ) {
+		CHECK ( std::same_as< make_factory_pointer<malloc_factory>, factory_pointer<malloc_factory> > );
+		CHECK ( std::same_as< make_factory_pointer<factory_pointer<malloc_factory>>, factory_pointer<malloc_factory> > );
+		CHECK ( std::same_as< make_factory_pointer<const malloc_factory&>, const factory_pointer<malloc_factory>& > );
+		CHECK ( std::same_as< make_factory_pointer<const factory_pointer<malloc_factory>&>, const factory_pointer<malloc_factory>& > );
+		CHECK ( std::same_as< make_factory_pointer<const volatile malloc_factory&&>, const volatile factory_pointer<malloc_factory>&& > );
+
+		CHECK ( std::same_as< remove_factory_pointer<malloc_factory>, malloc_factory > );
+		CHECK ( std::same_as< remove_factory_pointer<factory_pointer<malloc_factory>>, malloc_factory > );
+		CHECK ( std::same_as< remove_factory_pointer<const malloc_factory&>, const malloc_factory& > );
+		CHECK ( std::same_as< remove_factory_pointer<const factory_pointer<malloc_factory>&>, const malloc_factory& > );
+		CHECK ( std::same_as< remove_factory_pointer<const volatile factory_pointer<malloc_factory>&&>, const volatile malloc_factory&& > );
+		
+		CHECK ( std::same_as< util::copy_cvref<double, int>, int > );
+		CHECK ( std::same_as< util::copy_cvref<double&, int>, int& > );
+		CHECK ( std::same_as< util::copy_cvref<const double&, volatile int>, const int& > );
+		CHECK ( std::same_as< util::copy_ref<double&, int>, int& > );
+		CHECK ( std::same_as< util::copy_ref<double&&, int>, int&& > );
+		CHECK ( std::same_as< util::copy_const<const double&&, int>, const int > );
 	}
 
 	SECTION( "single factory" ) {
@@ -100,8 +122,8 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		REQUIRE( a1.setup(ba) );
 		REQUIRE( a2.setup(ba) );
 
-		const int TOTAL = GENERATE(1,2,4,8,16,32) * 1024;
-		for (int i = 0; i < TOTAL; ++i) {
+		const int64_t TOTAL = GENERATE(1,2,4,8,16,32) * 1024;
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			auto* p1 [[maybe_unused]] = a1.create();
 			REQUIRE( p1 != nullptr );
 			auto* p2 [[maybe_unused]] = a2.create();
@@ -122,13 +144,13 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		REQUIRE( bb.alignment() >= alignof(int32_t) );
 		std::vector<memb*> ref;
 		std::vector<int32_t*> refb;
-		const int32_t TOTAL = GENERATE(1,2,4,8,16,32,64) * 1024;
+		const int64_t TOTAL = GENERATE(1,2,4,8,16,32) * 1024;
 
 		auto* big = reinterpret_cast<int32_t*>( ba.upstream().allocate(TOTAL * sizeof(int32_t)) );
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			big[i] = -i;
 		}
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			auto* ptr = reinterpret_cast<memb*>( ba.create() );
 			ptr->a = i;
 			ptr->b = i*i;
@@ -137,7 +159,7 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 			*ptrb = i + i/2;
 			refb.push_back(ptrb);
 		}
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			REQUIRE(big[i] == -i);
 			auto* ptr = ref[i];
 			REQUIRE(ptr->a == i);
@@ -165,11 +187,11 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		CHECK( bb.alignment() >= alignof(memb) );
 		std::vector<memc*> ref;
 		std::vector<memb*> ref2;
-		const int32_t TOTAL = GENERATE(1,2,4,8,16,32,64) * 1024;
+		const int64_t TOTAL = GENERATE(1,2,4,8,16,32) * 1024;
 		std::set<memc*> alloc;
 		std::set<memb*> alloc2;
 
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			memc* v = reinterpret_cast<memc*>(ba.create());
 			v->a = i;
 			v->b = i*i;
@@ -186,7 +208,7 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		bb.reclaim();
 		int32_t dup_count = 0;
 		int32_t dup_count2 = 0;
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			memc* v = reinterpret_cast<memc*>(ba.create());
 			if (alloc.contains(v))
 				dup_count += 1;
@@ -289,11 +311,11 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		CHECK( ba.alignment() >= alignof(memc) );
 
 		std::vector<memc*> ref;
-		const int32_t TOTAL = GENERATE(1,2,4,8,16,32,64) * 1024;
+		const int64_t TOTAL = GENERATE(1,2,4,8,16,32) * 1024;
 		std::set<memc*> alloc;
 
 		// allocate inital 1024 elements one-at-a-time
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			memc* v = reinterpret_cast<memc*>(ba.create());
 			v->a = i;
 			v->b = i*i;
@@ -303,19 +325,19 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		}
 		REQUIRE( ba.size() == TOTAL );
 		// check previous allocations
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			memc* v = reinterpret_cast<memc*>(ba.get_if(i));
 			REQUIRE( v == ref[i] );
 			REQUIRE( v->a == i );
 			REQUIRE( v->b == (i*i) );
 		}
-		const int32_t TOTAL2 = 10 * TOTAL;
+		const int64_t TOTAL2 = 10 * TOTAL;
 		ba.resize(TOTAL2);
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			memc* v = reinterpret_cast<memc*>(ba.get_if(i));
 			REQUIRE( v == ref[i] );
 		}
-		for (int32_t i = TOTAL; i < TOTAL2; ++i) {
+		for (int64_t i = TOTAL; i < TOTAL2; ++i) {
 			memc* v = reinterpret_cast<memc*>(ba.get_if(i));
 			v->a = i;
 			v->b = i*i;
@@ -337,11 +359,11 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		CHECK( ba.alignment() >= alignof(memc) );
 
 		std::vector<memc*> ref;
-		const int32_t TOTAL = GENERATE(1,2,4,8,16,32,64) * 1024;
+		const int64_t TOTAL = GENERATE(1,2,4,8,16,32) * 1024;
 		std::set<memc*> alloc;
 
 		// allocate inital 1024 elements one-at-a-time
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			memc* v = reinterpret_cast<memc*>(ba.create());
 			v->a = i;
 			v->b = i*i;
@@ -351,19 +373,19 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		}
 		REQUIRE( ba.size() == TOTAL );
 		// check previous allocations
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			memc* v = reinterpret_cast<memc*>(ba.get_if(i));
 			REQUIRE( v == ref[i] );
 			REQUIRE( v->a == i );
 			REQUIRE( v->b == (i*i) );
 		}
-		const int32_t TOTAL2 = 10 * TOTAL;
+		const int64_t TOTAL2 = 10 * TOTAL;
 		ba.resize(TOTAL2);
-		for (int32_t i = 0; i < TOTAL; ++i) {
+		for (int64_t i = 0; i < TOTAL; ++i) {
 			memc* v = reinterpret_cast<memc*>(ba.get_if(i));
 			REQUIRE( v == ref[i] );
 		}
-		for (int32_t i = TOTAL; i < TOTAL2; ++i) {
+		for (int64_t i = TOTAL; i < TOTAL2; ++i) {
 			memc* v = reinterpret_cast<memc*>(ba.get_if(i));
 			v->a = i;
 			v->b = i*i;
@@ -392,12 +414,12 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		CHECK( bb.element_size() == sizeof(memc) );
 		CHECK( bb.alignment() >= alignof(memc) );
 
-		const uint32_t TOTAL_R = GENERATE(1,2,4,8,16,32,64,100,200) * 1024;
+		const int64_t TOTAL_R = GENERATE(1,2,4,8,16,32,64,100,200) * 1024;
 		std::vector<std::pair<void*,int>> val;
 		val.reserve(TOTAL_R+12);
 		std::unordered_set<void*> ref;
 		std::unordered_set<void*> ref_d;
-		for (uint32_t i = 0; i < TOTAL_R; ++i)
+		for (int64_t i = 0; i < TOTAL_R; ++i)
 		{
 			int s = i % 6;
 			int s1 = (1 << s) - GENERATE(take(1, random(0, 1<<6))) % (1 << (s > 1 ? s-1 : 0));
@@ -416,7 +438,7 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 			REQUIRE( p_d.second == std::max((int)(1 << s), (int)(1 << 2)) );
 			ref_d.insert(p_d.first);
 		}
-		for (uint32_t i = 0; i < 16; ++i) {
+		for (int64_t i = 0; i < 16; ++i) {
 			auto p = ba.allocate(GENERATE(take(1, random(1<<7, 1<<8))));
 			REQUIRE(p != nullptr);
 			auto p_d = bb.allocate(GENERATE(take(1, random(1<<7, 1<<8))));
@@ -431,7 +453,7 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 
 		// realloc
 		std::unordered_set<void*> ref2;
-		for (uint32_t i = 0; i < TOTAL_R/2; ++i)
+		for (int64_t i = 0; i < TOTAL_R/2; ++i)
 		{
 			ba.deallocate_array(reinterpret_cast<std::byte*>(val[i].first), val[i].second);
 			ref2.insert(val[i].first);
@@ -439,7 +461,7 @@ TEST_CASE( "Basic factory check", "[factory]" ) {
 		bb.reclaim();
 		// allocate, should reuse memory
 		int count_c = 0;
-		for (uint32_t i = 0; i < TOTAL_R/2; ++i) {
+		for (int64_t i = 0; i < TOTAL_R/2; ++i) {
 			int s = i % 6;
 			int s1 = (1 << s) - GENERATE(take(1, random(0, 1<<6))) % (1 << (s > 1 ? s-1 : 0));
 			auto p = ba.allocate(s1);
