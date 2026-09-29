@@ -17,28 +17,26 @@ namespace warthog::heuristic
 class zero_heuristic
 {
 public:
-	zero_heuristic() { }
-	~zero_heuristic() { }
 
-	double
+	constexpr double
 	h(unsigned int x, unsigned int y, unsigned int x2, unsigned int y2)
 	{
 		return 0;
 	}
 
-	double
+	constexpr double
 	h(sn_id_t id, sn_id_t id2)
 	{
 		return 0;
 	}
 
-	void
+	constexpr void
 	h(heuristic_value* hv)
 	{
 		hv->lb_ = 0;
 	}
 
-	size_t
+	constexpr size_t
 	mem()
 	{
 		return sizeof(this);

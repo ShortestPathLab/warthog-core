@@ -17,17 +17,15 @@ namespace warthog::heuristic
 class manhattan_heuristic
 {
 public:
-	manhattan_heuristic(uint32_t mapwidth, uint32_t mapheight)
+	constexpr manhattan_heuristic(uint32_t mapwidth, [[maybe_unused]] uint32_t mapheight)
 	    : mapwidth_(mapwidth)
 	{ }
-
-	~manhattan_heuristic() { }
 
 	double
 	h(int32_t x, int32_t y, int32_t x2, int32_t y2)
 	{
 		// NB: precision loss when double is an integer
-		return (abs(x - x2) + abs(y - y2));
+		return std::abs(x - x2) + std::abs(y - y2);
 	}
 
 	double

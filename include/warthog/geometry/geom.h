@@ -10,7 +10,7 @@
 //
 
 #include <cstdint>
-#include <float.h>
+#include <limits>
 #include <istream>
 #include <ostream>
 
@@ -22,66 +22,49 @@ struct rectangle
 public:
 	int32_t x1, y1, x2, y2;
 
-	rectangle() { clear(); }
+	constexpr rectangle() { clear(); }
 
-	rectangle(int32_t x1, int32_t y1, int32_t x2, int32_t y2)
-	{
-		this->x1 = x1;
-		this->y1 = y1;
-		this->x2 = x2;
-		this->y2 = y2;
-	}
+	constexpr rectangle(int32_t l_x1, int32_t l_y1, int32_t l_x2, int32_t l_y2)
+		: x1(l_x1), y1(l_y1), x2(l_x2), y2(l_y2)
+	{ }
 
-	rectangle(const rectangle& other)
-	{
-		x1 = other.x1;
-		x2 = other.x2;
-		y1 = other.y1;
-		y2 = other.y2;
-	}
+	constexpr rectangle(const rectangle& other) = default;
 
-	rectangle&
-	operator=(const rectangle& other)
-	{
-		x1 = other.x1;
-		x2 = other.x2;
-		y1 = other.y1;
-		y2 = other.y2;
-		return *this;
-	}
+	constexpr rectangle&
+	operator=(const rectangle& other) = default;
 
-	bool
+	constexpr bool
 	operator==(const rectangle& other)
 	{
 		return x1 == other.x1 && x2 == other.x2 && y1 == other.y1
 		    && y2 == other.y2;
 	}
 
-	bool
+	constexpr bool
 	operator!=(const rectangle& other)
 	{
 		return !this->operator==(other);
 	}
 
-	int32_t
+	constexpr int32_t
 	get_width()
 	{
-		return abs(x2 - x1);
+		return std::abs(x2 - x1);
 	}
 
-	int32_t
+	constexpr int32_t
 	get_height()
 	{
-		return abs(y2 - y1);
+		return std::abs(y2 - y1);
 	}
 
-	uint64_t
+	constexpr uint64_t
 	get_area()
 	{
-		return ((uint64_t)abs(x2 - x1)) * ((uint64_t)abs(y2 - y1));
+		return ((uint64_t)std::abs(x2 - x1)) * ((uint64_t)std::abs(y2 - y1));
 	}
 
-	void
+	constexpr void
 	grow(int32_t x, int32_t y)
 	{
 		if(x < x1) { x1 = x; }
@@ -90,7 +73,7 @@ public:
 		if(y > y2) { y2 = y; }
 	}
 
-	void
+	constexpr void
 	grow(const warthog::geometry::rectangle& r)
 	{
 		if(r.x1 < x1) { x1 = r.x1; }
@@ -99,7 +82,7 @@ public:
 		if(r.y2 > y2) { y2 = r.y2; }
 	}
 
-	bool
+	constexpr bool
 	contains(int32_t x, int32_t y)
 	{
 		return x >= x1 && x <= x2 && y >= y1 && y <= y2;
@@ -123,7 +106,7 @@ public:
 	// if there is no overlap. On the other hand
 	// if the area from (1) is smaller, the rectangles
 	// must overlap
-	bool
+	constexpr bool
 	intersects(warthog::geometry::rectangle& r)
 	{
 		rectangle r3(*this);
@@ -142,7 +125,7 @@ public:
 		return false;
 	}
 
-	bool
+	constexpr bool
 	is_valid()
 	{
 		return x2 >= x1 && y2 >= y1;
@@ -155,18 +138,18 @@ public:
 		    << std::endl;
 	}
 
-	void
+	constexpr void
 	clear()
 	{
-		x1 = y1 = INT32_MAX;
-		x2 = y2 = INT32_MIN;
+		x1 = y1 = std::numeric_limits<int32_t>::max();
+		x2 = y2 = std::numeric_limits<int32_t>::min();
 	}
 };
 
 } // namespace warthog::geometry
 
 std::ostream&
-operator<<(std::ostream& out, warthog::geometry::rectangle& rect)
+operator<<(std::ostream& out, const warthog::geometry::rectangle& rect)
 {
 	out.write((char*)(&rect.x1), sizeof(rect.x1));
 	out.write((char*)(&rect.x2), sizeof(rect.x2));
