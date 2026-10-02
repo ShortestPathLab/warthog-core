@@ -37,7 +37,14 @@
 
 namespace warthog::domain
 {
-
+	
+/**
+ * Support reading up to three rows along a grids horizontal axis.
+ * Given an (x,y), stores location of byte (round to 8) and allows reading of
+ * up to 64-bits on up to 3 rows.
+ * Can adjust on a byte level, both to the right (pos) and left (neg).
+ * Whenever rows are given, they are indexed: 0=y, 1=y-1, 2=y+1
+ */
 struct gridmap_slider;
 
 constexpr uint32_t GRID_ID_MAX = std::numeric_limits<uint32_t>::max();
@@ -470,12 +477,13 @@ struct gridmap_slider
 		loc += i;
 	}
 
+	/// @param rel_bytes position starts are loc+rel_bytes
 	/// @return the unaligned 64b (8B) block from loc in little-endian format
 	uint64_t
-	get_block_64bit_le() const noexcept
+	get_block_64bit_le(int64_t rel_bytes = 0) const noexcept
 	{
 		uint64_t return_value;
-		std::memcpy(&return_value, loc, sizeof(uint64_t));
+		std::memcpy(&return_value, loc + rel_bytes, sizeof(uint64_t));
 
 		if constexpr(std::endian::native == std::endian::big)
 		{
@@ -486,45 +494,188 @@ struct gridmap_slider
 		return return_value;
 	}
 
-	// returns rows as:
-	// [0] = middle
-	// [1] = above (-y)
-	// [2] = below (+y)
-	std::array<uint64_t, 3>
-	get_neighbours_64bit_le() const noexcept
+	/// @param rel_bytes position starts are loc+rel_bytes
+	/// @return the unaligned 32b (4B) block from loc in little-endian format
+	uint64_t
+	get_block_32bit_le(int64_t rel_bytes = 0) const noexcept
 	{
-		std::array<uint64_t, 3> return_value;
-		std::memcpy(&return_value[0], loc, sizeof(uint64_t));
-		std::memcpy(&return_value[1], loc - width8, sizeof(uint64_t));
-		std::memcpy(&return_value[2], loc + width8, sizeof(uint64_t));
+		uint32_t return_value;
+		std::memcpy(&return_value, loc + rel_bytes, sizeof(uint32_t));
 
 		if constexpr(std::endian::native == std::endian::big)
 		{
 			// big endian, perform byte swap
-			return_value[0] = util::byteswap_u64(return_value[0]);
-			return_value[1] = util::byteswap_u64(return_value[1]);
-			return_value[2] = util::byteswap_u64(return_value[2]);
+			return_value = util::byteswap_u32(return_value);
+		}
+
+		return return_value;
+	}
+
+	/// @param rel_bytes position starts are loc+rel_bytes
+	/// @return the unaligned 16b (2B) block from loc in little-endian format
+	uint16_t
+	get_block_16bit_le(int64_t rel_bytes = 0) const noexcept
+	{
+		uint16_t return_value;
+		std::memcpy(&return_value, loc + rel_bytes, sizeof(uint16_t));
+
+		if constexpr(std::endian::native == std::endian::big)
+		{
+			// big endian, perform byte swap
+			return_value = util::byteswap_u16(return_value);
+		}
+
+		return return_value;
+	}
+
+	/// @param rel_bytes position starts are loc+rel_bytes
+	/// @return the unaligned 8b (1B) block.
+	uint8_t
+	get_block_8bit_le(int64_t rel_bytes = 0) const noexcept
+	{
+		uint8_t return_value;
+		std::memcpy(&return_value, loc + rel_bytes, sizeof(uint8_t));
+
+		return return_value;
+	}
+
+#ifdef WARTHOG_INT128_ENABLED
+	/// @param rel_bytes position starts are loc+rel_bytes
+	/// @return the unaligned 8b (1B) block.
+	unsigned __int128
+	get_block_128bit_le(int64_t rel_bytes = 0) const noexcept
+	{
+		unsigned __int128 return_value;
+		std::memcpy(&return_value, loc + rel_bytes, sizeof(unsigned __int128));
+
+		if constexpr(std::endian::native == std::endian::big)
+		{
+			// big endian, perform byte swap
+			return_value = util::byteswap_u128(return_value);
+		}
+
+		return return_value;
+	}
+#endif
+
+	/// @param rel_bytes position starts are loc+rel_bytes
+	/// @return the unaligned block raised to the power of 2 of Bits.
+	template <size_t Bits>
+	auto get_block_auto_le(int64_t rel_bytes = 0) const noexcept
+	{
+		static_assert(1 <= Bits && Bits <= 64, "Bits must fall between 1 and 64");
+		if constexpr (Bits <= 8) {
+			return get_block_8bit_le(rel_bytes);
+		} else if constexpr (Bits <= 16) {
+			return get_block_16bit_le(rel_bytes);
+		} else if constexpr (Bits <= 32) {
+			return get_block_32bit_le(rel_bytes);
+		} else {
+			return get_block_64bit_le(rel_bytes);
+		}
+	}
+
+	/// returns rows as:
+	/// [0] = middle
+	/// [1] = above (-y)
+	/// [2] = below (+y)
+	template <size_t Rows = 3>
+	std::array<uint64_t, Rows>
+	get_neighbours_64bit_le() const noexcept
+	{
+		static_assert(1 <= Rows && Rows <= 3, "Rows must be 1-3.");
+		std::array<uint64_t, Rows> return_value;
+		return_value[0] = get_block_64bit_le(0);
+		if constexpr(Rows >= 2) {
+			return_value[1] = get_block_64bit_le(-static_cast<int64_t>(static_cast<uint64_t>(width8)));
+		}
+		if constexpr(Rows >= 3) {
+			return_value[2] = get_block_64bit_le(static_cast<int64_t>(static_cast<uint64_t>(width8)));
+		}
+
+		return return_value;
+	}
+
+	/// returns rows as:
+	/// [0] = middle
+	/// [1] = above (-y)
+	/// [2] = below (+y)
+	template <size_t Rows = 3>
+	std::array<uint32_t, Rows>
+	get_neighbours_32bit_le() const noexcept
+	{
+		static_assert(1 <= Rows && Rows <= 3, "Rows must be 1-3.");
+		std::array<uint32_t, Rows> return_value;
+		return_value[0] = get_block_32bit_le(0);
+		if constexpr(Rows >= 2) {
+			return_value[1] = get_block_32bit_le(-static_cast<int64_t>(static_cast<uint64_t>(width8)));
+		}
+		if constexpr(Rows >= 3) {
+			return_value[2] = get_block_32bit_le(static_cast<int64_t>(static_cast<uint64_t>(width8)));
+		}
+
+		return return_value;
+	}
+
+	/// returns rows as:
+	/// [0] = middle
+	/// [1] = above (-y)
+	/// [2] = below (+y)
+	template <size_t Rows = 3>
+	std::array<uint16_t, Rows>
+	get_neighbours_16bit_le() const noexcept
+	{
+		static_assert(1 <= Rows && Rows <= 3, "Rows must be 1-3.");
+		std::array<uint16_t, Rows> return_value;
+		return_value[0] = get_block_16bit_le(0);
+		if constexpr(Rows >= 2) {
+			return_value[1] = get_block_16bit_le(-static_cast<int64_t>(static_cast<uint64_t>(width8)));
+		}
+		if constexpr(Rows >= 3) {
+			return_value[2] = get_block_16bit_le(static_cast<int64_t>(static_cast<uint64_t>(width8)));
+		}
+
+		return return_value;
+	}
+
+	/// returns rows as:
+	/// [0] = middle
+	/// [1] = above (-y)
+	/// [2] = below (+y)
+	template <size_t Rows = 3>
+	std::array<uint8_t, Rows>
+	get_neighbours_8bit_le() const noexcept
+	{
+		static_assert(1 <= Rows && Rows <= 3, "Rows must be 1-3.");
+		std::array<uint8_t, Rows> return_value;
+		return_value[0] = get_block_8bit_le(0);
+		if constexpr(Rows >= 2) {
+			return_value[1] = get_block_8bit_le(-static_cast<int64_t>(static_cast<uint64_t>(width8)));
+		}
+		if constexpr(Rows >= 3) {
+			return_value[2] = get_block_8bit_le(static_cast<int64_t>(static_cast<uint64_t>(width8)));
 		}
 
 		return return_value;
 	}
 
 #ifdef WARTHOG_INT128_ENABLED
-	std::array<unsigned __int128, 3>
+	/// returns rows as:
+	/// [0] = middle
+	/// [1] = above (-y)
+	/// [2] = below (+y)
+	template <size_t Rows = 3>
+	std::array<unsigned __int128, Rows>
 	get_neighbours_128bit_le() const noexcept
 	{
-		using int128 = unsigned __int128;
-		std::array<int128, 3> return_value;
-		std::memcpy(&return_value[0], loc, sizeof(int128));
-		std::memcpy(&return_value[1], loc - width8, sizeof(int128));
-		std::memcpy(&return_value[2], loc + width8, sizeof(int128));
-
-		if constexpr(std::endian::native == std::endian::big)
-		{
-			// big endian, perform byte swap
-			return_value[0] = util::byteswap_u128(return_value[0]);
-			return_value[1] = util::byteswap_u128(return_value[1]);
-			return_value[2] = util::byteswap_u128(return_value[2]);
+		static_assert(1 <= Rows && Rows <= 3, "Rows must be 1-3.");
+		std::array<unsigned __int128, Rows> return_value;
+		return_value[0] = get_block_128bit_le(0);
+		if constexpr(Rows >= 2) {
+			return_value[1] = get_block_128bit_le(-static_cast<int64_t>(static_cast<uint64_t>(width8)));
+		}
+		if constexpr(Rows >= 3) {
+			return_value[2] = get_block_128bit_le(static_cast<int64_t>(static_cast<uint64_t>(width8)));
 		}
 
 		return return_value;
