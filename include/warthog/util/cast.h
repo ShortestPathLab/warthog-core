@@ -155,6 +155,89 @@ byteswap_auto(T value) noexcept
 	}
 }
 
+struct pointer_tagging_lsb
+{
+	uintptr_t data;
+
+	pointer_tagging_lsb() noexcept = default;
+	constexpr pointer_tagging_lsb(void* p) noexcept :
+		data{std::bit_cast<uintptr_t>(p)}
+	{ }
+	constexpr pointer_tagging_lsb(void* p, uintptr_t v) noexcept :
+		data{std::bit_cast<uintptr_t>(p) | v }
+	{ }
+
+	constexpr void
+	set(void* p, uintptr_t v = 0) noexcept
+	{
+		data = std::bit_cast<uintptr_t>(p) | v;
+	}
+
+	template <size_t ISize>
+	constexpr void*
+	ptr() noexcept
+	{
+		static_assert(ISize < 63, "ISize must fit bits of void");
+		return std::bit_cast<void*>(
+			data & (~static_cast<uintptr_t>(0) << ISize)
+		);
+	}
+	template <typename T>
+	constexpr T*
+	ptr() noexcept
+	{
+		return static_cast<T*>(ptr<std::bit_ceil(alignof(T))-1>());
+	}
+
+	template <size_t ISize>
+	constexpr void
+	ptr(void* p) noexcept
+	{
+		static_assert(ISize < 63, "ISize must fit bits of void");
+		set(p, value<ISize>());
+	}
+	template <typename T>
+	constexpr void
+	ptr(T* p) noexcept
+	{
+		ptr<std::bit_ceil(alignof(T))-1>(p);
+	}
+
+	template <size_t ISize>
+	constexpr uintptr_t
+	value() noexcept
+	{
+		static_assert(ISize < 63, "ISize must fit bits of void");
+		return data & ~(~static_cast<uintptr_t>(0) << ISize);
+	}
+	template <typename T>
+	constexpr uintptr_t
+	value() noexcept
+	{
+		return value<std::bit_ceil(alignof(T))-1>();
+	}
+	
+	template <size_t ISize>
+	constexpr void
+	value(uintptr_t v) noexcept
+	{
+		static_assert(ISize < 63, "ISize must fit bits of void");
+		set(ptr<ISize>(), v);
+	}
+	template <typename T>
+	constexpr void
+	value(uintptr_t v) noexcept
+	{
+		value<std::bit_ceil(alignof(T))-1>(v);
+	}
+
+	template <typename T = void>
+	const T* notag() noexcept
+	{
+		return std::bit_cast<T*>(data);
+	}
+};
+
 } // namespace warthog::util
 
 #endif // WARTHOG_UTIL_CAST_H

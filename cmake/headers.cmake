@@ -13,6 +13,9 @@ include/warthog/defines.h
 include/warthog/forward.h
 include/warthog/limits.h
 
+include/warthog/data/hash.h
+include/warthog/data/hash_table.h
+
 include/warthog/domain/grid.h
 include/warthog/domain/gridmap.h
 include/warthog/domain/labelled_gridmap.h
@@ -63,6 +66,7 @@ include/warthog/util/cost_table.h
 include/warthog/util/dimacs_parser.h
 include/warthog/util/helpers.h
 include/warthog/util/intrin.h
+include/warthog/util/numeric.h
 include/warthog/util/pqueue.h
 include/warthog/util/string.h
 include/warthog/util/template.h

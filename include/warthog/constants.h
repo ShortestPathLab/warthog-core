@@ -117,6 +117,10 @@ struct pad_tag
 using pad_id   = identity_base<pad_tag>;
 using pad32_id = identity_base<pad_tag, uint32_t>;
 
+/// Empty class
+struct empty
+{ };
+
 // each node in a weighted grid map uses sizeof(dbword) memory.
 // in a uniform-cost grid map each dbword is a contiguous set
 // of nodes s.t. every bit represents a node.

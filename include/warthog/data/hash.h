@@ -101,7 +101,7 @@ struct aes_hash
 		if constexpr (std::is_signed_v<I>) {
 			return operator()(static_cast<std::make_unsigned_t<I>>(val));
 		} else {
-#ifdef WARTHOG_INT128
+#ifdef WARTHOG_INT128_ENABLED
 			if constexpr (sizeof(I) > 8) { // unsigned __int128_t
 				alignas(unsigned __int128) uint64_t r[2];
 				unsigned __int128 v = static_cast<unsigned __int128>(val);
@@ -109,12 +109,12 @@ struct aes_hash
 				__m128i res = _mm_aesenc_si128(_mm_set_epi64x(r[0], r[1]), get_key());
 				return static_cast<size_t>(_mm_cvtsi128_si64(res));	
 			} else {
-#endif // WARTHOG_INT128
+#endif // WARTHOG_INT128_ENABLED
 				__m128i res = _mm_aesenc_si128(_mm_set_epi64x(static_cast<uint64_t>(val), 0), get_key());
 				return static_cast<size_t>(_mm_cvtsi128_si64(res));	
-#ifdef WARTHOG_INT128
+#ifdef WARTHOG_INT128_ENABLED
 			}
-#endif
+#endif // WARTHOG_INT128_ENABLED
 		}
 	}
 
