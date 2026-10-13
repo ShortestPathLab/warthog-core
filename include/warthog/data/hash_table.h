@@ -10,10 +10,11 @@
 
 #include "hash.h"
 
-#include <warthog/memory/alloc/indexed_block_factory.h>
+#include <warthog/memory/alloc/block_factory.h>
 #include <warthog/memory/alloc/factory_pointer.h>
 #include <warthog/memory/alloc/factory_adaptor.h>
 #include <warthog/memory/alloc/source_factory.h>
+#include <warthog/memory/alloc/object.h>
 #include <warthog/util/numeric.h>
 #include <warthog/util/cast.h>
 
@@ -21,6 +22,7 @@
 #include <algorithm>
 #include <tuple>
 #include <stdexcept>
+#include <span>
 
 namespace warthog::data
 {
@@ -42,8 +44,8 @@ struct GroupBucket
 	util::pointer_tagging_lsb chain; ///< chain to next GroupBucket, might include key size, access with next()
 	[[no_unique_address]] std::conditional_t<BucketSize == 1 || size_in_chain(), empty, util::fit_unsigned_t<BucketSize+1>>
 		used; ///< amount of keys in use, will try to store in chain if able, access with size()
-	std::array<Key, BucketSize> key;
-	std::array<Value, BucketSize> value;
+	std::array<memory::alloc::object_bytes<Key>, BucketSize> key_;
+	std::array<memory::alloc::object_bytes<Value>, BucketSize> value_;
 
 	void set(GroupBucket* next_bucket, size_type size)
 	{
@@ -106,6 +108,24 @@ struct GroupBucket
 		} else if constexpr (BucketSize != 1) {
 			used = used + static_cast<decltype(used)>( static_cast<std::make_signed_t<decltype(used)>>(v) );
 		}
+	}
+
+	std::span<Key, BucketSize> key() const noexcept
+	{
+		return {reinterpret_cast<Key*>(key_.data()), BucketSize};
+	}
+	std::span<const Key, BucketSize> key() noexcept
+	{
+		return {reinterpret_cast<const Key*>(key_.data()), BucketSize};
+	}
+
+	std::span<Value, BucketSize> value() const noexcept
+	{
+		return {reinterpret_cast<Value*>(value_.data()), BucketSize};
+	}
+	std::span<const Value, BucketSize> value() noexcept
+	{
+		return {reinterpret_cast<const Value*>(value_.data()), BucketSize};
 	}
 };
 
@@ -394,11 +414,11 @@ protected:
 
 	group_bucket* new_bucket()
 	{
-
+		return reinterpret_cast<group_bucket*>(bucket_alloc_.create());
 	}
 	void free_bucket(group_bucket* bucket)
 	{
-
+		bucket_alloc_.destroy(bucket);
 	}
 
 	static uint64_t bucket_index(uint64_t hash_value) const noexcept
@@ -443,7 +463,7 @@ protected:
 
 protected:
 	UpstreamFactory base_factory_;
-	memory::alloc::indexed_block_factory_type<Bucket, memory::alloc::make_factory_pointer<UpstreamFactory>, memory::alloc::void_factory, 0> bucket_list_;
+	memory::alloc::reuse_adaptor<memory::alloc::block_factory<Bucket, memory::alloc::make_factory_pointer<UpstreamFactory>, memory::alloc::void_factory, 0>> bucket_alloc_;
 
 	uintptr_t rolling_id_; ///< rolling id value
 	group_bucket** buckets_; ///< list of buckets
