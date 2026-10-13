@@ -157,20 +157,21 @@ byteswap_auto(T value) noexcept
 
 struct pointer_tagging_lsb
 {
-	uintptr_t data;
+	using value_type = uintptr_t;
+	value_type data;
 
 	pointer_tagging_lsb() noexcept = default;
 	constexpr pointer_tagging_lsb(void* p) noexcept :
-		data{std::bit_cast<uintptr_t>(p)}
+		data{std::bit_cast<value_type>(p)}
 	{ }
-	constexpr pointer_tagging_lsb(void* p, uintptr_t v) noexcept :
-		data{std::bit_cast<uintptr_t>(p) | v }
+	constexpr pointer_tagging_lsb(void* p, value_type v) noexcept :
+		data{std::bit_cast<value_type>(p) | v }
 	{ }
 
 	constexpr void
-	set(void* p, uintptr_t v = 0) noexcept
+	set(void* p, value_type v = 0) noexcept
 	{
-		data = std::bit_cast<uintptr_t>(p) | v;
+		data = std::bit_cast<value_type>(p) | v;
 	}
 
 	template <size_t ISize>
@@ -179,7 +180,7 @@ struct pointer_tagging_lsb
 	{
 		static_assert(ISize < 63, "ISize must fit bits of void");
 		return std::bit_cast<void*>(
-			data & (~static_cast<uintptr_t>(0) << ISize)
+			data & (~static_cast<value_type>(0) << ISize)
 		);
 	}
 	template <typename T>
@@ -204,14 +205,14 @@ struct pointer_tagging_lsb
 	}
 
 	template <size_t ISize>
-	constexpr uintptr_t
+	constexpr value_type
 	value() noexcept
 	{
 		static_assert(ISize < 63, "ISize must fit bits of void");
-		return data & ~(~static_cast<uintptr_t>(0) << ISize);
+		return data & ~(~static_cast<value_type>(0) << ISize);
 	}
 	template <typename T>
-	constexpr uintptr_t
+	constexpr value_type
 	value() noexcept
 	{
 		return value<std::bit_ceil(alignof(T))-1>();
@@ -219,14 +220,14 @@ struct pointer_tagging_lsb
 	
 	template <size_t ISize>
 	constexpr void
-	value(uintptr_t v) noexcept
+	value(value_type v) noexcept
 	{
 		static_assert(ISize < 63, "ISize must fit bits of void");
 		set(ptr<ISize>(), v);
 	}
 	template <typename T>
 	constexpr void
-	value(uintptr_t v) noexcept
+	value(value_type v) noexcept
 	{
 		value<std::bit_ceil(alignof(T))-1>(v);
 	}
