@@ -49,7 +49,7 @@ reuse_size() noexcept
 }
 
 template<SingleFactory Upstream>
-    requires(!FactoryTraitAny<Upstream, FactoryOwn | FactoryPointer>)
+    requires(!FactoryTraitAny<Upstream, FactoryReuse | FactoryPointer>)
 class reuse_adaptor : public Upstream
 {
 public:

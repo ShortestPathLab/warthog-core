@@ -41,7 +41,7 @@ struct GroupBucket
 	static_assert(BucketSize > 0, "BucketSize cannot be 0");
 	using size_type = hash_table_size_type;
 
-	static consteval bool size_bit_width() noexcept { return std::bit_width(BucketSize); }
+	static consteval size_t size_bit_width() noexcept { return std::bit_width(BucketSize); }
 	static consteval bool size_in_chain() noexcept { return BucketSize != 1 && BucketSize < alignof(GroupBucket*); }
 	
 	util::pointer_tagging_lsb chain; ///< chain to next GroupBucket, might include key size, access with next()
@@ -67,12 +67,12 @@ struct GroupBucket
 	{
 		if constexpr (size_in_chain())
 		{
-			return chain.ptr<size_bit_width()>();
+			return static_cast<GroupBucket*>(chain.ptr<size_bit_width()>());
 		} else { // BucketSize == 1 || size in used
-			return chain.notag();
+			return static_cast<GroupBucket*>(chain.notag());
 		}
 	}
-	void next(GroupBucket* next_bucket) const noexcept
+	void next(GroupBucket* next_bucket) noexcept
 	{
 		if constexpr (size_in_chain())
 		{
@@ -93,7 +93,7 @@ struct GroupBucket
 			return 1;
 		}
 	}
-	void size(size_type v) const noexcept
+	void size(size_type v) noexcept
 	{
 		if constexpr (size_in_chain())
 		{
@@ -113,22 +113,22 @@ struct GroupBucket
 		}
 	}
 
-	std::span<Key, BucketSize> key() const noexcept
+	std::span<Key, BucketSize> key() noexcept
 	{
-		return {reinterpret_cast<Key*>(key_.data()), BucketSize};
+		return std::span<Key, BucketSize>(reinterpret_cast<Key*>(key_.data()), BucketSize);
 	}
-	std::span<const Key, BucketSize> key() noexcept
+	std::span<const Key, BucketSize> key() const noexcept
 	{
-		return {reinterpret_cast<const Key*>(key_.data()), BucketSize};
+		return std::span<const Key, BucketSize>(reinterpret_cast<const Key*>(key_.data()), BucketSize);
 	}
 
-	std::span<Value, BucketSize> value() const noexcept
+	std::span<Value, BucketSize> value() noexcept
 	{
-		return {reinterpret_cast<Value*>(value_.data()), BucketSize};
+		return std::span<Value, BucketSize>(reinterpret_cast<Value*>(value_.data()), BucketSize);
 	}
-	std::span<const Value, BucketSize> value() noexcept
+	std::span<const Value, BucketSize> value() const noexcept
 	{
-		return {reinterpret_cast<const Value*>(value_.data()), BucketSize};
+		return std::span<const Value, BucketSize>(reinterpret_cast<const Value*>(value_.data()), BucketSize);
 	}
 };
 
@@ -139,13 +139,17 @@ struct GroupBucketIterator : std::conditional_t<!std::is_const_v<Value>,
 	>
 {
 	static consteval bool is_const() noexcept { return std::is_const_v<Value>; }
-	using bucket_type = std::conditional_t<!std::is_const_v<Value>,
+	using tuple_type = std::conditional_t<!std::is_const_v<Value>,
 	std::tuple<GroupBucket<Key, std::remove_const_t<Value>, BucketSize>*, int>, // non-const
 	std::tuple<const GroupBucket<Key, std::remove_const_t<Value>, BucketSize>*, int> // const
 	>;
+	using bucket_type = std::conditional_t<!std::is_const_v<Value>,
+	GroupBucket<Key, std::remove_const_t<Value>, BucketSize>, // non-const
+	const GroupBucket<Key, std::remove_const_t<Value>, BucketSize> // const
+	>;
 	using size_type = hash_table_size_type;
 
-	using bucket_type::bucket_type;
+	using tuple_type::tuple_type;
 
 	const bucket_type* bucket() const noexcept
 	{
@@ -241,6 +245,18 @@ public:
 	static consteval bool rolling_reset() noexcept { return Rolling != 0; }
 	static consteval uint64_t rolling_mask() noexcept { return ~(~0ull << (Rolling == 0 ? 1 : Rolling)); }
 
+	template <typename... Args>
+	bool factory_setup(Args&&... args)
+	{
+		if (!base_factory_.setup(std::forward<Args>(args)...))
+			return false;
+		return bucket_alloc_.setup(base_factory_);
+	}
+
+	void rehash(size_type amount)
+	{
+		create_buckets_(amount);
+	}
 
 	Hash hash() const noexcept
 	{
@@ -250,11 +266,11 @@ public:
 	template <typename K>
 	size_type bucket(const K& key)
 	{
-		return bucket_index(buckets_size_.index(hash_(key)));
+		return bucket_index(hash_(key));
 	}
 	size_type hash_to_bucket(uint64_t hash_value)
 	{
-		return bucket_index(buckets_size_.index(hash_value));
+		return bucket_index(hash_value);
 	}
 	
 	size_type bucket_size(size_type bucket_id)
@@ -328,23 +344,23 @@ public:
 	}
 
 	template <typename... Args>
-	iterator emplace(Key&& key, Args&& args)
+	iterator emplace(Key&& key, Args&&... args)
 	{
 		return emplace_(std::move(key), std::forward<Args>(args)...).first;
 	}
 	template <typename... Args>
-	iterator emplace(const Key& key, Args&& args)
+	iterator emplace(const Key& key, Args&&... args)
 	{
 		return emplace_(Key(key), std::forward<Args>(args)...).first;
 	}
 
 	template <typename... Args>
-	std::pair<iterator, bool> try_emplace(Key&& key, Args&& args)
+	std::pair<iterator, bool> try_emplace(Key&& key, Args&&... args)
 	{
 		return emplace_(std::move(key), std::forward<Args>(args)...);
 	}
 	template <typename... Args>
-	std::pair<iterator, bool> try_emplace(const Key& key, Args&& args)
+	std::pair<iterator, bool> try_emplace(const Key& key, Args&&... args)
 	{
 		return emplace_(Key(key), std::forward<Args>(args)...);
 	}
@@ -371,7 +387,7 @@ protected:
 		return iterator(nullptr, 0);
 	}
 	
-	iterator find_empty_key(const Key& key, group_bucket* start) const
+	iterator find_empty_key(const Key& key, group_bucket* start)
 	{
 		if constexpr (BucketSize == 1) {
 			return find_key(key, start);
@@ -379,31 +395,32 @@ protected:
 			iterator empty_pos(start, 0);
 			while (empty_pos.bucket() != nullptr)
 			{
-				size_type items = start->size();
-				assert(items > 0 && items <= BucketSize);
+				size_type items = empty_pos.bucket()->size();
+				assert(items > 0 && items <= BucketSize && empty_pos.index() <= items);
 				[[assume(items > 0 && items <= BucketSize)]];
-				for (auto k_it = empty_pos.bucket()->key.data(); empty_pos.index() < items; empty_pos.index(empty_pos.index() + 1))
+				for (auto k_it = empty_pos.bucket()->key().data(); empty_pos.index() < items; empty_pos.index(empty_pos.index() + 1))
 				{
 					if (key == k_it[empty_pos.index()]) {
-						return iterator(start, index);
+						return empty_pos;
 					}
 				}
 				// no items found, check if end
-				group_bucket* next_bucket = start->next();
+				group_bucket* next_bucket = empty_pos.bucket()->next();
 				if (next_bucket == nullptr)
 					break; // final bucket
 				if (items < BucketSize) {
 					// space in bucket, try to pull values from next bucket if able
-					bucket_pull(next_bucket, start, items);
+					bucket_pull(next_bucket, empty_pos.bucket_mutable(), items);
 					continue; // check all new items
 				}
 				empty_pos.bucket(next_bucket);
+				empty_pos.index(0);
 			}
 			return empty_pos;
 		}
 	}
 
-	static bool bucket_pull(group_bucket* from, group_bucket* to, size_type to_size) requires(BucketSize > 1)
+	bool bucket_pull(group_bucket* from, group_bucket* to, size_type to_size) requires(BucketSize > 1)
 	{
 		assert(to->next() == from);
 		assert(to->size() == to_size && to_size < BucketSize);
@@ -416,8 +433,8 @@ protected:
 			// take from end of from bucket(next) and put into to bucket
 			--to_size;
 			++changed;
-			from->key[from_size] = std::move(to->key[to_size]);
-			from->value[from_size] = std::move(to->value[to_size]);
+			from->key()[from_size] = std::move(to->key()[to_size]);
+			from->value()[from_size] = std::move(to->value()[to_size]);
 			++from_size;
 		} while (from_size > 0 && to_size < BucketSize);
 
@@ -441,15 +458,15 @@ protected:
 	}
 	void free_bucket(group_bucket* bucket)
 	{
-		bucket_alloc_.destroy(bucket);
+		bucket_alloc_.destroy(reinterpret_cast<std::byte*>(bucket));
 	}
 
-	static uint64_t bucket_index(uint64_t hash_value) noexcept
+	uint64_t bucket_index(uint64_t hash_value) const noexcept
 	{
 		if constexpr (rolling_reset()) {
-			return (hash_value & rolling_mask()) != 0 ? hash_value : hash_value+1;
+			return buckets_size_.index((hash_value & rolling_mask()) != 0 ? hash_value : hash_value+1);
 		} else {
-			return hash_value;
+			return buckets_size_.index(hash_value);
 		}
 	}
 
@@ -485,9 +502,9 @@ protected:
 	}
 
 	template <typename... Args>
-	std::pair<iterator, bool> emplace_(Key&& key, Args... args)
+	std::pair<iterator, bool> emplace_(Key&& key, Args&&... args)
 	{
-		group_bucket*& bucket = bucket_mutable(hash_(std::as_const(key)));
+		group_bucket*& bucket = *bucket_mutable(hash_(std::as_const(key)));
 		iterator pos = find_empty_key(std::as_const(key), bucket);
 		if (pos == nullptr || pos.overflow_full()) // make new bucket
 		{
@@ -498,7 +515,7 @@ protected:
 				bucket = b;
 			} else {
 				assert(pos != nullptr && pos.bucket()->size() == BucketSize && pos.bucket()->next() == nullptr);
-				pos->bucket_mutable()->next(b);
+				pos.bucket_mutable()->next(b);
 				b->set(nullptr, 0);
 			}
 			pos = iterator(b, 0);
@@ -507,12 +524,30 @@ protected:
 		assert(pos != nullptr && !pos.overflow_full());
 		if (pos.overflow()) {
 			// new element
-			std::construct_at(pos.bucket_mutable().key().data() + pos.index(), std::move(key));
-			std::construct_at(pos.bucket_mutable().value().data() + pos.index(), std::forward(args)...);
+			items_count_++;
+			std::construct_at(pos.bucket_mutable()->key().data() + pos.index(), std::move(key));
+			std::construct_at(pos.bucket_mutable()->value().data() + pos.index(), std::forward<Args>(args)...);
+			auto s1 = pos.bucket_mutable()->size();
 			pos.bucket_mutable()->size_mod(1);
+			auto s2 = pos.bucket_mutable()->size();
+			assert(pos.bucket_mutable()->size() == pos.index()+1);
 			return {pos, true};
 		}
 		return {pos, false};
+	}
+
+	void create_buckets_(size_type amount)
+	{
+		amount = buckets_size_.set_size(amount);
+		if (rolling_reset()) {
+			// align
+			size_type r = amount & rolling_mask();
+			if (r != 0) {
+				amount += (rolling_mask()+1) - r;
+			}
+		}
+		buckets_ = reinterpret_cast<group_bucket**>(base_factory_.allocate(amount * sizeof(group_bucket*)));
+		std::fill_n(buckets_, amount, nullptr);
 	}
 
 protected:
@@ -522,11 +557,11 @@ protected:
 		memory::alloc::block_factory_type<group_bucket, upstream_slab>
 		> bucket_alloc_;
 
-	uintptr_t rolling_id_; ///< rolling id value
-	group_bucket** buckets_; ///< list of buckets
-	Lookup buckets_size_; ///< number of buckets
-	uint32_t items_count_; ///< number of items in the hash table
-	[[no_unique_address]] Hash hash_; ///< hash function
+	uintptr_t rolling_id_ = 0; ///< rolling id value
+	group_bucket** buckets_ = nullptr; ///< list of buckets
+	Lookup buckets_size_ = {}; ///< number of buckets
+	uint32_t items_count_ = 0; ///< number of items in the hash table
+	[[no_unique_address]] Hash hash_ = {}; ///< hash function
 };
 
 
@@ -564,7 +599,7 @@ struct bucket_lookup_pow2
 		return mask + 1;
 	}
 
-	constexpr uint32_t index(std::integral auto hash)
+	constexpr uint32_t index(std::integral auto hash) const noexcept
 	{
 		assert(mask != 0);
 		return static_cast<uint32_t>(hash) & mask;
@@ -612,7 +647,7 @@ struct bucket_lookup_prime
 		return prime;
 	}
 
-	constexpr uint32_t index(std::integral auto hash)
+	constexpr uint32_t index(std::integral auto hash) const noexcept
 	{
 		assert(prime != 0);
 		return static_cast<uint32_t>(hash) % prime;
