@@ -14,9 +14,11 @@
 #include <warthog/memory/alloc/factory_pointer.h>
 #include <warthog/memory/alloc/factory_adaptor.h>
 #include <warthog/memory/alloc/source_factory.h>
+#include <warthog/memory/alloc/slab_factory.h>
 #include <warthog/memory/alloc/object.h>
 #include <warthog/util/numeric.h>
 #include <warthog/util/cast.h>
+#include <warthog/constants.h>
 
 #include <type_traits>
 #include <algorithm>
@@ -40,7 +42,7 @@ struct GroupBucket
 	using size_type = hash_table_size_type;
 
 	static consteval bool size_bit_width() noexcept { return std::bit_width(BucketSize); }
-	static consteval bool size_in_chain() noexcept { return BucketSize != 1 && BucketSize < alignof(GroupBucket*, Key); }
+	static consteval bool size_in_chain() noexcept { return BucketSize != 1 && BucketSize < alignof(GroupBucket*); }
 	
 	util::pointer_tagging_lsb chain; ///< chain to next GroupBucket, might include key size, access with next()
 	[[no_unique_address]] std::conditional_t<BucketSize == 1 || size_in_chain(), empty, util::fit_unsigned_t<BucketSize+1>>
@@ -56,7 +58,7 @@ struct GroupBucket
 		} else { // BucketSize == 1 || size in used
 			return chain.set(next_bucket);
 			if constexpr (BucketSize != 1) {
-				used = static_cast<decltype(used)>(v);
+				used = static_cast<decltype(used)>(size);
 			}
 		}
 	}
@@ -101,7 +103,7 @@ struct GroupBucket
 		}
 	}
 
-	void size_mod(std::make_signed_t<size_type> v) const noexcept
+	void size_mod(std::make_signed_t<size_type> v) noexcept
 	{
 		if constexpr (size_in_chain())
 		{
@@ -252,7 +254,7 @@ public:
 	}
 	size_type hash_to_bucket(uint64_t hash_value)
 	{
-		return bucket_index(buckets_size_.index(hash_(key)));
+		return bucket_index(buckets_size_.index(hash_value));
 	}
 	
 	size_type bucket_size(size_type bucket_id)
@@ -392,7 +394,7 @@ protected:
 					break; // final bucket
 				if (items < BucketSize) {
 					// space in bucket, try to pull values from next bucket if able
-					bucket_pull(next_bucket, to, items);
+					bucket_pull(next_bucket, start, items);
 					continue; // check all new items
 				}
 				empty_pos.bucket(next_bucket);
@@ -442,7 +444,7 @@ protected:
 		bucket_alloc_.destroy(bucket);
 	}
 
-	static uint64_t bucket_index(uint64_t hash_value) const noexcept
+	static uint64_t bucket_index(uint64_t hash_value) noexcept
 	{
 		if constexpr (rolling_reset()) {
 			return (hash_value & rolling_mask()) != 0 ? hash_value : hash_value+1;
@@ -479,7 +481,7 @@ protected:
 				*hash_roll = std::bit_cast<group_bucket*>(rolling_id_);
 			}
 		}
-		return bucket_ + bucket_index(hash_value);
+		return buckets_ + bucket_index(hash_value);
 	}
 
 	template <typename... Args>
@@ -514,8 +516,11 @@ protected:
 	}
 
 protected:
+	using upstream_slab = memory::alloc::slab_factory<memory::alloc::make_factory_pointer<UpstreamFactory>, (sizeof(group_bucket)+32) * 128>;
 	UpstreamFactory base_factory_;
-	memory::alloc::reuse_adaptor<memory::alloc::block_factory<Bucket, memory::alloc::make_factory_pointer<UpstreamFactory>, memory::alloc::void_factory, 0>> bucket_alloc_;
+	memory::alloc::reuse_adaptor<
+		memory::alloc::block_factory_type<group_bucket, upstream_slab>
+		> bucket_alloc_;
 
 	uintptr_t rolling_id_; ///< rolling id value
 	group_bucket** buckets_; ///< list of buckets

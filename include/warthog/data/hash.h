@@ -26,7 +26,7 @@ struct identity_hash
 	template <std::integral I>
 	constexpr size_t operator()(I val) const noexcept
 	{
-		return static_cast<value_type>(
+		return static_cast<size_t>(
 			static_cast<std::make_unsigned_t<I>>(val)
 		);
 	}
@@ -55,7 +55,7 @@ struct chain_hash : Hashes...
 		if constexpr (sizeof...(Hs) == 0) {
 			return H::operator()(val);
 		} else {
-			return hash_<Hs>(H::operator()(val));
+			return hash_<Hs...>(H::operator()(val));
 		}
 	}
 };

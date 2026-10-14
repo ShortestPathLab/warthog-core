@@ -176,7 +176,7 @@ struct pointer_tagging_lsb
 
 	template <size_t ISize>
 	constexpr void*
-	ptr() noexcept
+	ptr() const noexcept
 	{
 		static_assert(ISize < 63, "ISize must fit bits of void");
 		return std::bit_cast<void*>(
@@ -185,7 +185,7 @@ struct pointer_tagging_lsb
 	}
 	template <typename T>
 	constexpr T*
-	ptr() noexcept
+	ptr() const noexcept
 	{
 		return static_cast<T*>(ptr<std::bit_ceil(alignof(T))-1>());
 	}
@@ -206,14 +206,14 @@ struct pointer_tagging_lsb
 
 	template <size_t ISize>
 	constexpr value_type
-	value() noexcept
+	value() const noexcept
 	{
 		static_assert(ISize < 63, "ISize must fit bits of void");
 		return data & ~(~static_cast<value_type>(0) << ISize);
 	}
 	template <typename T>
 	constexpr value_type
-	value() noexcept
+	value() const noexcept
 	{
 		return value<std::bit_ceil(alignof(T))-1>();
 	}
@@ -233,7 +233,7 @@ struct pointer_tagging_lsb
 	}
 
 	template <typename T = void>
-	const T* notag() noexcept
+	T* notag() const noexcept
 	{
 		return std::bit_cast<T*>(data);
 	}
