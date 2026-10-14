@@ -23,6 +23,7 @@
 #include <tuple>
 #include <stdexcept>
 #include <span>
+#include <memory>
 
 namespace warthog::data
 {
@@ -152,11 +153,20 @@ struct GroupBucketIterator : std::conditional_t<!std::is_const_v<Value>,
 	{
 		return std::get<0>(*this);
 	}
+	void bucket(bucket_type* bucket) noexcept
+	{
+		std::get<0>(*this) = bucket;
+	}
 
 	size_type index() const noexcept
 	{
 		return std::get<1>(*this);
 	}
+	void index(size_type i) noexcept
+	{
+		std::get<1>(*this) = i;
+	}
+
 	const Key& key() const noexcept
 	{
 		assert(bucket() != nullptr);
@@ -184,11 +194,12 @@ struct GroupBucketIterator : std::conditional_t<!std::is_const_v<Value>,
 	bool overflow() const noexcept
 	{
 		assert(bucket() != nullptr);
-		if constexpr (BucketSize == 1) {
-			return true;
-		} else {
-			return std::get<1>(*this) >= bucket()->size();
-		}
+		return std::get<1>(*this) >= bucket()->size();
+	}
+	bool overflow_full() const noexcept
+	{
+		assert(bucket() != nullptr);
+		return std::get<1>(*this) >= BucketSize;
 	}
 };
 
@@ -314,15 +325,26 @@ public:
 			: nullptr;
 	}
 
-	template <typename P>
-	iterator emplace(Key&& key, P&& value)
+	template <typename... Args>
+	iterator emplace(Key&& key, Args&& args)
 	{
-		iterator bucket = find_empty_key(key);
-		if (bucket == nullptr || bucket.overflow())
-		{
-			// new bucket needed
-			
-		}
+		return emplace_(std::move(key), std::forward<Args>(args)...).first;
+	}
+	template <typename... Args>
+	iterator emplace(const Key& key, Args&& args)
+	{
+		return emplace_(Key(key), std::forward<Args>(args)...).first;
+	}
+
+	template <typename... Args>
+	std::pair<iterator, bool> try_emplace(Key&& key, Args&& args)
+	{
+		return emplace_(std::move(key), std::forward<Args>(args)...);
+	}
+	template <typename... Args>
+	std::pair<iterator, bool> try_emplace(const Key& key, Args&& args)
+	{
+		return emplace_(Key(key), std::forward<Args>(args)...);
 	}
 
 protected:
@@ -347,21 +369,20 @@ protected:
 		return iterator(nullptr, 0);
 	}
 	
-	iterator find_empty_key(const Key& key, group_bucket* start, group_bucket** bucket_root) const
+	iterator find_empty_key(const Key& key, group_bucket* start) const
 	{
 		if constexpr (BucketSize == 1) {
 			return find_key(key, start);
 		} else {
-			iterator empty_pos(nullptr, 0);
-			size_type index = 0;
-			while (start != nullptr)
+			iterator empty_pos(start, 0);
+			while (empty_pos.bucket() != nullptr)
 			{
 				size_type items = start->size();
 				assert(items > 0 && items <= BucketSize);
 				[[assume(items > 0 && items <= BucketSize)]];
-				for (auto k_it = start->key.data(); index < items; ++index)
+				for (auto k_it = empty_pos.bucket()->key.data(); empty_pos.index() < items; empty_pos.index(empty_pos.index() + 1))
 				{
-					if (key == k_it[index]) {
+					if (key == k_it[empty_pos.index()]) {
 						return iterator(start, index);
 					}
 				}
@@ -374,9 +395,9 @@ protected:
 					bucket_pull(next_bucket, to, items);
 					continue; // check all new items
 				}
-				start = next_bucket;
+				empty_pos.bucket(next_bucket);
 			}
-			return iterator(nullptr, 0);
+			return empty_pos;
 		}
 	}
 
@@ -459,6 +480,37 @@ protected:
 			}
 		}
 		return bucket_ + bucket_index(hash_value);
+	}
+
+	template <typename... Args>
+	std::pair<iterator, bool> emplace_(Key&& key, Args... args)
+	{
+		group_bucket*& bucket = bucket_mutable(hash_(std::as_const(key)));
+		iterator pos = find_empty_key(std::as_const(key), bucket);
+		if (pos == nullptr || pos.overflow_full()) // make new bucket
+		{
+			// new bucket needed
+			group_bucket* b = new_bucket();
+			if (Rolling == 1 || pos == nullptr) {
+				b->set(bucket, 0);
+				bucket = b;
+			} else {
+				assert(pos != nullptr && pos.bucket()->size() == BucketSize && pos.bucket()->next() == nullptr);
+				pos->bucket_mutable()->next(b);
+				b->set(nullptr, 0);
+			}
+			pos = iterator(b, 0);
+			[[assume(pos.overflow())]];
+		}
+		assert(pos != nullptr && !pos.overflow_full());
+		if (pos.overflow()) {
+			// new element
+			std::construct_at(pos.bucket_mutable().key().data() + pos.index(), std::move(key));
+			std::construct_at(pos.bucket_mutable().value().data() + pos.index(), std::forward(args)...);
+			pos.bucket_mutable()->size_mod(1);
+			return {pos, true};
+		}
+		return {pos, false};
 	}
 
 protected:
