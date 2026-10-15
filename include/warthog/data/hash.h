@@ -127,6 +127,8 @@ struct aes_hash
 };
 #endif
 
+using aes_hash_default = aes_hash<0x6347'2211'640a'ff3e,0>;
+
 } // namespace warthog::data
 
 #endif // WARTHOG_DATA_HASH_H

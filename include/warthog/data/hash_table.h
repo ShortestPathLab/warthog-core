@@ -176,12 +176,17 @@ struct GroupBucketIterator : std::conditional_t<!std::is_const_v<Value>,
 	const Key& key() const noexcept
 	{
 		assert(bucket() != nullptr);
-		return bucket()->key[index()];
+		return bucket()->key()[index()];
 	}
-	Value& value() const noexcept
+	const Value& value() const noexcept
 	{
 		assert(bucket() != nullptr);
-		return bucket()->value[index()];
+		return bucket()->value()[index()];
+	}
+	Value& value() noexcept
+	{
+		assert(bucket() != nullptr);
+		return bucket_mutable()->value()[index()];
 	}
 
 	operator GroupBucketIterator<Key, std::add_const_t<Value>, BucketSize>() const noexcept
@@ -223,7 +228,7 @@ struct GroupBucketIterator : std::conditional_t<!std::is_const_v<Value>,
 ///
 /// Bucket uses hash to get index of bucket, and stores GroupBuckets number in bucket.
 /// If an overflow of bucket occurs, 
-template <typename Key, typename Value, size_t BucketSize = 4, typename Hash = identity_hash, typename Lookup = bucket_lookup_prime, size_t Rolling = 0, memory::alloc::ByteFactory UpstreamFactory = memory::alloc::malloc_factory>
+template <typename Key, typename Value, typename Hash = identity_hash, size_t BucketSize = 4, typename Lookup = bucket_lookup_prime, size_t Rolling = 0, memory::alloc::ByteFactory UpstreamFactory = memory::alloc::malloc_factory>
 class hash_table
 {
 	static_assert(BucketSize > 0, "BucketSize must be greater than 0");
@@ -250,7 +255,10 @@ public:
 	{
 		if (!base_factory_.setup(std::forward<Args>(args)...))
 			return false;
-		return bucket_alloc_.setup(base_factory_);
+		if (!bucket_alloc_.setup(base_factory_))
+			return false;
+		rolling_id_ = 1;
+		return true;
 	}
 
 	void rehash(size_type amount)
@@ -365,6 +373,11 @@ public:
 		return emplace_(Key(key), std::forward<Args>(args)...);
 	}
 
+	void clear()
+	{
+		clear_(true);
+	}
+
 protected:
 	template <typename K>
 	iterator find_key(const K& key, group_bucket* start) const
@@ -375,7 +388,7 @@ protected:
 			assert(items > 0 && items <= BucketSize);
 			[[assume(items > 0 && items <= BucketSize)]];
 			int index = 0;
-			for (auto k_it = start->key.data(); index < items; ++index)
+			for (auto k_it = start->key().data(); index < items; ++index)
 			{
 				if (key == k_it[index]) {
 					return iterator(start, index);
@@ -538,16 +551,51 @@ protected:
 
 	void create_buckets_(size_type amount)
 	{
-		amount = buckets_size_.set_size(amount);
-		if (rolling_reset()) {
+		buckets_size_.set_size(amount);
+		amount = buckets_amount_();
+		buckets_ = reinterpret_cast<group_bucket**>(base_factory_.allocate(amount * sizeof(group_bucket*)));
+		std::fill_n(buckets_, amount, nullptr);
+		rolling_id_ = 1;
+	}
+
+	size_type buckets_amount_() const noexcept
+	{
+		size_type amount = buckets_size_.size();
+		if constexpr (rolling_reset()) {
 			// align
 			size_type r = amount & rolling_mask();
 			if (r != 0) {
 				amount += (rolling_mask()+1) - r;
 			}
 		}
-		buckets_ = reinterpret_cast<group_bucket**>(base_factory_.allocate(amount * sizeof(group_bucket*)));
-		std::fill_n(buckets_, amount, nullptr);
+		return amount;
+	}
+
+	void clear_(bool free_buckets)
+	{
+		if (rolling_id_ == 0)
+			return;
+		if (free_buckets) {
+			bucket_alloc_.reclaim();
+		}
+		if constexpr (rolling_reset()) {
+			rolling_id_++;
+		} else {
+			if (buckets_) {
+				std::fill_n(buckets_, buckets_amount_(), nullptr);
+			}
+		}
+	}
+	void reset_()
+	{
+		if (rolling_id_ == 0)
+			return;
+		bucket_alloc_.release(true);
+		if (buckets_) {
+			base_factory_.deallocate(reinterpret_cast<std::byte*>(buckets_), buckets_amount_() * sizeof(group_bucket*));
+			buckets_ = nullptr;
+		}
+		buckets_size_.set_size(0);
 	}
 
 protected:
@@ -557,7 +605,7 @@ protected:
 		memory::alloc::block_factory_type<group_bucket, upstream_slab>
 		> bucket_alloc_;
 
-	uintptr_t rolling_id_ = 0; ///< rolling id value
+	uintptr_t rolling_id_ = 0; ///< rolling id value, 0=factory not init
 	group_bucket** buckets_ = nullptr; ///< list of buckets
 	Lookup buckets_size_ = {}; ///< number of buckets
 	uint32_t items_count_ = 0; ///< number of items in the hash table
