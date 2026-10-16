@@ -54,9 +54,9 @@ struct GroupBucket
 	{
 		if constexpr (size_in_chain())
 		{
-			return chain.set(next_bucket, size);
+			chain.set(next_bucket, size);
 		} else { // BucketSize == 1 || size in used
-			return chain.set(next_bucket);
+			chain.set(next_bucket);
 			if constexpr (BucketSize != 1) {
 				used = static_cast<decltype(used)>(size);
 			}
@@ -107,7 +107,9 @@ struct GroupBucket
 	{
 		if constexpr (size_in_chain())
 		{
-			chain.data += static_cast<std::make_signed_t<util::pointer_tagging_lsb::value_type>> (v);
+			chain.data += static_cast<util::pointer_tagging_lsb::value_type>(
+				static_cast<std::make_signed_t<util::pointer_tagging_lsb::value_type>> (v)
+			);
 		} else if constexpr (BucketSize != 1) {
 			used = used + static_cast<decltype(used)>( static_cast<std::make_signed_t<decltype(used)>>(v) );
 		}

@@ -106,12 +106,27 @@ struct aes_hash
 				alignas(unsigned __int128) uint64_t r[2];
 				unsigned __int128 v = static_cast<unsigned __int128>(val);
 				std::memcpy(+r, &v, std::min(sizeof(v),sizeof(r)));
+				r[0] ^= 0xF786'FCDD'3CD3'8304ull;
+				r[1] ^= 0x07FE'532A'F2E5'0998ull;
 				__m128i res = _mm_aesenc_si128(_mm_set_epi64x(r[0], r[1]), get_key());
-				return static_cast<size_t>(_mm_cvtsi128_si64(res));	
+				return static_cast<size_t>(_mm_cvtsi128_si64(res)) + static_cast<size_t>(r[0]);	
 			} else {
 #endif // WARTHOG_INT128_ENABLED
-				__m128i res = _mm_aesenc_si128(_mm_set_epi64x(static_cast<uint64_t>(val), 0), get_key());
-				return static_cast<size_t>(_mm_cvtsi128_si64(res));	
+				uint64_t new_key = static_cast<uint64_t>(val);
+				if constexpr (sizeof(I) <= 1) {
+					new_key |= new_key << 8;
+				}
+				if constexpr (sizeof(I) <= 2) {
+					new_key |= new_key << 16;
+				}
+				if constexpr (sizeof(I) <= 4) {
+					new_key |= new_key << 32;
+				}
+				if constexpr (sizeof(I) != sizeof(uint64_t)) {
+					new_key ^= 0xF786'FCDD'3CD3'8304ull;
+				}
+				__m128i res = _mm_aesenc_si128(_mm_set_epi64x(new_key, new_key ^ 0x07FE'532A'F2E5'0998ull), get_key());
+				return static_cast<size_t>(_mm_cvtsi128_si64(res)) + static_cast<size_t>(new_key);
 #ifdef WARTHOG_INT128_ENABLED
 			}
 #endif // WARTHOG_INT128_ENABLED
@@ -127,7 +142,7 @@ struct aes_hash
 };
 #endif
 
-using aes_hash_default = aes_hash<0x6347'2211'640a'ff3e,0>;
+using aes_hash_default = aes_hash<0x9696'0D60'BAE8'401Cull,0x34A7'D836'7B3F'EDA8ull>;
 
 } // namespace warthog::data
 
