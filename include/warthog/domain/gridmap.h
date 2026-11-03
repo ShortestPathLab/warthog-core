@@ -447,7 +447,7 @@ protected:
 struct gridmap_slider
 {
 	const warthog::dbword* loc;
-	uint32_t width8;
+	int32_t width8;
 	uint32_t width8_bits; /// only used for end-user
 
 	// fetches a contiguous set of tiles from three adjacent rows.
@@ -467,8 +467,13 @@ struct gridmap_slider
 		return {
 		    grid.data()
 		        + static_cast<uint32_t>(grid_id.id >> ba::base_bit_width),
-		    static_cast<uint32_t>(grid.width_bytes()),
+		    static_cast<int32_t>(grid.width_bytes()),
 		    static_cast<uint32_t>(grid_id.id & ba::base_bit_mask)};
+	}
+
+	constexpr void invert_row_order() noexcept
+	{
+		width8 = -width8;
 	}
 
 	constexpr void
@@ -477,10 +482,16 @@ struct gridmap_slider
 		loc += i;
 	}
 
+	constexpr void
+	adj_rows(int i) noexcept
+	{
+		loc += i * width8;
+	}
+
 	/// @param rel_bytes position starts are loc+rel_bytes
 	/// @return the unaligned 64b (8B) block from loc in little-endian format
 	uint64_t
-	get_block_64bit_le(int64_t rel_bytes = 0) const noexcept
+	get_block_64bit_le(int32_t rel_bytes = 0) const noexcept
 	{
 		uint64_t return_value;
 		std::memcpy(&return_value, loc + rel_bytes, sizeof(uint64_t));
@@ -497,7 +508,7 @@ struct gridmap_slider
 	/// @param rel_bytes position starts are loc+rel_bytes
 	/// @return the unaligned 32b (4B) block from loc in little-endian format
 	uint64_t
-	get_block_32bit_le(int64_t rel_bytes = 0) const noexcept
+	get_block_32bit_le(int32_t rel_bytes = 0) const noexcept
 	{
 		uint32_t return_value;
 		std::memcpy(&return_value, loc + rel_bytes, sizeof(uint32_t));
@@ -514,7 +525,7 @@ struct gridmap_slider
 	/// @param rel_bytes position starts are loc+rel_bytes
 	/// @return the unaligned 16b (2B) block from loc in little-endian format
 	uint16_t
-	get_block_16bit_le(int64_t rel_bytes = 0) const noexcept
+	get_block_16bit_le(int32_t rel_bytes = 0) const noexcept
 	{
 		uint16_t return_value;
 		std::memcpy(&return_value, loc + rel_bytes, sizeof(uint16_t));
@@ -531,7 +542,7 @@ struct gridmap_slider
 	/// @param rel_bytes position starts are loc+rel_bytes
 	/// @return the unaligned 8b (1B) block.
 	uint8_t
-	get_block_8bit_le(int64_t rel_bytes = 0) const noexcept
+	get_block_8bit_le(int32_t rel_bytes = 0) const noexcept
 	{
 		uint8_t return_value;
 		std::memcpy(&return_value, loc + rel_bytes, sizeof(uint8_t));
@@ -561,7 +572,7 @@ struct gridmap_slider
 	/// @param rel_bytes position starts are loc+rel_bytes
 	/// @return the unaligned block raised to the power of 2 of Bits.
 	template <size_t Bits>
-	auto get_block_auto_le(int64_t rel_bytes = 0) const noexcept
+	auto get_block_auto_le(int32_t rel_bytes = 0) const noexcept
 	{
 		static_assert(1 <= Bits && Bits <= 64, "Bits must fall between 1 and 64");
 		if constexpr (Bits <= 8) {
@@ -587,10 +598,10 @@ struct gridmap_slider
 		std::array<uint64_t, Rows> return_value;
 		return_value[0] = get_block_64bit_le(0);
 		if constexpr(Rows >= 2) {
-			return_value[1] = get_block_64bit_le(-static_cast<int64_t>(static_cast<uint64_t>(width8)));
+			return_value[1] = get_block_64bit_le(-width8);
 		}
 		if constexpr(Rows >= 3) {
-			return_value[2] = get_block_64bit_le(static_cast<int64_t>(static_cast<uint64_t>(width8)));
+			return_value[2] = get_block_64bit_le(width8);
 		}
 
 		return return_value;
@@ -608,10 +619,10 @@ struct gridmap_slider
 		std::array<uint32_t, Rows> return_value;
 		return_value[0] = get_block_32bit_le(0);
 		if constexpr(Rows >= 2) {
-			return_value[1] = get_block_32bit_le(-static_cast<int64_t>(static_cast<uint64_t>(width8)));
+			return_value[1] = get_block_32bit_le(-width8);
 		}
 		if constexpr(Rows >= 3) {
-			return_value[2] = get_block_32bit_le(static_cast<int64_t>(static_cast<uint64_t>(width8)));
+			return_value[2] = get_block_32bit_le(width8);
 		}
 
 		return return_value;
@@ -629,10 +640,10 @@ struct gridmap_slider
 		std::array<uint16_t, Rows> return_value;
 		return_value[0] = get_block_16bit_le(0);
 		if constexpr(Rows >= 2) {
-			return_value[1] = get_block_16bit_le(-static_cast<int64_t>(static_cast<uint64_t>(width8)));
+			return_value[1] = get_block_16bit_le(-width8);
 		}
 		if constexpr(Rows >= 3) {
-			return_value[2] = get_block_16bit_le(static_cast<int64_t>(static_cast<uint64_t>(width8)));
+			return_value[2] = get_block_16bit_le(width8);
 		}
 
 		return return_value;
@@ -650,10 +661,10 @@ struct gridmap_slider
 		std::array<uint8_t, Rows> return_value;
 		return_value[0] = get_block_8bit_le(0);
 		if constexpr(Rows >= 2) {
-			return_value[1] = get_block_8bit_le(-static_cast<int64_t>(static_cast<uint64_t>(width8)));
+			return_value[1] = get_block_8bit_le(-width8);
 		}
 		if constexpr(Rows >= 3) {
-			return_value[2] = get_block_8bit_le(static_cast<int64_t>(static_cast<uint64_t>(width8)));
+			return_value[2] = get_block_8bit_le(width8);
 		}
 
 		return return_value;
@@ -672,10 +683,10 @@ struct gridmap_slider
 		std::array<unsigned __int128, Rows> return_value;
 		return_value[0] = get_block_128bit_le(0);
 		if constexpr(Rows >= 2) {
-			return_value[1] = get_block_128bit_le(-static_cast<int64_t>(static_cast<uint64_t>(width8)));
+			return_value[1] = get_block_128bit_le(-width8);
 		}
 		if constexpr(Rows >= 3) {
-			return_value[2] = get_block_128bit_le(static_cast<int64_t>(static_cast<uint64_t>(width8)));
+			return_value[2] = get_block_128bit_le(width8);
 		}
 
 		return return_value;
@@ -688,7 +699,7 @@ gridmap::get_neighbours_slider(pad_id grid_id) const noexcept
 {
 	return {
 	    data() + static_cast<uint32_t>(grid_id.id >> base_bit_width),
-	    static_cast<uint32_t>(dbwidth_),
+	    static_cast<int32_t>(dbwidth_),
 	    static_cast<uint32_t>(grid_id.id & base_bit_mask)};
 }
 
