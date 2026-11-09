@@ -25,8 +25,8 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include <warthog/forward.h>
 #include <warthog/defines.h>
+#include <warthog/forward.h>
 
 #include <algorithm>
 #include <cassert>
@@ -115,9 +115,7 @@ struct binary_fixed_point
 	static consteval value_type
 	frac_mask() noexcept
 	{
-		return static_cast<value_type>(
-			~(~0ull << Fraction)
-		);
+		return static_cast<value_type>(~(~0ull << Fraction));
 	}
 
 	value_type value;
@@ -129,7 +127,9 @@ struct binary_fixed_point
 	constexpr binary_fixed_point(binary_fixed_point&& v) noexcept = default;
 	template<std::floating_point FP>
 	explicit binary_fixed_point(FP val) noexcept
-	    : value(static_cast<value_type>(static_cast<FP>(val) * (1ull << Fraction)))
+	    : value(
+	          static_cast<value_type>(
+	              static_cast<FP>(val) * (1ull << Fraction)))
 	{ }
 	~binary_fixed_point() = default;
 
@@ -152,41 +152,52 @@ struct binary_fixed_point
 		using to_type  = binary_fixed_point<OD, OF>;
 		using to_value = typename to_type::value_type;
 
-		if constexpr (OF < Fraction) {
-			return to_type(static_cast<to_value>(static_cast<to_value>(value) >> (Fraction - OF)));
-		} else if constexpr (OF > Fraction) {
-			return to_type(static_cast<to_value>(static_cast<to_value>(value) << (OF - Fraction)));
-		} else {
-			return to_type(static_cast<to_value>(value));
+		if constexpr(OF < Fraction)
+		{
+			return to_type(
+			    static_cast<to_value>(
+			        static_cast<to_value>(value) >> (Fraction - OF)));
 		}
+		else if constexpr(OF > Fraction)
+		{
+			return to_type(
+			    static_cast<to_value>(
+			        static_cast<to_value>(value) << (OF - Fraction)));
+		}
+		else { return to_type(static_cast<to_value>(value)); }
 	}
 };
 
-namespace details {
-template <typename T>
+namespace details
+{
+template<typename T>
 struct is_BinaryFixedPoint : std::false_type
 { };
-template <size_t Digits, size_t Fraction>
-struct is_BinaryFixedPoint<binary_fixed_point<Digits,Fraction>> : std::true_type
+template<size_t Digits, size_t Fraction>
+struct is_BinaryFixedPoint<binary_fixed_point<Digits, Fraction>>
+    : std::true_type
 { };
-constexpr size_t binary_fixed_point_norm_digits(size_t digits, size_t from_frac, size_t to_frac) noexcept
+constexpr size_t
+binary_fixed_point_norm_digits(
+    size_t digits, size_t from_frac, size_t to_frac) noexcept
 {
 	assert(from_frac < digits);
 	[[assume(from_frac < digits)]];
-	return static_cast<size_t>(
-		(int)digits + ((int)to_frac - (int)from_frac)
-	);
+	return static_cast<size_t>((int)digits + ((int)to_frac - (int)from_frac));
 }
 }
 
 template<typename T>
-concept BinaryFixedPoint = 
-    details::is_BinaryFixedPoint<std::remove_cvref_t<T>>::value;
+concept BinaryFixedPoint
+    = details::is_BinaryFixedPoint<std::remove_cvref_t<T>>::value;
 
 template<BinaryFixedPoint A, BinaryFixedPoint B>
 using common_binary_fixed_point = binary_fixed_point<
-    std::max(details::binary_fixed_point_norm_digits(A::logical_digits(), A::frac(), std::max(A::frac(), B::frac()))
-	, details::binary_fixed_point_norm_digits(B::logical_digits(), B::frac(), std::max(A::frac(), B::frac()))),
+    std::max(
+        details::binary_fixed_point_norm_digits(
+            A::logical_digits(), A::frac(), std::max(A::frac(), B::frac())),
+        details::binary_fixed_point_norm_digits(
+            B::logical_digits(), B::frac(), std::max(A::frac(), B::frac()))),
     std::max(A::frac(), B::frac())>;
 
 template<BinaryFixedPoint A, BinaryFixedPoint B>
@@ -219,8 +230,9 @@ operator+(A a, B b) noexcept
 	{
 		using type = common_binary_fixed_point<A, B>;
 		using vt   = typename type::value_type;
-		return type(static_cast<vt>(
-		    static_cast<type>(a).value + static_cast<type>(b).value));
+		return type(
+		    static_cast<vt>(
+		        static_cast<type>(a).value + static_cast<type>(b).value));
 	}
 }
 template<BinaryFixedPoint A, BinaryFixedPoint B>
@@ -243,8 +255,9 @@ operator-(A a, B b) noexcept
 	{
 		using type = common_binary_fixed_point<A, B>;
 		using vt   = typename type::value_type;
-		return type(static_cast<vt>(
-		    static_cast<type>(a).value - static_cast<type>(b).value));
+		return type(
+		    static_cast<vt>(
+		        static_cast<type>(a).value - static_cast<type>(b).value));
 	}
 }
 template<BinaryFixedPoint A, BinaryFixedPoint B>
@@ -427,36 +440,46 @@ operator!=(A a, B b) noexcept
 	return (a <=> b) != std::strong_ordering::equal;
 }
 
-template <BinaryFixedPoint FP>
-typename FP::value_type int_floor(FP a) noexcept
+template<BinaryFixedPoint FP>
+typename FP::value_type
+int_floor(FP a) noexcept
 {
 	return static_cast<typename FP::value_type>(a.value >> FP::frac());
 }
-template <BinaryFixedPoint FP>
-typename FP::value_type int_ceil(FP a) noexcept
+template<BinaryFixedPoint FP>
+typename FP::value_type
+int_ceil(FP a) noexcept
 {
-	return static_cast<typename FP::value_type>((a.value + FP::frac_mask()) >> FP::frac());
+	return static_cast<typename FP::value_type>(
+	    (a.value + FP::frac_mask()) >> FP::frac());
 }
-template <BinaryFixedPoint FP>
-typename FP::value_type int_trunc(FP a) noexcept
+template<BinaryFixedPoint FP>
+typename FP::value_type
+int_trunc(FP a) noexcept
 {
-	return static_cast<typename FP::value_type>((a.value >= 0 ? a.value : a.value+FP::frac_mask()) >> FP::frac());
+	return static_cast<typename FP::value_type>(
+	    (a.value >= 0 ? a.value : a.value + FP::frac_mask()) >> FP::frac());
 }
 
-template <BinaryFixedPoint FP>
-FP floor(FP a) noexcept
+template<BinaryFixedPoint FP>
+FP
+floor(FP a) noexcept
 {
 	return FP(a.value & ~FP::frac_mask());
 }
-template <BinaryFixedPoint FP>
-FP ceil(FP a) noexcept
+template<BinaryFixedPoint FP>
+FP
+ceil(FP a) noexcept
 {
 	return FP((a.value + FP::frac_mask()) & ~FP::frac_mask());
 }
-template <BinaryFixedPoint FP>
-FP trunc(FP a) noexcept
+template<BinaryFixedPoint FP>
+FP
+trunc(FP a) noexcept
 {
-	return FP((a.value >= 0 ? a.value : a.value+FP::frac_mask()) & ~FP::frac_mask());
+	return FP(
+	    (a.value >= 0 ? a.value : a.value + FP::frac_mask())
+	    & ~FP::frac_mask());
 }
 
 } // namespace inx::numeric
