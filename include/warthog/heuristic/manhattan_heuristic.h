@@ -17,7 +17,8 @@ namespace warthog::heuristic
 class manhattan_heuristic
 {
 public:
-	constexpr manhattan_heuristic(uint32_t mapwidth, [[maybe_unused]] uint32_t mapheight)
+	constexpr manhattan_heuristic(
+	    uint32_t mapwidth, [[maybe_unused]] uint32_t mapheight)
 	    : mapwidth_(mapwidth)
 	{ }
 

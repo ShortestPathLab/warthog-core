@@ -506,14 +506,8 @@ struct alignas(uint32_t) point
 constexpr bool
 operator==(point a, point b)
 {
-	if consteval
-	{
-		return a.x == b.x && a.y == b.y;
-	}
-	else
-	{
-		return std::bit_cast<uint32_t>(a) == std::bit_cast<uint32_t>(b);
-	}
+	if consteval { return a.x == b.x && a.y == b.y; }
+	else { return std::bit_cast<uint32_t>(a) == std::bit_cast<uint32_t>(b); }
 }
 
 /// @brief signed point, due to point allowing >2^15 numbers, does not support
@@ -531,14 +525,8 @@ struct alignas(uint32_t) spoint
 constexpr bool
 operator==(spoint a, spoint b)
 {
-	if consteval
-	{
-		return a.x == b.x && a.y == b.y;
-	}
-	else
-	{
-		return std::bit_cast<uint32_t>(a) == std::bit_cast<uint32_t>(b);
-	}
+	if consteval { return a.x == b.x && a.y == b.y; }
+	else { return std::bit_cast<uint32_t>(a) == std::bit_cast<uint32_t>(b); }
 }
 
 constexpr std::pair<int32_t, int32_t>

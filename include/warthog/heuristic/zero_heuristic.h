@@ -17,7 +17,6 @@ namespace warthog::heuristic
 class zero_heuristic
 {
 public:
-
 	constexpr double
 	h(unsigned int x, unsigned int y, unsigned int x2, unsigned int y2)
 	{

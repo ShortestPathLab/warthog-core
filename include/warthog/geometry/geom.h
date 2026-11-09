@@ -10,8 +10,8 @@
 //
 
 #include <cstdint>
-#include <limits>
 #include <istream>
+#include <limits>
 #include <ostream>
 
 namespace warthog::geometry
@@ -25,13 +25,14 @@ public:
 	constexpr rectangle() { clear(); }
 
 	constexpr rectangle(int32_t l_x1, int32_t l_y1, int32_t l_x2, int32_t l_y2)
-		: x1(l_x1), y1(l_y1), x2(l_x2), y2(l_y2)
+	    : x1(l_x1), y1(l_y1), x2(l_x2), y2(l_y2)
 	{ }
 
 	constexpr rectangle(const rectangle& other) = default;
 
 	constexpr rectangle&
-	operator=(const rectangle& other) = default;
+	operator=(const rectangle& other)
+	    = default;
 
 	constexpr bool
 	operator==(const rectangle& other)

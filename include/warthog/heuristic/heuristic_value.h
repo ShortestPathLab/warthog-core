@@ -25,7 +25,8 @@ struct heuristic_value
 	{
 		this->operator()(sn_id_t{from}, sn_id_t{to}, ub_path);
 	}
-	heuristic_value(pad_id from, pad_id to, std::vector<pack_id>* ub_path = nullptr)
+	heuristic_value(
+	    pad_id from, pad_id to, std::vector<pack_id>* ub_path = nullptr)
 	{
 		this->operator()(sn_id_t{from}, sn_id_t{to}, ub_path);
 	}
@@ -36,7 +37,8 @@ struct heuristic_value
 	}
 
 	void
-	operator()(sn_id_t from, sn_id_t to, std::vector<pack_id>* ub_path = nullptr)
+	operator()(
+	    sn_id_t from, sn_id_t to, std::vector<pack_id>* ub_path = nullptr)
 	{
 		from_     = from;
 		to_       = to;
@@ -52,7 +54,7 @@ struct heuristic_value
 
 	// the pair of states the bounds refer to
 	sn_id_t from_ = warthog::SN_ID_MAX;
-	sn_id_t to_ = warthog::SN_ID_MAX;
+	sn_id_t to_   = warthog::SN_ID_MAX;
 
 	// are the bounds abstract estimates or
 	// actually feasible plans?
