@@ -54,8 +54,10 @@ warthog/search/vl_gridmap_expansion_policy.h
 warthog/util/cast.h
 warthog/util/cost_table.h
 warthog/util/dimacs_parser.h
+warthog/util/fixed_point.h
 warthog/util/helpers.h
 warthog/util/intrin.h
+warthog/util/numeric.h
 warthog/util/pqueue.h
 warthog/util/string.h
 warthog/util/template.h

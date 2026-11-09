@@ -9,10 +9,14 @@
 #include <memory>
 #include <random>
 #include <vector>
+
+#include <warthog/forward.h>
 #include <warthog/memory/bittable.h>
 
 namespace
 {
+
+using namespace ::warthog::forward_types;
 
 template<typename bt, typename vec>
 bool
