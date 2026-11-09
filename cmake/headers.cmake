@@ -62,8 +62,10 @@ include/warthog/search/vl_gridmap_expansion_policy.h
 include/warthog/util/cast.h
 include/warthog/util/cost_table.h
 include/warthog/util/dimacs_parser.h
+include/warthog/util/fixed_point.h
 include/warthog/util/helpers.h
 include/warthog/util/intrin.h
+include/warthog/util/numeric.h
 include/warthog/util/pqueue.h
 include/warthog/util/string.h
 include/warthog/util/template.h
