@@ -116,6 +116,136 @@ template<typename T, typename T2>
 concept same_as_rmcvref
     = std::same_as<std::remove_cvref_t<T>, std::remove_cvref_t<T2>>;
 
+namespace details
+{
+template<typename T>
+struct TypeTemplate : std::false_type
+{ };
+template<template<typename...> typename T, typename... Ts>
+struct TypeTemplate<T<Ts...>> : std::true_type
+{ };
+template<typename T>
+struct TypeTemplateSize : std::integral_constant<size_t, 0>
+{ };
+template<template<typename...> typename T, typename... Ts>
+struct TypeTemplateSize<T<Ts...>>
+    : std::integral_constant<size_t, sizeof...(Ts)>
+{ };
+template<typename T>
+struct TupleType : std::false_type
+{ };
+template<typename... Ts>
+struct TupleType<std::tuple<Ts...>> : std::true_type
+{ };
+} // namespace details
+
+//
+// BEGIN inxlib https://github.com/heavenfall/inxlib
+//
+
+template<typename T>
+concept Plain
+    = !std::is_void_v<T> && !std::is_reference_v<T> && !std::is_volatile_v<T>;
+template<typename T>
+concept ConstPlain = Plain<T> && std::is_const_v<T>;
+template<typename T>
+concept NonConstPlain = Plain<T> && !std::is_const_v<T>;
+
+template<typename T>
+concept TypeTemplate = details::TypeTemplate<T>::value;
+template<typename T>
+constexpr size_t TypeTemplateSize = details::TypeTemplateSize<T>::value;
+template<typename T>
+concept Tuple = details::TupleType<T>::value;
+
+namespace details
+{
+
+template<typename From, typename To>
+struct copy_ref_
+{
+	using type = To;
+};
+template<typename From, typename To>
+    requires(std::is_lvalue_reference_v<From>)
+struct copy_ref_<From, To>
+{
+	using type = std::add_lvalue_reference_t<To>;
+};
+template<typename From, typename To>
+    requires(std::is_rvalue_reference_v<From>)
+struct copy_ref_<From, To>
+{
+	using type = std::add_rvalue_reference_t<To>;
+};
+
+template<typename From, typename To>
+struct copy_const_
+{
+	using type = To;
+};
+template<typename From, typename To>
+    requires(std::is_const_v<From>)
+struct copy_const_<From, To>
+{
+	using type = std::add_const_t<To>;
+};
+
+template<typename From, typename To>
+struct copy_volatile_
+{
+	using type = To;
+};
+template<typename From, typename To>
+    requires(std::is_volatile_v<From>)
+struct copy_volatile_<From, To>
+{
+	using type = std::add_volatile_t<To>;
+};
+
+} // namespace details
+
+/// Copy cvref (if any) of type From to type To, overriding unto To.
+/// e.g. From=const int&, To=volatile double, Result=const double&
+template<typename From, typename To>
+using copy_cvref = typename details::copy_ref_<
+    From,
+    typename details::copy_volatile_<
+        std::remove_reference_t<From>,
+        typename details::copy_const_<
+            std::remove_reference_t<From>,
+            std::remove_cvref_t<To>>::type>::type>::type;
+
+/// Copy ref (if any) of type From to type To, overriding unto To.
+/// e.g. From=const int&, To=volatile double, Result=double&
+template<typename From, typename To>
+using copy_ref =
+    typename details::copy_ref_<From, std::remove_cvref_t<To>>::type;
+
+/// Copy ref (if any) of type From to type To, overriding unto To.
+/// e.g. From=const int&, To=volatile double&, Result=const double
+template<typename From, typename To>
+using copy_const = typename details::copy_const_<
+    std::remove_reference_t<From>, std::remove_cvref_t<To>>::type;
+
+/// Copy ref (if any) of type From to type To, overriding unto To.
+/// e.g. From=const int&, To=volatile double&, Result=double
+template<typename From, typename To>
+using copy_volatile = typename details::copy_volatile_<
+    std::remove_reference_t<From>, std::remove_cvref_t<To>>::type;
+
+/// Copy cvref (if any) of type From to type To, overriding unto To.
+/// e.g. From=const int&, To=volatile double, Result=const double&
+template<typename From, typename To>
+using copy_cv = typename details::copy_volatile_<
+    std::remove_reference_t<From>,
+    typename details::copy_const_<
+        std::remove_reference_t<From>, std::remove_cvref_t<To>>::type>::type;
+
+//
+// END inxlib
+//
+
 } // namespace warthog::util
 
 #endif // WARTHOG_UTIL_CAST_H

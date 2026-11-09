@@ -23,7 +23,8 @@
 // @updated: 2018-11-01
 //
 
-#include "cpool.h"
+#include <warthog/memory/alloc/source_factory.h>
+#include <warthog/memory/alloc/indexed_block_factory.h>
 #include <warthog/search/search_node.h>
 
 #include <stdint.h>
@@ -33,14 +34,16 @@ namespace warthog::memory
 
 namespace node_pool_ns
 {
-static const uint64_t NBS      = 8; // node block size; set this >= 8
-static const uint64_t LOG2_NBS = 3;
-static const uint64_t NBS_MASK = 7;
+constexpr uint64_t NBS      = 8; // node block size; set this >= 8
+constexpr uint64_t LOG2_NBS = 3;
+constexpr uint64_t NBS_MASK = 7;
 }
 
 class node_pool
 {
 public:
+	using factory = alloc::indexed_block_factory_type<search::search_node, alloc::slab_factory<alloc::malloc_factory, (1u << node_pool_ns::NBS) * sizeof(search::search_node)>, alloc::void_factory, (1u << node_pool_ns::NBS)>;
+
 	node_pool(size_t num_nodes);
 	~node_pool();
 
@@ -62,11 +65,7 @@ private:
 	void
 	init(size_t nblocks);
 
-	size_t num_blocks_;
-	search::search_node** blocks_;
-	cpool* blockspool_;
-	//        uint64_t* node_init_;
-	//        uint64_t node_init_sz_;
+	factory nodes_;
 };
 
 } // namespace warthog::memory

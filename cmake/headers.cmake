@@ -6,8 +6,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h
 	PUBLIC_HEADER
 	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/warthog)
 
-# use `find include/warthog -maxdepth 1 -type f -name '*.h' | sort`
-# use `find include/warthog/*/ -type f -name '*.h' | sort`
+# find include/warthog/ -type f | awk -F/ '{print NF"/"$0}' | LANG= sort -nft/ | cut -d/ -f2- | wl-copy
 target_sources(warthog_core PUBLIC
 include/warthog/constants.h
 include/warthog/defines.h
@@ -68,4 +67,16 @@ include/warthog/util/pqueue.h
 include/warthog/util/string.h
 include/warthog/util/template.h
 include/warthog/util/timer.h
+
+include/warthog/memory/alloc/block_factory.h
+include/warthog/memory/alloc/bump_factory.h
+include/warthog/memory/alloc/factory.h
+include/warthog/memory/alloc/factory_adaptor.h
+include/warthog/memory/alloc/factory_pointer.h
+include/warthog/memory/alloc/indexed_block_factory.h
+include/warthog/memory/alloc/object.h
+include/warthog/memory/alloc/single_factory.h
+include/warthog/memory/alloc/slab_factory.h
+include/warthog/memory/alloc/slice_array_factory.h
+include/warthog/memory/alloc/source_factory.h
 )
