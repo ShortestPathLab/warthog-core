@@ -19,7 +19,7 @@ namespace warthog::heuristic
 class octile_heuristic
 {
 public:
-	octile_heuristic(uint32_t mapwidth, uint32_t mapheight)
+	constexpr octile_heuristic(uint32_t mapwidth, uint32_t mapheight)
 	    : mapwidth_(mapwidth), hscale_(1.0)
 	{ }
 
@@ -28,8 +28,8 @@ public:
 	double
 	h(int32_t x, int32_t y, int32_t x2, int32_t y2)
 	{
-		int32_t dx = abs(x - x2);
-		int32_t dy = abs(y - y2);
+		int32_t dx = std::abs(x - x2);
+		int32_t dy = std::abs(y - y2);
 		if(dx < dy)
 		{
 			return (dx * warthog::DBL_ROOT_TWO + (dy - dx)) * hscale_;
@@ -65,7 +65,7 @@ public:
 		return hscale_;
 	}
 
-	size_t
+	constexpr size_t
 	mem()
 	{
 		return sizeof(this);
