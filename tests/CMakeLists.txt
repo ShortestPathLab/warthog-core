@@ -2,3 +2,4 @@ cmake_minimum_required(VERSION 3.13)
 
 add_subdirectory(memory)
 add_subdirectory(units)
+add_subdirectory(compile)

@@ -580,7 +580,7 @@ dir_unit_point(direction_id d) noexcept
 	if !consteval
 	{
 		// _pdep_u32 may not be constexpr
-		res.v = _pdep_u32(packed_reldir >> d * 4, 0xC000'C000u);
+		res.v = _pdep_u32(packed_reldir >> d * 4, 0x0003'0003u);
 	}
 	else
 	{
@@ -621,7 +621,7 @@ dir_unit_point_secic(direction_id d) noexcept
 	if !consteval
 	{
 		// _pdep_u32 may not be constexpr
-		res.v = _pdep_u32(packed_reldir >> d * 4, 0xC000'C000u);
+		res.v = _pdep_u32(packed_reldir >> d * 4, 0x0003'0003u);
 	}
 	else
 	{

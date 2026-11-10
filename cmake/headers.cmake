@@ -1,71 +1,63 @@
 cmake_minimum_required(VERSION 3.13)
 
-configure_file(cmake/config.h.in include/warthog/config.h @ONLY)
-target_sources(warthog_core PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h
-	PUBLIC_HEADER
-	DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/warthog)
+# find include/warthog/ -type f | awk -F/ '{print NF"/"$0}' | LANG= sort -nft/ | cut -d/ -f3-
+set(WARTHOG_CORE_HEADERS
+warthog/constants.h
+warthog/defines.h
+warthog/forward.h
+warthog/limits.h
 
-# use `find include/warthog -maxdepth 1 -type f -name '*.h' | sort`
-# use `find include/warthog/*/ -type f -name '*.h' | sort`
-target_sources(warthog_core PUBLIC
-include/warthog/constants.h
-include/warthog/defines.h
-include/warthog/forward.h
-include/warthog/limits.h
+warthog/domain/grid.h
+warthog/domain/gridmap.h
+warthog/domain/labelled_gridmap.h
 
-include/warthog/domain/grid.h
-include/warthog/domain/gridmap.h
-include/warthog/domain/labelled_gridmap.h
+warthog/geometry/geography.h
+warthog/geometry/geom.h
 
-include/warthog/geometry/geography.h
-include/warthog/geometry/geom.h
+warthog/heuristic/heuristic_value.h
+warthog/heuristic/manhattan_heuristic.h
+warthog/heuristic/octile_heuristic.h
+warthog/heuristic/zero_heuristic.h
 
-include/warthog/heuristic/heuristic_value.h
-include/warthog/heuristic/manhattan_heuristic.h
-include/warthog/heuristic/octile_heuristic.h
-include/warthog/heuristic/zero_heuristic.h
+warthog/io/bittable_serialize.h
+warthog/io/fwd.h
+warthog/io/grid_trace.h
+warthog/io/log.h
+warthog/io/observer.h
+warthog/io/posthoc_trace.h
+warthog/io/scenario_serialize.h
+warthog/io/serialize_base.h
+warthog/io/stream_observer.h
 
-include/warthog/io/bittable_serialize.h
-include/warthog/io/fwd.h
-include/warthog/io/grid_trace.h
-include/warthog/io/log.h
-include/warthog/io/observer.h
-include/warthog/io/posthoc_trace.h
-include/warthog/io/scenario_serialize.h
-include/warthog/io/serialize_base.h
-include/warthog/io/stream_observer.h
+warthog/memory/arraylist.h
+warthog/memory/bittable.h
+warthog/memory/cpool.h
+warthog/memory/node_pool.h
 
-include/warthog/memory/arraylist.h
-include/warthog/memory/bittable.h
-include/warthog/memory/cpool.h
-include/warthog/memory/node_pool.h
+warthog/scenario/experiment.h
+warthog/scenario/grid_patch_set.h
+warthog/scenario/scenario_manager.h
+warthog/scenario/scenario_runner.h
 
-include/warthog/scenario/experiment.h
-include/warthog/scenario/grid_patch_set.h
-include/warthog/scenario/scenario_manager.h
-include/warthog/scenario/scenario_runner.h
+warthog/search/expansion_policy.h
+warthog/search/gridmap_expansion_policy.h
+warthog/search/problem_instance.h
+warthog/search/search.h
+warthog/search/search_metrics.h
+warthog/search/search_node.h
+warthog/search/search_parameters.h
+warthog/search/solution.h
+warthog/search/uds_traits.h
+warthog/search/unidirectional_search.h
+warthog/search/vl_gridmap_expansion_policy.h
 
-include/warthog/search/expansion_policy.h
-include/warthog/search/gridmap_expansion_policy.h
-include/warthog/search/noop_search.h
-include/warthog/search/problem_instance.h
-include/warthog/search/search.h
-include/warthog/search/search_metrics.h
-include/warthog/search/search_node.h
-include/warthog/search/search_parameters.h
-include/warthog/search/solution.h
-include/warthog/search/uds_traits.h
-include/warthog/search/unidirectional_search.h
-include/warthog/search/vl_gridmap_expansion_policy.h
-
-include/warthog/util/cast.h
-include/warthog/util/cost_table.h
-include/warthog/util/dimacs_parser.h
-include/warthog/util/helpers.h
-include/warthog/util/intrin.h
-include/warthog/util/pqueue.h
-include/warthog/util/string.h
-include/warthog/util/template.h
-include/warthog/util/timer.h
+warthog/util/cast.h
+warthog/util/cost_table.h
+warthog/util/dimacs_parser.h
+warthog/util/helpers.h
+warthog/util/intrin.h
+warthog/util/pqueue.h
+warthog/util/string.h
+warthog/util/template.h
+warthog/util/timer.h
 )
