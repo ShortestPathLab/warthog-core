@@ -37,7 +37,6 @@
 
 namespace warthog::domain
 {
-	
 
 /// Support reading up to three rows along a grids horizontal axis.
 /// Given an (x,y), stores location of byte (round to 8) and allows reading of
@@ -470,7 +469,8 @@ struct gridmap_slider
 		    static_cast<uint32_t>(grid_id.id & ba::base_bit_mask)};
 	}
 
-	constexpr void invert_row_order() noexcept
+	constexpr void
+	invert_row_order() noexcept
 	{
 		width8 = -width8;
 	}
@@ -570,36 +570,35 @@ struct gridmap_slider
 
 	/// @param rel_bytes position starts are loc+rel_bytes
 	/// @return the unaligned block raised to the power of 2 of Bits.
-	template <size_t Bits>
-	auto get_block_auto_le(int32_t rel_bytes = 0) const noexcept
+	template<size_t Bits>
+	auto
+	get_block_auto_le(int32_t rel_bytes = 0) const noexcept
 	{
-		static_assert(1 <= Bits && Bits <= 64, "Bits must fall between 1 and 64");
-		if constexpr (Bits <= 8) {
-			return get_block_8bit_le(rel_bytes);
-		} else if constexpr (Bits <= 16) {
-			return get_block_16bit_le(rel_bytes);
-		} else if constexpr (Bits <= 32) {
-			return get_block_32bit_le(rel_bytes);
-		} else {
-			return get_block_64bit_le(rel_bytes);
-		}
+		static_assert(
+		    1 <= Bits && Bits <= 64, "Bits must fall between 1 and 64");
+		if constexpr(Bits <= 8) { return get_block_8bit_le(rel_bytes); }
+		else if constexpr(Bits <= 16) { return get_block_16bit_le(rel_bytes); }
+		else if constexpr(Bits <= 32) { return get_block_32bit_le(rel_bytes); }
+		else { return get_block_64bit_le(rel_bytes); }
 	}
 
 	/// returns rows as:
 	/// [0] = middle
 	/// [1] = above (-y)
 	/// [2] = below (+y)
-	template <size_t Rows = 3>
+	template<size_t Rows = 3>
 	std::array<uint64_t, Rows>
 	get_neighbours_64bit_le() const noexcept
 	{
 		static_assert(1 <= Rows && Rows <= 3, "Rows must be 1-3.");
 		std::array<uint64_t, Rows> return_value;
 		return_value[0] = get_block_64bit_le(0);
-		if constexpr(Rows >= 2) {
+		if constexpr(Rows >= 2)
+		{
 			return_value[1] = get_block_64bit_le(-width8);
 		}
-		if constexpr(Rows >= 3) {
+		if constexpr(Rows >= 3)
+		{
 			return_value[2] = get_block_64bit_le(width8);
 		}
 
@@ -610,17 +609,19 @@ struct gridmap_slider
 	/// [0] = middle
 	/// [1] = above (-y)
 	/// [2] = below (+y)
-	template <size_t Rows = 3>
+	template<size_t Rows = 3>
 	std::array<uint32_t, Rows>
 	get_neighbours_32bit_le() const noexcept
 	{
 		static_assert(1 <= Rows && Rows <= 3, "Rows must be 1-3.");
 		std::array<uint32_t, Rows> return_value;
 		return_value[0] = get_block_32bit_le(0);
-		if constexpr(Rows >= 2) {
+		if constexpr(Rows >= 2)
+		{
 			return_value[1] = get_block_32bit_le(-width8);
 		}
-		if constexpr(Rows >= 3) {
+		if constexpr(Rows >= 3)
+		{
 			return_value[2] = get_block_32bit_le(width8);
 		}
 
@@ -631,17 +632,19 @@ struct gridmap_slider
 	/// [0] = middle
 	/// [1] = above (-y)
 	/// [2] = below (+y)
-	template <size_t Rows = 3>
+	template<size_t Rows = 3>
 	std::array<uint16_t, Rows>
 	get_neighbours_16bit_le() const noexcept
 	{
 		static_assert(1 <= Rows && Rows <= 3, "Rows must be 1-3.");
 		std::array<uint16_t, Rows> return_value;
 		return_value[0] = get_block_16bit_le(0);
-		if constexpr(Rows >= 2) {
+		if constexpr(Rows >= 2)
+		{
 			return_value[1] = get_block_16bit_le(-width8);
 		}
-		if constexpr(Rows >= 3) {
+		if constexpr(Rows >= 3)
+		{
 			return_value[2] = get_block_16bit_le(width8);
 		}
 
@@ -652,17 +655,19 @@ struct gridmap_slider
 	/// [0] = middle
 	/// [1] = above (-y)
 	/// [2] = below (+y)
-	template <size_t Rows = 3>
+	template<size_t Rows = 3>
 	std::array<uint8_t, Rows>
 	get_neighbours_8bit_le() const noexcept
 	{
 		static_assert(1 <= Rows && Rows <= 3, "Rows must be 1-3.");
 		std::array<uint8_t, Rows> return_value;
 		return_value[0] = get_block_8bit_le(0);
-		if constexpr(Rows >= 2) {
+		if constexpr(Rows >= 2)
+		{
 			return_value[1] = get_block_8bit_le(-width8);
 		}
-		if constexpr(Rows >= 3) {
+		if constexpr(Rows >= 3)
+		{
 			return_value[2] = get_block_8bit_le(width8);
 		}
 
@@ -674,17 +679,19 @@ struct gridmap_slider
 	/// [0] = middle
 	/// [1] = above (-y)
 	/// [2] = below (+y)
-	template <size_t Rows = 3>
+	template<size_t Rows = 3>
 	std::array<unsigned __int128, Rows>
 	get_neighbours_128bit_le() const noexcept
 	{
 		static_assert(1 <= Rows && Rows <= 3, "Rows must be 1-3.");
 		std::array<unsigned __int128, Rows> return_value;
 		return_value[0] = get_block_128bit_le(0);
-		if constexpr(Rows >= 2) {
+		if constexpr(Rows >= 2)
+		{
 			return_value[1] = get_block_128bit_le(-width8);
 		}
-		if constexpr(Rows >= 3) {
+		if constexpr(Rows >= 3)
+		{
 			return_value[2] = get_block_128bit_le(width8);
 		}
 

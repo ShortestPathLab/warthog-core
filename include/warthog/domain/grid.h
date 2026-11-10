@@ -507,7 +507,8 @@ struct alignas(uint32_t) point
 {
 	uint16_t x;
 	uint16_t y;
-	explicit constexpr operator point32() const noexcept;
+	explicit constexpr
+	operator point32() const noexcept;
 };
 constexpr bool
 operator==(point a, point b) noexcept
@@ -521,8 +522,10 @@ struct alignas(uint32_t) spoint
 {
 	int16_t x;
 	int16_t y;
-	explicit constexpr operator point() const noexcept;
-	explicit constexpr operator spoint32() const noexcept;
+	explicit constexpr
+	operator point() const noexcept;
+	explicit constexpr
+	operator spoint32() const noexcept;
 };
 constexpr bool
 operator==(spoint a, spoint b)
@@ -534,7 +537,8 @@ struct alignas(uint64_t) point32
 {
 	uint32_t x;
 	uint32_t y;
-	explicit constexpr operator point() const noexcept;
+	explicit constexpr
+	operator point() const noexcept;
 };
 constexpr bool
 operator==(point32 a, point32 b) noexcept
@@ -548,8 +552,10 @@ struct alignas(uint64_t) spoint32
 {
 	int32_t x;
 	int32_t y;
-	explicit constexpr operator point32() const noexcept;
-	explicit constexpr operator spoint() const noexcept;
+	explicit constexpr
+	operator point32() const noexcept;
+	explicit constexpr
+	operator spoint() const noexcept;
 };
 constexpr bool
 operator==(spoint32 a, spoint32 b)
@@ -561,34 +567,36 @@ operator==(spoint32 a, spoint32 b)
 // cast operators
 //
 
-constexpr point::operator point32() const noexcept
+constexpr point::
+operator point32() const noexcept
 {
 	return point32{static_cast<uint32_t>(x), static_cast<uint32_t>(y)};
 }
 
-constexpr
-spoint::operator point() const noexcept
+constexpr spoint::
+operator point() const noexcept
 {
 	return point{static_cast<uint16_t>(x), static_cast<uint16_t>(y)};
 }
-constexpr
-spoint::operator spoint32() const noexcept
+constexpr spoint::
+operator spoint32() const noexcept
 {
 	return spoint32{static_cast<int32_t>(x), static_cast<int32_t>(y)};
 }
 
-constexpr point32::operator point() const noexcept
+constexpr point32::
+operator point() const noexcept
 {
 	return point{static_cast<uint16_t>(x), static_cast<uint16_t>(y)};
 }
 
-constexpr
-spoint32::operator point32() const noexcept
+constexpr spoint32::
+operator point32() const noexcept
 {
 	return point32(static_cast<uint32_t>(x), static_cast<uint32_t>(y));
 }
-constexpr
-spoint32::operator spoint() const noexcept
+constexpr spoint32::
+operator spoint() const noexcept
 {
 	return spoint(static_cast<int16_t>(x), static_cast<int16_t>(y));
 }
@@ -600,14 +608,18 @@ spoint32::operator spoint() const noexcept
 constexpr point
 operator+(point a, spoint b) noexcept
 {
-	return point{static_cast<uint16_t>(a.x + static_cast<uint16_t>(b.x)),
-		static_cast<uint16_t>(a.y + static_cast<uint16_t>(b.y))};
+	return point{
+	    static_cast<uint16_t>(a.x + static_cast<uint16_t>(b.x)),
+	    static_cast<uint16_t>(a.y + static_cast<uint16_t>(b.y))};
 }
 constexpr spoint
 operator-(point a, point b) noexcept
 {
-	return spoint{static_cast<int16_t>(static_cast<int16_t>(a.x) - static_cast<int16_t>(b.x)),
-		static_cast<int16_t>(static_cast<int16_t>(a.y) - static_cast<int16_t>(b.y))};
+	return spoint{
+	    static_cast<int16_t>(
+	        static_cast<int16_t>(a.x) - static_cast<int16_t>(b.x)),
+	    static_cast<int16_t>(
+	        static_cast<int16_t>(a.y) - static_cast<int16_t>(b.y))};
 }
 
 //
@@ -617,14 +629,13 @@ operator-(point a, point b) noexcept
 constexpr spoint
 operator+(spoint a, spoint b) noexcept
 {
-	return spoint{static_cast<int16_t>(a.x + b.x),
-		static_cast<int16_t>(a.y + b.y)};
+	return spoint{
+	    static_cast<int16_t>(a.x + b.x), static_cast<int16_t>(a.y + b.y)};
 }
 constexpr spoint
 operator-(spoint a) noexcept
 {
-	return spoint{static_cast<int16_t>(-a.x),
-		static_cast<int16_t>(-a.y)};
+	return spoint{static_cast<int16_t>(-a.x), static_cast<int16_t>(-a.y)};
 }
 constexpr spoint
 operator*(int16_t a, spoint b) noexcept
@@ -640,14 +651,18 @@ operator*(int16_t a, spoint b) noexcept
 constexpr point32
 operator+(point32 a, spoint32 b) noexcept
 {
-	return point32{static_cast<uint32_t>(a.x + static_cast<uint32_t>(b.x)),
-		static_cast<uint32_t>(a.y + static_cast<uint32_t>(b.y))};
+	return point32{
+	    static_cast<uint32_t>(a.x + static_cast<uint32_t>(b.x)),
+	    static_cast<uint32_t>(a.y + static_cast<uint32_t>(b.y))};
 }
 constexpr spoint32
 operator-(point32 a, point32 b) noexcept
 {
-	return spoint32{static_cast<int32_t>(static_cast<int32_t>(a.x) - static_cast<int32_t>(b.x)),
-		static_cast<int32_t>(static_cast<int32_t>(a.y) - static_cast<int32_t>(b.y))};
+	return spoint32{
+	    static_cast<int32_t>(
+	        static_cast<int32_t>(a.x) - static_cast<int32_t>(b.x)),
+	    static_cast<int32_t>(
+	        static_cast<int32_t>(a.y) - static_cast<int32_t>(b.y))};
 }
 
 //
@@ -657,14 +672,13 @@ operator-(point32 a, point32 b) noexcept
 constexpr spoint32
 operator+(spoint32 a, spoint32 b) noexcept
 {
-	return spoint32{static_cast<int32_t>(a.x + b.x),
-		static_cast<int32_t>(a.y + b.y)};
+	return spoint32{
+	    static_cast<int32_t>(a.x + b.x), static_cast<int32_t>(a.y + b.y)};
 }
 constexpr spoint32
 operator-(spoint32 a) noexcept
 {
-	return spoint32{static_cast<int32_t>(-a.x),
-		static_cast<int32_t>(-a.y)};
+	return spoint32{static_cast<int32_t>(-a.x), static_cast<int32_t>(-a.y)};
 }
 constexpr spoint32
 operator*(int32_t a, spoint32 b) noexcept
@@ -674,7 +688,7 @@ operator*(int32_t a, spoint32 b) noexcept
 }
 
 [[deprecated]]
-constexpr std::pair<int32_t,int32_t>
+constexpr std::pair<int32_t, int32_t>
 point_signed_diff(point a, point b) noexcept
 {
 	return {
@@ -692,37 +706,49 @@ struct cross_value
 {
 	int64_t i;
 
-	constexpr bool is_cw() const noexcept
+	constexpr bool
+	is_cw() const noexcept
 	{
 		return i > 0;
 	}
-	constexpr bool is_aw() const noexcept
+	constexpr bool
+	is_aw() const noexcept
 	{
 		return i < 0;
 	}
-	constexpr bool is_co() const noexcept
+	constexpr bool
+	is_co() const noexcept
 	{
 		return i == 0;
 	}
 };
 
-constexpr cross_value cross(grid::spoint a, grid::spoint b) noexcept
+constexpr cross_value
+cross(grid::spoint a, grid::spoint b) noexcept
 {
-	return cross_value{ static_cast<int64_t>(a.x) * static_cast<int64_t>(b.y) - static_cast<int64_t>(b.x) * static_cast<int64_t>(a.y) };
+	return cross_value{
+	    static_cast<int64_t>(a.x) * static_cast<int64_t>(b.y)
+	    - static_cast<int64_t>(b.x) * static_cast<int64_t>(a.y)};
 }
-constexpr cross_value cross(grid::spoint32 a, grid::spoint32 b) noexcept
+constexpr cross_value
+cross(grid::spoint32 a, grid::spoint32 b) noexcept
 {
-	return cross_value{ static_cast<int64_t>(a.x) * static_cast<int64_t>(b.y) - static_cast<int64_t>(b.x) * static_cast<int64_t>(a.y) };
+	return cross_value{
+	    static_cast<int64_t>(a.x) * static_cast<int64_t>(b.y)
+	    - static_cast<int64_t>(b.x) * static_cast<int64_t>(a.y)};
 }
-constexpr cross_value cross(grid::point32 r, grid::point32 a, grid::point32 b) noexcept
+constexpr cross_value
+cross(grid::point32 r, grid::point32 a, grid::point32 b) noexcept
 {
 	return cross(a - r, b - r);
 }
-constexpr cross_value cross(grid::point r, grid::point a, grid::point b) noexcept
+constexpr cross_value
+cross(grid::point r, grid::point a, grid::point b) noexcept
 {
-	return cross(static_cast<point32>(r), static_cast<point32>(a), static_cast<point32>(b));
+	return cross(
+	    static_cast<point32>(r), static_cast<point32>(a),
+	    static_cast<point32>(b));
 }
-
 
 /// @brief gets a unit signed-point in direction
 /// @param d the direction for the unit-distance
