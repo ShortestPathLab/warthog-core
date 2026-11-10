@@ -29,6 +29,7 @@ SOFTWARE.
 #include <concepts>
 #include <limits>
 #include <type_traits>
+#include <cstdlib>
 
 #include <warthog/forward.h>
 
