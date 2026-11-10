@@ -7,8 +7,8 @@
 ///
 /// @author Ryan Hechenberger
 
-#include <warthog/forward.h>
 #include <utility>
+#include <warthog/forward.h>
 
 namespace warthog::util
 {

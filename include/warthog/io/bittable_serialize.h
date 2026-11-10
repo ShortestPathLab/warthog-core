@@ -11,7 +11,6 @@
 /// @author Ryan Hechenberger
 /// @date 2025-06-01
 
-
 #include "serialize_base.h"
 
 #include <warthog/limits.h>

@@ -5,12 +5,13 @@
 ///
 /// A utility for mapping terrain types (ASCII characters) to their weights
 /// (warthog::cost_t) in weighted maps. This is backed by a simple 256-element
-/// array. Cost 0 is used to represent untraversable terrain, and NaN is used as
-/// a "not specified" sentinel.
+/// array. Cost 0 is used to represent untraversable terrain, and NaN is used
+/// as a "not specified" sentinel.
 ///
-/// The file format consists of one entry per line, where the first character of
-/// a line is the terrain type, then any amount of whitespace, followed by the
-/// decimal terrain cost. Example specifying `.` as traversable with cost 1 and
+/// The file format consists of one entry per line, where the first character
+/// of a line is the terrain type, then any amount of whitespace, followed by
+/// the decimal terrain cost. Example specifying `.` as traversable with cost 1
+/// and
 /// `@`, `T` as untraversable: . 1
 /// @ 0
 /// T 0

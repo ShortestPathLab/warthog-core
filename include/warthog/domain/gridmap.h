@@ -18,7 +18,6 @@
 /// @author dharabor, Ryan Hechenberger
 /// @date 2012-08-08
 
-
 #include <warthog/constants.h>
 
 #include "grid.h"

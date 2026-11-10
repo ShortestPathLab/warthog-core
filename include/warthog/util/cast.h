@@ -9,8 +9,8 @@
 /// @author Ryan Hechenberger
 /// @date 2024-10-11
 
-#include <warthog/forward.h>
 #include <warthog/defines.h>
+#include <warthog/forward.h>
 
 #include <bit>
 #include <cstdint>

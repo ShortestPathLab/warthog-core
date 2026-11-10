@@ -108,11 +108,11 @@ public:
 	bool verbose_ = false;
 
 private:
-	cost_t cost_cutoff_= std::numeric_limits<cost_t>::max();
+	cost_t cost_cutoff_  = std::numeric_limits<cost_t>::max();
 	uint32_t exp_cutoff_ = std::numeric_limits<uint32_t>::max();
 	std::chrono::nanoseconds time_cutoff_ns_ = std::chrono::nanoseconds::max();
-	double w_admissibility_ = 1.0;
-	cost_t eps_admissibility_ = 0.0;
+	double w_admissibility_                  = 1.0;
+	cost_t eps_admissibility_                = 0.0;
 };
 
 } // namespace warthog::search

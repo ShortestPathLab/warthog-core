@@ -11,10 +11,10 @@
 /// ::precision_, which can be used to indicate the accuracy with which
 /// ::distance_ should be interpreted. The hardcoded default is 4.
 ///
-/// NB2: The attributes ::mapwidth_ and ::mapheight_ refer to the x/y dimensions
-/// that ::map should be scaled to. The individial node
-/// coordinates (::startx_, ::starty_ etc.) are taken with respect to the
-/// dimensions of the scaled map.
+/// NB2: The attributes ::mapwidth_ and ::mapheight_ refer to the x/y
+/// dimensions that ::map should be scaled to. The individial node coordinates
+/// (::startx_, ::starty_ etc.) are taken with respect to the dimensions of the
+/// scaled map.
 ///
 /// @author dharabor
 /// @date 2012-08-21
