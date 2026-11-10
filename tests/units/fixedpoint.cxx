@@ -80,33 +80,67 @@ TEST_CASE("fixed_point operator tests", "[unit][general][fixedpoint]")
 
 	auto p12 = f1 + f2;
 	CHECK( p12.digits() == 10 );
+	CHECK( p12.digits() == p12.logical_digits() );
 	CHECK( p12.frac() == 2 );
 	auto n12 = f1 - f2;
 	CHECK( n12.digits() == 10 );
+	CHECK( n12.digits() == n12.logical_digits() );
 	CHECK( n12.frac() == 2 );
 	auto m12 = f1 * f2;
 	CHECK( m12.digits() == 20 );
+	CHECK( m12.digits() == m12.logical_digits() );
 	CHECK( m12.frac() == 4 );
 
 	auto p34 = f3 + f4;
 	CHECK( p34.digits() == 32 );
+	CHECK( p34.digits() == p34.logical_digits() );
 	CHECK( p34.frac() == 10 );
 	auto n34 = f3 - f4;
 	CHECK( n34.digits() == 32 );
+	CHECK( n34.digits() == n34.logical_digits() );
 	CHECK( n34.frac() == 10 );
 	auto m34 = f3 * f4;
 	CHECK( m34.digits() == 64 );
+	CHECK( m34.digits() == m34.logical_digits() );
 	CHECK( m34.frac() == 20 );
 
 	auto p24 = f2 + f4;
 	CHECK( p24.digits() == 32 );
+	CHECK( p24.digits() == p24.logical_digits() );
 	CHECK( p24.frac() == 10 );
 	auto n24 = f2 - f4;
 	CHECK( n24.digits() == 32 );
+	CHECK( n24.digits() == n24.logical_digits() );
 	CHECK( n24.frac() == 10 );
 	auto m24 = f2 * f4;
 	CHECK( m24.digits() == 42 );
+	CHECK( m24.digits() == m24.logical_digits() );
 	CHECK( m24.frac() == 12 );
+
+	WARTHOG_TEST_PDEF(5,48,16,0x655a'433e'0003'66ffLL);
+	WARTHOG_TEST_PDEF(6,32,32,0x005a'5f33'1aef'f2eaLL);
+	
+	auto p56 = f5 + f6;
+	CHECK( p56.digits() == 64 );
+	CHECK( p56.logical_digits() == 64+16 );
+	CHECK( p56.frac() == 32 );
+	auto n56 = f5 - f6;
+	CHECK( n56.digits() == 64 );
+	CHECK( n56.logical_digits() == 64+16 );
+	CHECK( n56.frac() == 32 );
+
+#ifdef WARTHOG_INT128_ENABLED
+	bool lt = f5 < f6;
+	bool gt = f5 > f6;
+	bool eq = f5 == f6;
+	bool ne = f5 != f6;
+	bool eq2 = f5 == f5;
+	CHECK( lt == false );
+	CHECK( gt == true );
+	CHECK( eq == false );
+	CHECK( ne == true );
+	CHECK( eq2 == true );
+#endif
 }
 
 }

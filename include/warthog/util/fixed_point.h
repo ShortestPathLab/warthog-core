@@ -82,36 +82,50 @@ struct binary_fixed_width_deduce<Digits>
 	static constexpr bool overflow = false;
 };
 
+/// @brief represent a fixed-point number of exact size
+/// @tparam Digits the total number of binary digits (including decimals)
+/// @tparam Fraction the number of binary digits in the decimals
+///
+/// Represents a fixed_point number.
+/// Stored within value as a signed integer of at least min(Digits,64) bits.
+/// Any Digits exceeding 64 is an overflow and considered logical_digits().
+///
+/// The actual number is represented as value * 2^(-Fraction).
 template<size_t Digits, size_t Fraction>
 struct binary_fixed_point
 {
 	using deduce     = binary_fixed_width_deduce<Digits>;
 	using value_type = typename deduce::type;
 	static_assert(
-	    Digits <= deduce::digits, "Digits must not exceed max integer size.");
+	    deduce::digits <= Digits, "Digits must not exceed max integer size.");
 	static_assert(
 	    Fraction < deduce::digits, "Fraction must be less than integer size.");
 
+	/// @return the real digits bits, min(Digits,64)
 	static consteval size_t
 	digits() noexcept
 	{
 		return deduce::digits;
 	}
+	/// @return the logical digits bits, Digits
 	static consteval size_t
 	logical_digits() noexcept
 	{
 		return Digits;
 	}
+	/// @return the binary decimal digits bit, min(Digits,64)
 	static consteval size_t
 	frac() noexcept
 	{
 		return Fraction;
 	}
+	/// @return if digit overflow occured, digits() != logical_digits()
 	static consteval bool
 	overflow() noexcept
 	{
 		return deduce::overflow;
 	}
+	/// @return the lsb mask of size frac()
 	static consteval value_type
 	frac_mask() noexcept
 	{
@@ -121,30 +135,49 @@ struct binary_fixed_point
 	value_type value;
 
 	binary_fixed_point() noexcept = default;
+	/// @brief assign from underlying value directly
+	/// @param v value
 	constexpr explicit binary_fixed_point(value_type v) noexcept : value{v} { }
 	constexpr binary_fixed_point(const binary_fixed_point& v) noexcept
 	    = default;
 	constexpr binary_fixed_point(binary_fixed_point&& v) noexcept = default;
+	/// @brief assign a floating-point number as close as possible, should be
+	/// truncated
+	/// @param val floating val
 	template<std::floating_point FP>
 	explicit binary_fixed_point(FP val) noexcept
-	    : value(
-	          static_cast<value_type>(
-	              static_cast<FP>(val) * (1ull << Fraction)))
+	    : value(static_cast<value_type>(
+	          static_cast<FP>(val) * (1ull << Fraction)))
 	{ }
 	~binary_fixed_point() = default;
 
+	/// @brief construct from integer
+	/// @param val integer value
+	template<std::integral I>
+	static constexpr binary_fixed_point
+	from_int(I val) noexcept
+	{
+		return binary_fixed_point(
+		    static_cast<value_type>(static_cast<value_type>(val) << frac()));
+	}
+
+	/// @brief cast to a floating-point value, if fits mantissa should be exact
 	template<std::floating_point FP>
 	explicit
 	operator FP() const noexcept
 	{
 		return static_cast<FP>(value) / (1ull << Fraction);
 	}
+
+	/// @brief cast to an integer value, it rounds down for performance reason
 	template<std::integral Int>
 	constexpr explicit
 	operator Int() const noexcept
 	{
 		return static_cast<Int>(value >> Fraction);
 	}
+
+	/// @brief casts to a different binary_fixed_point
 	template<size_t OD, size_t OF>
 	constexpr explicit(OD < Digits)
 	operator binary_fixed_point<OD, OF>() const noexcept
@@ -154,15 +187,13 @@ struct binary_fixed_point
 
 		if constexpr(OF < Fraction)
 		{
-			return to_type(
-			    static_cast<to_value>(
-			        static_cast<to_value>(value) >> (Fraction - OF)));
+			return to_type(static_cast<to_value>(
+			    static_cast<to_value>(value) >> (Fraction - OF)));
 		}
 		else if constexpr(OF > Fraction)
 		{
-			return to_type(
-			    static_cast<to_value>(
-			        static_cast<to_value>(value) << (OF - Fraction)));
+			return to_type(static_cast<to_value>(
+			    static_cast<to_value>(value) << (OF - Fraction)));
 		}
 		else { return to_type(static_cast<to_value>(value)); }
 	}
@@ -185,7 +216,7 @@ binary_fixed_point_norm_digits(
 	[[assume(from_frac < digits)]];
 	return static_cast<size_t>((int)digits + ((int)to_frac - (int)from_frac));
 }
-}
+} // namespace details
 
 template<typename T>
 concept BinaryFixedPoint
@@ -218,9 +249,7 @@ struct multiply_binary_fixed_point<A, B>
 	constexpr static bool fits_int = false;
 };
 
-/**
- * @return plus operator of type common_binary_fixed_point<A,B>
- */
+/// @return plus operator of type common_binary_fixed_point<A,B>
 template<BinaryFixedPoint A, BinaryFixedPoint B>
 constexpr auto
 operator+(A a, B b) noexcept
@@ -230,9 +259,8 @@ operator+(A a, B b) noexcept
 	{
 		using type = common_binary_fixed_point<A, B>;
 		using vt   = typename type::value_type;
-		return type(
-		    static_cast<vt>(
-		        static_cast<type>(a).value + static_cast<type>(b).value));
+		return type(static_cast<vt>(
+		    static_cast<type>(a).value + static_cast<type>(b).value));
 	}
 }
 template<BinaryFixedPoint A, BinaryFixedPoint B>
@@ -243,9 +271,7 @@ operator+=(A& a, B b) noexcept
 	return a;
 }
 
-/**
- * @return plus operator of type common_binary_fixed_point<A,B>
- */
+/// @return plus operator of type common_binary_fixed_point<A,B>
 template<BinaryFixedPoint A, BinaryFixedPoint B>
 constexpr auto
 operator-(A a, B b) noexcept
@@ -255,9 +281,8 @@ operator-(A a, B b) noexcept
 	{
 		using type = common_binary_fixed_point<A, B>;
 		using vt   = typename type::value_type;
-		return type(
-		    static_cast<vt>(
-		        static_cast<type>(a).value - static_cast<type>(b).value));
+		return type(static_cast<vt>(
+		    static_cast<type>(a).value - static_cast<type>(b).value));
 	}
 }
 template<BinaryFixedPoint A, BinaryFixedPoint B>
@@ -268,9 +293,7 @@ operator-=(A& a, B b) noexcept
 	return a;
 }
 
-/**
- * @return plus operator of type common_binary_fixed_point<A,B>
- */
+/// @return plus operator of type common_binary_fixed_point<A,B>
 template<BinaryFixedPoint A, BinaryFixedPoint B>
 constexpr auto
 operator*(A a, B b) noexcept
@@ -421,7 +444,6 @@ operator<=>(A a, B b) noexcept
 		return a128 <=> b128;
 #else
 		// handle
-		assert(false);
 		return static_cast<common>(a) <=> static_cast<common>(b);
 #endif // WARTHOG_INT128_ENABLED
 	}
@@ -461,18 +483,23 @@ int_trunc(FP a) noexcept
 	    (a.value >= 0 ? a.value : a.value + FP::frac_mask()) >> FP::frac());
 }
 
+/// @return FP rounded down to the nearest integer
 template<BinaryFixedPoint FP>
 FP
 floor(FP a) noexcept
 {
 	return FP(a.value & ~FP::frac_mask());
 }
+
+/// @return FP rounded up to the nearest integer
 template<BinaryFixedPoint FP>
 FP
 ceil(FP a) noexcept
 {
 	return FP((a.value + FP::frac_mask()) & ~FP::frac_mask());
 }
+
+/// @return FP rounded towards 0 to the nearest integer
 template<BinaryFixedPoint FP>
 FP
 trunc(FP a) noexcept
