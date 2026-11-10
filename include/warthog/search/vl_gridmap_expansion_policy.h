@@ -1,32 +1,32 @@
 #ifndef WARTHOG_SEARCH_VL_GRIDMAP_EXPANSION_POLICY_H
 #define WARTHOG_SEARCH_VL_GRIDMAP_EXPANSION_POLICY_H
 
-// search/vl_gridmap_expansion_policy.h
-//
-// An expansion policy for square gridmaps with
-// vertex costs. There are eight possible move
-// actions: 4 cardinal and 4 diagonal with
-// costs 1 and sqrt(2) respectively.
-//
-// The edge costs are weighted by the average of
-// the vertices they connect.
-//
-// Example:
-//
-// ab
-// cd
-//
-// In the case of a cardial move from cell a to b,
-// we compute the dge weight by computing the average
-// of the the labels found at vertex a and vertex b.
-// Diagonal moves are similar but we take the
-// average of four cells
-//
-//
-// @author: dharabor
-// @created: 2014-09-17
-// @updated: 2018-11-09
-//
+/// @file vl_gridmap_expansion_policy.h
+///
+/// An expansion policy for square gridmaps with
+/// vertex costs. There are eight possible move
+/// actions: 4 cardinal and 4 diagonal with
+/// costs 1 and sqrt(2) respectively.
+///
+/// The edge costs are weighted by the average of
+/// the vertices they connect.
+///
+/// Example:
+///
+/// ab
+/// cd
+///
+/// In the case of a cardial move from cell a to b,
+/// we compute the dge weight by computing the average
+/// of the the labels found at vertex a and vertex b.
+/// Diagonal moves are similar but we take the
+/// average of four cells
+///
+///
+/// @author dharabor
+/// @date 2014-09-17
+
+#include <warthog/forward.h>
 
 #include "expansion_policy.h"
 #include "search_node.h"

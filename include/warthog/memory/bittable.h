@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstring>
 #include <span>
+#include <climits>
 
 namespace warthog::memory
 {

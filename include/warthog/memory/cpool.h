@@ -1,22 +1,22 @@
 #ifndef WARTHOG_MEMORY_CPOOL_H
 #define WARTHOG_MEMORY_CPOOL_H
 
-// cpool.h
-//
-// A pool of pre-allocated memory specialised for the construction of
-// single structs of a fixed size.
-// To achieve efficient re-allocation each pre-allocated
-// chunk of memory has associated with it a stack of memory offsets
-// which have been previously freed.
-// This introduces a 12.5% overhead to total memory consumption.
-//
-// @author: dharabor
-// @created: 23/08/2012
-//
+/// @file cpool.h
+///
+/// A pool of pre-allocated memory specialised for the construction of
+/// single structs of a fixed size.
+/// To achieve efficient re-allocation each pre-allocated
+/// chunk of memory has associated with it a stack of memory offsets
+/// which have been previously freed.
+/// This introduces a 12.5% overhead to total memory consumption.
+///
+/// @author dharabor
+/// @date 23/08/2012
+
+#include <warthog/forward.h>
 
 #include <algorithm>
 #include <cassert>
-#include <cstdint>
 #include <iostream>
 
 namespace warthog::memory

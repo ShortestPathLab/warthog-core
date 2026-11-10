@@ -1,16 +1,17 @@
 #ifndef WARTHOG_SEARCH_EXPANSION_POLICY_H
 #define WARTHOG_SEARCH_EXPANSION_POLICY_H
 
-// expansion_policy.h
-//
-// An (abstract) expansion policy for searching explicit
-// domains. It is assumed the number of nodes in the
-// search space is known apriori and a description of each node can be
-// generated in constant time and independent of any other node.
-//
-// @author: dharabor
-// @created: 2016-01-26
-//
+/// @file expansion_policy.h
+///
+/// An (abstract) expansion policy for searching explicit
+/// domains. It is assumed the number of nodes in the
+/// search space is known apriori and a description of each node can be
+/// generated in constant time and independent of any other node.
+///
+/// @author dharabor
+/// @date 2016-01-26
+
+#include <warthog/forward.h>
 
 #include "problem_instance.h"
 #include "search_node.h"

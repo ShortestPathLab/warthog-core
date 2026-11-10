@@ -1,32 +1,31 @@
 #ifndef WARTHOG_MEMORY_NODE_POOL_H
 #define WARTHOG_MEMORY_NODE_POOL_H
 
-// memory/node_pool.h
-//
-// A memory pool of warthog::search_node objects.
-//
-// This implementation uses ragged two-dimensional array
-// allocator. Memory for the pool is reserved but nodes
-// are allocated in blocks of size NBS.
-// If a node from a block needs to be geneated then the
-// entire block is allocated at the same time.
-// Once allocated, memory is not released again until
-// destruction.
-//
-// On the one hand, this approach stores successor nodes in
-// close proximity to their parents. On the other hand,
-// blocks which are adjacent spatially may not be located
-// contiguously in memory.
-//
-// @author: dharabor
-// @created: 02/09/2012
-// @updated: 2018-11-01
-//
+/// @file node_pool.h
+///
+/// A memory pool of warthog::search_node objects.
+///
+/// This implementation uses ragged two-dimensional array
+/// allocator. Memory for the pool is reserved but nodes
+/// are allocated in blocks of size NBS.
+/// If a node from a block needs to be geneated then the
+/// entire block is allocated at the same time.
+/// Once allocated, memory is not released again until
+/// destruction.
+///
+/// On the one hand, this approach stores successor nodes in
+/// close proximity to their parents. On the other hand,
+/// blocks which are adjacent spatially may not be located
+/// contiguously in memory.
+///
+/// @author dharabor
+/// @date 02/09/2012
+
+#include <warthog/forward.h>
 
 #include "cpool.h"
-#include <warthog/search/search_node.h>
 
-#include <stdint.h>
+#include <warthog/search/search_node.h>
 
 namespace warthog::memory
 {

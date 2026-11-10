@@ -20,10 +20,12 @@
 /// call i.[function](args...) if able. If i.event([function],args...) is a
 /// valid callable, calls this function first, also tries i.event([function]).
 ///
-/// @author: Ryan Hechenberger
-/// @created: 2025-08-06
+/// @author Ryan Hechenberger
+/// @date 2025-08-06
 
 #include <warthog/constants.h>
+
+#include <utility>
 
 /// @brief Creates a concept observer_has_[func_name] that checks of function
 /// Listener.func_name(args...) is callable.

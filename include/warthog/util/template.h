@@ -1,14 +1,13 @@
 #ifndef WARTHOG_UTIL_TEMPLATE_H
 #define WARTHOG_UTIL_TEMPLATE_H
 
-// template.h
-//
-// Utility file for template metaprogramming.
-//
-// @author: Ryan Hechenberger
-// @created: 2025-06-27
-//
+/// @file template.h
+///
+/// Utility file for template metaprogramming.
+///
+/// @author Ryan Hechenberger
 
+#include <warthog/forward.h>
 #include <utility>
 
 namespace warthog::util

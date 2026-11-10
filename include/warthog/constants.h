@@ -1,17 +1,15 @@
 #ifndef WARTHOG_CONSTANTS_H
 #define WARTHOG_CONSTANTS_H
 
-// #include <warthog/constants.h>
-//
-// @author: dharabor
-// @created: 01/08/2012
-//
+/// @file constants.h
+///
+/// @author dharabor
+/// @date 2012-08-01
+
+#include "forward.h"
 
 #include <bit>
 #include <cassert>
-#include <cfloat>
-#include <climits>
-#include <cmath>
 #include <concepts>
 #include <cstdint>
 #include <limits>

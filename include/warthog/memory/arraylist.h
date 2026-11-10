@@ -1,19 +1,19 @@
 #ifndef WARTHOG_MEMORY_ARRAYLIST_H
 #define WARTHOG_MEMORY_ARRAYLIST_H
 
-// arraylist.h
-//
-// A dumb but dynamically-sized array for both simple and complex types.
-// The array is initialised with an initial size. New objects are added
-// to the end of the collection. When the number of elements exceeds
-// the capacity of the array, its size increases by a factor of 2.
-//
-// @author: dharabor
-// @created: 22/05/2013
-//
+/// @file arraylist.h
+///
+/// A dumb but dynamically-sized array for both simple and complex types.
+/// The array is initialised with an initial size. New objects are added
+/// to the end of the collection. When the number of elements exceeds
+/// the capacity of the array, its size increases by a factor of 2.
+///
+/// @author dharabor
+/// @date 2013-05-22
+
+#include <warthog/forward.h>
 
 #include <cstring>
-#include <stdint.h>
 
 namespace warthog::memory
 {

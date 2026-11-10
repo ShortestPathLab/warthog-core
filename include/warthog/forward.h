@@ -1,13 +1,12 @@
 #ifndef WARTHOG_FORWARD_H
 #define WARTHOG_FORWARD_H
 
-// ./memory/forward.h
-//
-// Forward declarations
-//
-// @author: dharabor
-// @created: 2018-11-07
-//
+/// @file forward.h
+///
+/// Forward declarations and integers into warthog namespace.
+///
+/// @author dharabor
+/// @date 2018-11-07
 
 #include <cstddef>
 #include <cstdint>

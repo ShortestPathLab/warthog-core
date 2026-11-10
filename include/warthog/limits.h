@@ -1,6 +1,8 @@
 #ifndef WARTHOG_LIMITS_H
 #define WARTHOG_LIMITS_H
 
+#include <warthog/forward.h>
+
 #include <cstddef>
 
 namespace warthog

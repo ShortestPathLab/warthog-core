@@ -1,14 +1,14 @@
 #ifndef WARTHOG_HEURISTIC_MANHATTAN_HEURISTIC_H
 #define WARTHOG_HEURISTIC_MANHATTAN_HEURISTIC_H
 
-// manhattan_heuristic.h
-//
-// @author: dharabor
-// @created: 21/08/2012
-//
+/// @file manhattan_heuristic.h
+///
+/// @author dharabor
+/// @date 2012-08-21
+
+#include <warthog/constants.h>
 
 #include "heuristic_value.h"
-#include <warthog/constants.h>
 #include <warthog/util/helpers.h>
 
 namespace warthog::heuristic

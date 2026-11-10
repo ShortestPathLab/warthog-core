@@ -1,14 +1,15 @@
 #ifndef WARTHOG_UTIL_DIMACS_PARSER_H
 #define WARTHOG_UTIL_DIMACS_PARSER_H
 
-// dimacs_parser.h
-//
-// A parser for reading road networks of the type
-// used at the 9th DIMACS competition.
-//
-// @author: dharabor
-// @created: 2015-01-08
-//
+/// @file dimacs_parser.h
+///
+/// A parser for reading road networks of the type
+/// used at the 9th DIMACS competition.
+///
+/// @author dharabor
+/// @date 2015-01-08
+
+#include <warthog/forward.h>
 
 #include <warthog/search/problem_instance.h>
 

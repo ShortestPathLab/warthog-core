@@ -1,16 +1,16 @@
 #ifndef WARTHOG_HEURISTIC_OCTILE_HEURISTIC_H
 #define WARTHOG_HEURISTIC_OCTILE_HEURISTIC_H
 
-// octile_heuristic.h
-//
-// Analogue of Manhattan Heuristic but for 8C grids (cf. 4C).
-//
-// @author: dharabor
-// @created: 21/08/2012
-//
+/// @file octile_heuristic.h
+///
+/// Analogue of Manhattan Heuristic but for 8C grids (cf. 4C).
+///
+/// @author dharabor
+/// @date 21/08/2012
+
+#include <warthog/constants.h>
 
 #include "heuristic_value.h"
-#include <warthog/constants.h>
 #include <warthog/util/helpers.h>
 
 namespace warthog::heuristic

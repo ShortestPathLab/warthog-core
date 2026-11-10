@@ -1,24 +1,25 @@
 #ifndef WARTHOG_SEARCH_GRIDMAP_EXPANSION_POLICY_H
 #define WARTHOG_SEARCH_GRIDMAP_EXPANSION_POLICY_H
 
-// gridmap_expansion_policy.h
-//
-// An ExpansionPolicy for square uniform-cost grids.
-// Supports octile movement and manhattan movement.
-//
-// In the case where diagonal moves are allowed
-// corner-cutting is forbidden.
-// i.e.
-//
-// ab
-// cd
-//
-// the move c -> b is only permitted if both 'a' and 'd'
-// are traversable.
-//
-// @author: dharabor
-// @created: 28/10/2010
-//
+/// @file gridmap_expansion_policy.h
+///
+/// An ExpansionPolicy for square uniform-cost grids.
+/// Supports octile movement and manhattan movement.
+///
+/// In the case where diagonal moves are allowed
+/// corner-cutting is forbidden.
+/// i.e.
+///
+/// ab
+/// cd
+///
+/// the move c -> b is only permitted if both 'a' and 'd'
+/// are traversable.
+///
+/// @author dharabor
+/// @date 2010-10-28
+
+#include <warthog/forward.h>
 
 #include "expansion_policy.h"
 #include "problem_instance.h"

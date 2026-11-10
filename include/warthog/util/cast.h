@@ -1,23 +1,24 @@
 #ifndef WARTHOG_UTIL_CAST_H
 #define WARTHOG_UTIL_CAST_H
 
-// cast.h
-//
-// Utility file for memory value conversion.
-// Include support for byte swapping over different compilers.
-//
-// @author: Ryan Hechenberger
-// @created: 2024-10-11
-//
+/// @file cast.h
+///
+/// Utility file for memory value conversion.
+/// Include support for byte swapping over different compilers.
+///
+/// @author Ryan Hechenberger
+/// @date 2024-10-11
+
+#include <warthog/forward.h>
+#include <warthog/defines.h>
 
 #include <bit>
 #include <cstdint>
 #include <cstring>
 #ifdef _MSC_VER
-#include <stdlib.h>
+#include <cstdlib>
 #endif // byteswap
 #include <concepts>
-#include <warthog/defines.h>
 
 namespace warthog::util
 {

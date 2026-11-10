@@ -1,13 +1,13 @@
 #ifndef WARTHOG_SEARCH_SEARCH_NODE_H
 #define WARTHOG_SEARCH_SEARCH_NODE_H
 
-// search_node.h
-//
-// @author: dharabor
-// @created: 10/08/2012
-//
+/// @file search_node.h
+///
+/// @author dharabor
+/// @date 2012-08-10
 
 #include <warthog/constants.h>
+
 #include <warthog/io/log.h>
 #include <warthog/memory/cpool.h>
 

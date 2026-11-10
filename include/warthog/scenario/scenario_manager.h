@@ -1,20 +1,21 @@
 #ifndef WARTHOG_SCENARIO_SCENARIO_MANAGER_H
 #define WARTHOG_SCENARIO_SCENARIO_MANAGER_H
 
-// scenario_manager.h
-//
-// Read and generate/write scenario files
-//
-//	Supported formats for read:
-//	    - GPPC 1.0 format (as at 2012 Grid-based Path Planning Competition)
-//		  (fields: bucket,map,mapwidth,mapheight,sx,sy,gx,gy,distance)
-//	    - DIMACS format (as at the 9th DIMACS Implementation Challenge)
-//	      (fields: q [source-id] [target-id])
-//      - Dynamic format (tbd)
-//
-// @author: dharabor & Ryan Hechenberger
-// @created: 21/08/2012
-//
+/// @file scenario_manager.h
+///
+/// Read and generate/write scenario files
+///
+///	Supported formats for read:
+///	    - GPPC 1.0 format (as at 2012 Grid-based Path Planning Competition)
+///		  (fields: bucket,map,mapwidth,mapheight,sx,sy,gx,gy,distance)
+///	    - DIMACS format (as at the 9th DIMACS Implementation Challenge)
+///	      (fields: q [source-id] [target-id])
+///      - Dynamic format (tbd)
+///
+/// @author dharabor, Ryan Hechenberger
+/// @date 2012-08-21
+
+#include <warthog/forward.h>
 
 #include "experiment.h"
 #include <warthog/domain/gridmap.h>

@@ -1,13 +1,14 @@
 #ifndef WARTHOG_GEOMETRY_GEOM_H
 #define WARTHOG_GEOMETRY_GEOM_H
 
-// util/geom.h
-//
-// miscellaneous collection of geometric things
-//
-// @author: dharabor
-// @created 2016-07-31
-//
+/// @file util/geom.h
+///
+/// miscellaneous collection of geometric things
+///
+/// @author dharabor
+/// @date 2016-07-31
+
+#include <warthog/forward.h>
 
 #include <cstdint>
 #include <istream>

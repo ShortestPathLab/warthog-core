@@ -16,8 +16,8 @@
 ///	    - GPPC 1.0 format (as at 2012 Grid-based Path Planning Competition)
 ///      - Dynamic format (tbd link)
 ///
-/// @author: dharabor & Ryan Hechenberger
-/// @created: 2025-12-04
+/// @author dharabor, Ryan Hechenberger
+/// @date 2025-12-04
 
 #include "serialize_base.h"
 
