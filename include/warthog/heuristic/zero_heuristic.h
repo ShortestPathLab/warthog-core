@@ -1,14 +1,14 @@
 #ifndef WARTHOG_HEURISTIC_ZERO_HEURISTIC_H
 #define WARTHOG_HEURISTIC_ZERO_HEURISTIC_H
 
-// zero_heuristic.h
-//
-// @author: dharabor
-// @created: 2014-10-22
-//
+/// @file zero_heuristic.h
+///
+/// @author dharabor
+/// @date 2014-10-22
+
+#include <warthog/constants.h>
 
 #include "heuristic_value.h"
-#include <warthog/constants.h>
 #include <warthog/util/helpers.h>
 
 namespace warthog::heuristic

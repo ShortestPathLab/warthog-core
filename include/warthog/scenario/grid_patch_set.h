@@ -7,9 +7,10 @@
 /// Can read with some flexibility and be used with scenario_runner to update a
 /// gridmap.
 ///
-/// @author: Ryan Hechenberger
-/// @created: 2026-04-10
-///
+/// @author Ryan Hechenberger
+/// @date 2026-04-10
+
+#include <warthog/forward.h>
 
 #include <warthog/domain/gridmap.h>
 #include <warthog/io/fwd.h>

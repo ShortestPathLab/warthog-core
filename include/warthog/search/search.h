@@ -1,20 +1,18 @@
 #ifndef WARTHOG_SEARCH_SEARCH_H
 #define WARTHOG_SEARCH_SEARCH_H
 
-// search.h
-//
-// A base class for functionality common to all
-// search algorithms.
-//
-// @author: dharabor
-// @created: 2016-02-24
-//
+/// @file search.h
+///
+/// A base class for functionality common to all
+/// search algorithms.
+///
+/// @author dharabor
+/// @date 2016-02-24
+
+#include <warthog/forward.h>
 
 #include "problem_instance.h"
 #include "solution.h"
-
-#include <stdint.h>
-#include <stdlib.h>
 
 namespace warthog::search
 {

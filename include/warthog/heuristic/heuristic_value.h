@@ -1,16 +1,16 @@
 #ifndef WARTHOG_HEURISTIC_HEURISTIC_VALUE_H
 #define WARTHOG_HEURISTIC_HEURISTIC_VALUE_H
 
-// heuristics/heuristic_value.h
-//
-// A container for passing data to and from heuristic functions.
-//
-// @author: dharabor
-// @created: 2021-10-13
-//
+/// @file heuristic_value.h
+///
+/// A container for passing data to and from heuristic functions.
+///
+/// @author dharabor
+/// @date 2021-10-13
+
+#include <warthog/constants.h>
 
 #include <vector>
-#include <warthog/constants.h>
 
 namespace warthog::heuristic
 {

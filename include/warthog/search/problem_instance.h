@@ -1,6 +1,8 @@
 #ifndef WARTHOG_SEARCH_PROBLEM_INSTANCE_H
 #define WARTHOG_SEARCH_PROBLEM_INSTANCE_H
 
+#include <warthog/forward.h>
+
 #include "search_node.h"
 
 namespace warthog::search

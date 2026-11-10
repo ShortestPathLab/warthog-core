@@ -25,13 +25,13 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#include <warthog/forward.h>
+
 #include <compare>
 #include <concepts>
 #include <cstdlib>
 #include <limits>
 #include <type_traits>
-
-#include <warthog/forward.h>
 
 namespace warthog::util
 {

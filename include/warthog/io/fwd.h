@@ -5,8 +5,10 @@
 ///
 /// Forward class definitions and store global enums.
 ///
-/// @author: Ryan Hechenberger
-/// @created: 2026-05-01
+/// @author Ryan Hechenberger
+/// @date 2026-05-01
+
+#include <warthog/forward.h>
 
 #include <cstdint>
 

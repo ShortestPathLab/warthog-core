@@ -1,20 +1,21 @@
 #ifndef WARTHOG_SEARCH_SEARCH_PARAMETERS_H
 #define WARTHOG_SEARCH_SEARCH_PARAMETERS_H
 
-// search/search_parameters.h
-//
-// A colleciton of parameters that can be used to configure heuristic search.
-// These can take the form of various cutoff limits, that restrict the scope
-// of a search, or they can be admissibility criteria that specify a desired
-// level of quality for a returned solution.
-//
-// @author: dharabor, amaheo
-// @created: 2021-10-13
+/// @file search_parameters.h
+///
+/// A colleciton of parameters that can be used to configure heuristic search.
+/// These can take the form of various cutoff limits, that restrict the scope
+/// of a search, or they can be admissibility criteria that specify a desired
+/// level of quality for a returned solution.
+///
+/// @author dharabor, amaheo
+/// @date 2021-10-13
 //
 
 #include <warthog/constants.h>
 
 #include <chrono>
+#include <limits>
 
 namespace warthog::search
 {
@@ -22,17 +23,7 @@ namespace warthog::search
 struct search_parameters
 {
 public:
-	search_parameters()
-	{
-		// defaults:
-		// optimal solution cost, no cutoff limits
-		cost_cutoff_       = DBL_MAX;
-		exp_cutoff_        = UINT32_MAX;
-		time_cutoff_ns_    = std::chrono::nanoseconds::max();
-		w_admissibility_   = 1.0;
-		eps_admissibility_ = 0.0;
-		verbose_           = false;
-	}
+	search_parameters() = default;
 
 	// limits the maximum time which is available to find a solution
 	// (in nanoseconds)
@@ -114,14 +105,14 @@ public:
 		return eps_admissibility_;
 	}
 
-	bool verbose_;
+	bool verbose_ = false;
 
 private:
-	cost_t cost_cutoff_;
-	uint32_t exp_cutoff_;
-	std::chrono::nanoseconds time_cutoff_ns_;
-	double w_admissibility_;
-	cost_t eps_admissibility_ = 0;
+	cost_t cost_cutoff_  = std::numeric_limits<cost_t>::max();
+	uint32_t exp_cutoff_ = std::numeric_limits<uint32_t>::max();
+	std::chrono::nanoseconds time_cutoff_ns_ = std::chrono::nanoseconds::max();
+	double w_admissibility_                  = 1.0;
+	cost_t eps_admissibility_                = 0.0;
 };
 
 } // namespace warthog::search

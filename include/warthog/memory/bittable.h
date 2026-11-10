@@ -4,6 +4,7 @@
 #include <warthog/constants.h>
 
 #include <bit>
+#include <climits>
 #include <concepts>
 #include <cstdint>
 #include <cstring>

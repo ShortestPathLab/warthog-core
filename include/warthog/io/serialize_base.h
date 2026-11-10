@@ -12,8 +12,8 @@
 /// which supports fast reading of tokens through string_view and error
 /// checking.
 ///
-/// @author: Ryan Hechenberger
-/// @created: 2026-04-10
+/// @author Ryan Hechenberger
+/// @date 2026-04-10
 
 #include "fwd.h"
 

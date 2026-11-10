@@ -1,25 +1,26 @@
 #ifndef WARTHOG_DOMAIN_GRIDMAP_H
 #define WARTHOG_DOMAIN_GRIDMAP_H
 
-// gridmap.h
-//
-// A uniform cost gridmap implementation.  The map is stored in
-// a compact matrix form. Nodes are represented as single bit quantities.
-//
-// NB: To allow efficient lookups this implementation uses a padding scheme
-// that adds extra elements to the end of each row and also introduces an
-// empty row immediately before and immediately after the start and end of
-// the gridmap data.
-// Padding allows us to refer to tiles and their neighbours by their indexes
-// in a one dimensional array and also to avoid range checks when trying to
-// identify invalid neighbours of tiles on the edge of the map.
-//
-// @author: dharabor & Ryan Hechenberger
-// @created: 08/08/2012
-//
+/// @file gridmap.h
+///
+/// A uniform cost gridmap implementation.  The map is stored in
+/// a compact matrix form. Nodes are represented as single bit quantities.
+///
+/// To allow efficient lookups this implementation uses a padding scheme
+/// that adds extra elements to the end of each row and also introduces an
+/// empty row immediately before and immediately after the start and end of
+/// the gridmap data.
+///
+/// Padding allows us to refer to tiles and their neighbours by their indexes
+/// in a one dimensional array and also to avoid range checks when trying to
+/// identify invalid neighbours of tiles on the edge of the map.
+///
+/// @author dharabor, Ryan Hechenberger
+/// @date 2012-08-08
+
+#include <warthog/constants.h>
 
 #include "grid.h"
-#include <warthog/constants.h>
 #include <warthog/io/fwd.h>
 #include <warthog/memory/bittable.h>
 #include <warthog/util/cast.h>

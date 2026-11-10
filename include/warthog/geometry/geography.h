@@ -5,6 +5,8 @@
 #ifndef WARTHOG_GEOMETRY_GEOGRAPHY_H
 #define WARTHOG_GEOMETRY_GEOGRAPHY_H
 
+#include <warthog/forward.h>
+
 #include <cstdint>
 
 namespace warthog::geometry

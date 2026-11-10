@@ -6,9 +6,10 @@
 /// Take a scenario_manager object and be able to progress through a dynamic
 /// scenario.
 ///
-/// @author: Ryan Hechenberger
-/// @created: 2026-04-09
-///
+/// @author Ryan Hechenberger
+/// @date 2026-04-09
+
+#include <warthog/forward.h>
 
 #include "grid_patch_set.h"
 #include "scenario_manager.h"

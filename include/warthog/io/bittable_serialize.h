@@ -1,15 +1,15 @@
 #ifndef WARTHOG_IO_GRID_H
 #define WARTHOG_IO_GRID_H
 
-/// @file grid.h
+/// @file bittable_serialize.h
 ///
 /// Read utility for gridmap.
 ///
 /// Supported MovingAI map format.  Read format spec:
 /// https://movingai.com/benchmarks/formats.html
 ///
-/// @author: Ryan Hechenberger
-/// @created: 2025-06-01
+/// @author Ryan Hechenberger
+/// @date 2025-06-01
 
 #include "serialize_base.h"
 

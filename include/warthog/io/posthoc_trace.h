@@ -6,8 +6,8 @@
 /// stream_observer that outputs a trace for use with posthoc visuliser.
 /// See https:///posthoc-app.pathfinding.ai/
 ///
-/// @author: Ryan Hechenberger
-/// @created: 2025-08-07
+/// @author Ryan Hechenberger
+/// @date 2025-08-07
 
 #include "stream_observer.h"
 

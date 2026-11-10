@@ -13,8 +13,10 @@
 /// Every trait has a default value, and thus are optional to include, i.e.
 /// an empty struct is the same as uds_default_traits.
 ///
-/// @author: dharabor & Ryan Hechenberger
-/// @created: 2021-10-12
+/// @author dharabor, Ryan Hechenberger
+/// @date 2021-10-12
+
+#include <warthog/forward.h>
 
 #include "search_metrics.h"
 #include "search_node.h"

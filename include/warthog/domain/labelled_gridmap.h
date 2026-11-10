@@ -1,23 +1,23 @@
 #ifndef WARTHOG_DOMAIN_LABELLED_GRIDMAP_H
 #define WARTHOG_DOMAIN_LABELLED_GRIDMAP_H
 
-// domains/labelled_gridmap.h
-//
-// A gridmap with weights/labels. This data structure supports
-// labels on grid edges as well as vertices.
-// This implementation stores the map as a flat 1d array of "cell"
-// objects. We add some padding around the map to simplify access
-// operations:
-//  - a terminator character is added to indicate end-of-row.
-//  - a line of terminator characters are added before the first row.
-//  - a line of terminator characters are added after the last row.
-//
-// @author: dharabor & Ryan Hechenberger
-// @created: 2018-11-08
-//
+/// @file labelled_gridmap.h
+///
+/// A gridmap with weights/labels. This data structure supports
+/// labels on grid edges as well as vertices.
+/// This implementation stores the map as a flat 1d array of "cell"
+/// objects. We add some padding around the map to simplify access
+/// operations:
+///  - a terminator character is added to indicate end-of-row.
+///  - a line of terminator characters are added before the first row.
+///  - a line of terminator characters are added after the last row.
+///
+/// @author dharabor, Ryan Hechenberger
+/// @date 2018-11-08
+
+#include <warthog/constants.h>
 
 #include "grid.h"
-#include <warthog/constants.h>
 #include <warthog/io/bittable_serialize.h>
 #include <warthog/io/log.h>
 #include <warthog/util/helpers.h>

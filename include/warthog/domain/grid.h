@@ -1,7 +1,7 @@
 #ifndef WARTHOG_DOMAIN_GRID_H
 #define WARTHOG_DOMAIN_GRID_H
 
-/// @file domains/grid.h
+/// @file grid.h
 ///
 /// A place for grid-related features.
 /// Includes the grid identifier (id), direction (and direction_id),
@@ -10,17 +10,17 @@
 /// These utilities include conversion between direction/direction_id,
 /// rotation, direction to point and inverse, helpers for grid traversal, etc.
 ///
-/// @author: dharabor & Ryan Hechenberger
-/// @created: 2018-11-03
-///
+/// @author dharabor, Ryan Hechenberger
+/// @date 2018-11-03
+
+#include <warthog/constants.h>
+#include <warthog/util/intrin.h>
 
 #include <bit>
 #include <bitset>
 #include <cassert>
 #include <cstdint>
 #include <iostream>
-#include <warthog/constants.h>
-#include <warthog/util/intrin.h>
 
 namespace warthog::grid
 {

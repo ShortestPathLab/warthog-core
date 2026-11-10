@@ -1,14 +1,15 @@
 #ifndef WARTHOG_SEARCH_UNIDIRECTIONAL_SEARCH_H
 #define WARTHOG_SEARCH_UNIDIRECTIONAL_SEARCH_H
 
-// search/unidirectional_search.h
-//
-// Unidirectional search whose algorithmic parameters and properties
-// can be specified via templates.
-//
-// @author: dharabor, amaheo
-// @created: 2021-10-13
-//
+/// @file unidirectional_search.h
+///
+/// Unidirectional search whose algorithmic parameters and properties
+/// can be specified via templates.
+///
+/// @author dharabor, amaheo
+/// @date 2021-10-13
+
+#include <warthog/forward.h>
 
 #include "problem_instance.h"
 #include "search.h"
@@ -18,7 +19,6 @@
 #include <warthog/constants.h>
 #include <warthog/heuristic/heuristic_value.h>
 #include <warthog/io/observer.h>
-#include <warthog/memory/cpool.h>
 #include <warthog/util/timer.h>
 
 #include <functional>

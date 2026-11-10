@@ -1,18 +1,18 @@
 #ifndef WARTHOG_UTIL_HELPERS_H
 #define WARTHOG_UTIL_HELPERS_H
 
-// helpers.h
-//
-// Helper functions that don't fit anywhere else.
-//
-// @author: dharabor
-// @created: 21/08/2012
-//
+/// @file helpers.h
+///
+/// Helper functions that don't fit anywhere else.
+///
+/// @author dharabor
+/// @date 21/08/2012
+
+#include <warthog/constants.h>
 
 #include <cstdint>
 #include <cstdlib>
 #include <vector>
-#include <warthog/constants.h>
 
 namespace warthog::util
 {

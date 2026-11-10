@@ -1,19 +1,21 @@
 #ifndef WARTHOG_SEARCH_SOLUTION_H
 #define WARTHOG_SEARCH_SOLUTION_H
 
-// a wrapper for solutions found by algorithms implemented
-// in the warthog library
-//
-// @author: dharabor
-// @created: 2017-05-03
-//
+/// @file solution.h
+///
+/// a wrapper for solutions found by algorithms implemented
+/// in the warthog library
+///
+/// @author dharabor
+/// @date 2017-05-03
+
+#include <warthog/constants.h>
 
 #include "search_metrics.h"
 #include "search_node.h"
 
 #include <ostream>
 #include <vector>
-#include <warthog/constants.h>
 
 namespace warthog::search
 {

@@ -1,13 +1,13 @@
 #ifndef WARTHOG_UTIL_PQUEUE_H
 #define WARTHOG_UTIL_PQUEUE_H
 
-// pqueue.h
-//
-// A min priority queue. Loosely based on an implementation from HOG
-// by Nathan Sturtevant.
-//
-// @author: dharabor
-// @created: 09/08/2012
+/// @file pqueue.h
+///
+/// A min priority queue. Loosely based on an implementation from HOG
+/// by Nathan Sturtevant.
+///
+/// @author dharabor
+/// @date 09/08/2012
 //
 
 #include <warthog/search/search_node.h>

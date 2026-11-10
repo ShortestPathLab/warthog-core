@@ -41,8 +41,8 @@
 /// overridden with define cstring WARTHOG_LOG_TIME. Clock is in local system
 /// time, but can be set to UTC by defining WARTHOG_LOG_CLOCK_UTC.
 ///
-/// @author: Ryan Hechenberger
-/// @created: 2025-09-09
+/// @author Ryan Hechenberger
+/// @date 2025-09-09
 
 #include <array>
 #include <filesystem>

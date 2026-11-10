@@ -1,15 +1,14 @@
 #ifndef WARTHOG_UTIL_STRING_H
 #define WARTHOG_UTIL_STRING_H
 
-// template.h
-//
-// Utility string functions.
-// Includes handling of space and conversion of string to other values,
-// mainly int/double.
-//
-// @author: Ryan Hechenberger
-// @created: 2026-04-14
-//
+/// @file template.h
+///
+/// Utility string functions.
+/// Includes handling of space and conversion of string to other values,
+/// mainly int/double.
+///
+/// @author Ryan Hechenberger
+/// @date 2026-04-14
 
 #include <algorithm>
 #include <cassert>

@@ -13,8 +13,8 @@
 /// Using the observer methodology, event functions will be given that will
 /// write to output in certain ways.
 ///
-/// @author: Ryan Hechenberger
-/// @created: 2025-08-01
+/// @author Ryan Hechenberger
+/// @date 2025-08-01
 
 #include "fwd.h"
 

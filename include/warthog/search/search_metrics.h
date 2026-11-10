@@ -1,17 +1,18 @@
 #ifndef WARTHOG_SEARCH_SEARCH_METRICS_H
 #define WARTHOG_SEARCH_SEARCH_METRICS_H
 
-// search/search_metrics.h
+/// @file search/search_metrics.h
+///
+/// A container for all the metrics that are recorded when running a search
+///
+/// @author dharabor
+/// @date 2021-10-13
 //
-// A container for all the metrics that are recorded when running a search
-//
-// @author: dharabor
-// @created: 2021-10-13
-//
+
+#include <warthog/constants.h>
 
 #include <chrono>
 #include <iostream>
-#include <warthog/constants.h>
 
 namespace warthog::search
 {
