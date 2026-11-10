@@ -27,9 +27,9 @@ SOFTWARE.
 
 #include <compare>
 #include <concepts>
+#include <cstdlib>
 #include <limits>
 #include <type_traits>
-#include <cstdlib>
 
 #include <warthog/forward.h>
 

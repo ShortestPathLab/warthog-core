@@ -146,8 +146,9 @@ struct binary_fixed_point
 	/// @param val floating val
 	template<std::floating_point FP>
 	explicit binary_fixed_point(FP val) noexcept
-	    : value(static_cast<value_type>(
-	          static_cast<FP>(val) * (1ull << Fraction)))
+	    : value(
+	          static_cast<value_type>(
+	              static_cast<FP>(val) * (1ull << Fraction)))
 	{ }
 	~binary_fixed_point() = default;
 
@@ -187,13 +188,15 @@ struct binary_fixed_point
 
 		if constexpr(OF < Fraction)
 		{
-			return to_type(static_cast<to_value>(
-			    static_cast<to_value>(value) >> (Fraction - OF)));
+			return to_type(
+			    static_cast<to_value>(
+			        static_cast<to_value>(value) >> (Fraction - OF)));
 		}
 		else if constexpr(OF > Fraction)
 		{
-			return to_type(static_cast<to_value>(
-			    static_cast<to_value>(value) << (OF - Fraction)));
+			return to_type(
+			    static_cast<to_value>(
+			        static_cast<to_value>(value) << (OF - Fraction)));
 		}
 		else { return to_type(static_cast<to_value>(value)); }
 	}
@@ -259,8 +262,9 @@ operator+(A a, B b) noexcept
 	{
 		using type = common_binary_fixed_point<A, B>;
 		using vt   = typename type::value_type;
-		return type(static_cast<vt>(
-		    static_cast<type>(a).value + static_cast<type>(b).value));
+		return type(
+		    static_cast<vt>(
+		        static_cast<type>(a).value + static_cast<type>(b).value));
 	}
 }
 template<BinaryFixedPoint A, BinaryFixedPoint B>
@@ -281,8 +285,9 @@ operator-(A a, B b) noexcept
 	{
 		using type = common_binary_fixed_point<A, B>;
 		using vt   = typename type::value_type;
-		return type(static_cast<vt>(
-		    static_cast<type>(a).value - static_cast<type>(b).value));
+		return type(
+		    static_cast<vt>(
+		        static_cast<type>(a).value - static_cast<type>(b).value));
 	}
 }
 template<BinaryFixedPoint A, BinaryFixedPoint B>
