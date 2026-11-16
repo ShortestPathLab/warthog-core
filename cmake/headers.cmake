@@ -7,9 +7,11 @@ warthog/defines.h
 warthog/forward.h
 warthog/limits.h
 
+warthog/domain/graph.h
 warthog/domain/grid.h
 warthog/domain/gridmap.h
 warthog/domain/labelled_gridmap.h
+warthog/domain/static_adj_graph.h
 
 warthog/geometry/geography.h
 warthog/geometry/geom.h
