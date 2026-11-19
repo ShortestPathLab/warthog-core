@@ -11,7 +11,7 @@
 
 #include <warthog/forward.h>
 
-#include <warthog/util/dimacs_parser.h>
+#include <warthog/io/dimacs_parser.h>
 #include <warthog/domain/static_adj_graph.h>
 #include <warthog/util/string.h>
 
@@ -86,7 +86,7 @@ help(std::ostream& out)
 /// @brief general wrapper around dimics
 struct dimics_scenario
 {
-	warthog::util::dimacs_parser parser;
+	warthog::io::dimacs_parser parser;
 	warthog::domain::static_adj_graph32<warthog::graph::e_OUT, uint32_t> graph;
 
 	void setup_graph()

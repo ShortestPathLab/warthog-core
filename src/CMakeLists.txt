@@ -6,6 +6,7 @@ domain/gridmap.cpp
 geometry/geography.cpp
 
 io/bittable_serialize.cpp
+io/dimacs_parser.cpp
 io/grid_trace.cpp
 io/log.cpp
 io/scenario_serialize.cpp
@@ -26,7 +27,6 @@ search/solution.cpp
 search/vl_gridmap_expansion_policy.cpp
 
 util/cost_table.cpp
-util/dimacs_parser.cpp
 util/helpers.cpp
 util/timer.cpp
 )

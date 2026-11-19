@@ -1,4 +1,4 @@
-#include <warthog/util/dimacs_parser.h>
+#include <warthog/io/dimacs_parser.h>
 
 #include <warthog/constants.h>
 
@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace warthog::util
+namespace warthog::io
 {
 
 dimacs_parser::dimacs_parser()
@@ -502,4 +502,4 @@ dimacs_parser::print_undirected_unweighted_metis(
 	}
 }
 
-} // namespace warthog::util
+} // namespace warthog::io

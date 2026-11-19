@@ -22,6 +22,7 @@ warthog/heuristic/octile_heuristic.h
 warthog/heuristic/zero_heuristic.h
 
 warthog/io/bittable_serialize.h
+warthog/io/dimacs_parser.h
 warthog/io/fwd.h
 warthog/io/grid_trace.h
 warthog/io/log.h
@@ -55,7 +56,6 @@ warthog/search/vl_gridmap_expansion_policy.h
 
 warthog/util/cast.h
 warthog/util/cost_table.h
-warthog/util/dimacs_parser.h
 warthog/util/fixed_point.h
 warthog/util/helpers.h
 warthog/util/intrin.h

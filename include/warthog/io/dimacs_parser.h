@@ -1,5 +1,5 @@
-#ifndef WARTHOG_UTIL_DIMACS_PARSER_H
-#define WARTHOG_UTIL_DIMACS_PARSER_H
+#ifndef WARTHOG_IO_DIMACS_PARSER_H
+#define WARTHOG_IO_DIMACS_PARSER_H
 
 /// @file dimacs_parser.h
 ///
@@ -20,7 +20,7 @@
 #include <cassert>
 #include <ranges>
 
-namespace warthog::util
+namespace warthog::io
 {
 
 class dimacs_parser
@@ -210,6 +210,6 @@ void dimics_to_graph(const dimacs_parser& dimic,
 	}
 }
 
-} // warthog::util
+} // warthog::io
 
-#endif // WARTHOG_UTIL_DIMACS_PARSER_H
+#endif // WARTHOG_IO_DIMACS_PARSER_H
