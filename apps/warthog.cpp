@@ -30,7 +30,6 @@
 #endif
 
 #include "cfg.h"
-#include <getopt.h>
 
 #include <cmath>
 #include <filesystem>

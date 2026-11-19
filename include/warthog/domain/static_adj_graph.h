@@ -1,5 +1,5 @@
-#ifndef WARTHOG_DOMAIN_ADJ_GRAPH_H
-#define WARTHOG_DOMAIN_ADJ_GRAPH_H
+#ifndef WARTHOG_DOMAIN_STATIC_ADJ_GRAPH_H
+#define WARTHOG_DOMAIN_STATIC_ADJ_GRAPH_H
 
 /// @file domains/adj_graph.h
 ///
@@ -14,6 +14,8 @@
 /// @author Ryan Hechenberger
 /// @date 2026-11-04
 ///
+
+/// NOTES: https://benchmarks.pathfinding.ai/2d-benchmarks/road-maps/ missing
 
 #include <warthog/constants.h>
 
@@ -30,127 +32,118 @@ namespace warthog::domain
 namespace details
 {
 
-template <uint8_t ID, typename T>
+template <typename T>
 struct static_adj_graph_edges
 {
-	std::unique_ptr<EdgeData[]> data;
+	std::unique_ptr<T[]> data;
 	
 	void setup(size_t ecount)
 	{
-		data = std::make_unique<EdgeData[]>(ecount);
+		data = std::make_unique<T[]>(ecount);
+	}
+};
+template <>
+struct static_adj_graph_edges<void>
+{
+	void setup(size_t)
+	{ }
+};
+
+template <typename T, typename edge_id>
+std::span<const T> get_vertex_data(const static_adj_graph_edges<T>& edges, graph::vertex_edges<edge_id> ve)
+{
+	return std::span<const T>(edges.data.get() + ve.start, ve.count);
+}
+template <typename T, typename edge_id>
+std::span<T> get_vertex_data_mut(static_adj_graph_edges<T>& edges, graph::vertex_edges<edge_id> ve)
+{
+	return std::span<T>(edges.data.get() + ve.start, ve.count);
+}
+
+
+template <uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
+struct static_adj_graph_data
+{
+	static_assert(std::same_as<CostOut,void> || (GraphDir&graph::e_OUT) != 0);
+	static_assert(std::same_as<CostIn,void> || (GraphDir&graph::e_IN) != 0);
+	using vertex_id = util::fit_unsigned_t<MaxV>;
+	using edge_id = util::fit_unsigned_t<MaxE>;
+	using vertex_type = graph::vertex_node<GraphDir, edge_id>;
+	
+	std::pair<uint32_t,uint32_t> graph_size;
+	std::unique_ptr<vertex_type[]> vertex_node;
+	[[no_unique_address]] static_adj_graph_edges<std::conditional_t<(GraphDir&graph::e_OUT)!=0, vertex_id, void>> edge_out;
+	[[no_unique_address]] static_adj_graph_edges<std::conditional_t<(GraphDir&graph::e_OUT)!=0, vertex_id, void>> edge_in;
+	[[no_unique_address]] static_adj_graph_edges<CostOut> cost_out;
+	[[no_unique_address]] static_adj_graph_edges<CostIn> cost_in;
+
+	void setup(vertex_id vcount, edge_id ecount)
+	{
+		graph_size.first = static_cast<uint32_t>(vcount);
+		graph_size.second = static_cast<uint32_t>(ecount);
+		vertex_node = std::make_unique<vertex_type[]>(vcount);
+		std::fill_n(vertex_node.get(), vcount, vertex_type{});
+		edge_out.setup(ecount);
+		edge_in.setup(ecount);
+		cost_out.setup(ecount);
+		cost_in.setup(ecount);
+	}
+
+	std::pair<uint32_t,uint32_t> sizes() const noexcept
+	{
+		return graph_size;
+	}
+	uint32_t vertices() const noexcept
+	{
+		return graph_size.first;
+	}
+	uint32_t edges() const noexcept
+	{
+		return graph_size.second;
 	}
 };
 
-template <uint8_t ID, typename T, typename edge_id>
-std::span<const T> get_vertex_data(const static_adj_graph_edges<ID, T>& edges, graph::vertex_edges<edge_id> ve)
-{
-	return std::span<const T>(edges.data.get() + ve.start, ve.count);
-}
-template <uint8_t ID, typename T, typename edge_id>
-std::span<T> get_vertex_data_mut(static_adj_graph_edges<ID, T>& edges, graph::vertex_edges<edge_id> ve)
-{
-	return std::span<T>(edges.data.get() + ve.start, ve.count);
-}
 
-template <uint8_t ID, typename T, typename edge_id>
-std::span<const T> get_vertex_data(const static_adj_graph_edges<ID, T>& edges, graph::vertex_edges<edge_id> ve)
-{
-	return std::span<const T>(edges.data.get() + ve.start, ve.count);
-}
-template <uint8_t ID, typename T, typename edge_id>
-std::span<T> get_vertex_data_mut(static_adj_graph_edges<ID, T>& edges, graph::vertex_edges<edge_id> ve)
-{
-	return std::span<T>(edges.data.get() + ve.start, ve.count);
-}
+};
 
-template <size_t MaxV, size_t MaxE, typename EdgeData>
-struct static_adj_graph_data : static_adj_graph_data<MaxV, MaxE, void>
+template <uint8_t GraphDir = graph::e_OUT, size_t MaxV = graph::graph_int16, size_t MaxE = graph::graph_int16, typename CostOut = void, typename CostIn = void>
+class static_adj_graph : public details::static_adj_graph_data<GraphDir, MaxV, MaxE, CostOut, CostIn>
 {
-	using super = static_adj_graph_data<MaxV, MaxE, void>;
+public:
+	using super = details::static_adj_graph_data<GraphDir, MaxV, MaxE, CostOut, CostIn>;
+	using cost_out_type = CostOut;
+	using cost_in_type = CostIn;
 	using typename super::vertex_id;
 	using typename super::edge_id;
-	using typename super::vertex_node;
-	
-	std::unique_ptr<EdgeData[]> Edata;
+	using typename super::vertex_type;
+	using vertex_edges = graph::vertex_edges<edge_id>;
 
-	void set_size(vertex_id vcount, edge_id ecount)
+	const vertex_type& vertex(uint32_t i) const noexcept
 	{
-		super::set_size(vcount, ecount);
-		Edata = std::make_unique<EdgeData[]>(ecount);
+		assert(i < this->vertices() && this->vertex_node != nullptr);
+		return this->vertex_node[i];
 	}
-
-	std::span<const EdgeData> vertex_out_data(vertex_node node) const noexcept
+	vertex_type& vertex_mut(uint32_t i) noexcept
 	{
-		assert((size_t)node.edge_start + (size_t)node.edge_count <= this->edge_count);
-		return std::span(Edata.get() + node.edge_start, node.edge_count);
+		assert(i < this->vertices() && this->vertex_node != nullptr);
+		return this->vertex_node[i];
 	}
-	std::span<const EdgeData> vertex_out_data(vertex_id id) const noexcept
+	std::span<const vertex_type> vertex_span() const noexcept
 	{
-		return vertex_out(vertex(id));
+		return std::span<const vertex_type>(this->vertex_node.get(), this->vertices());
 	}
-
-	const EdgeData& edge_data(edge_id id)
+	std::span<vertex_type> vertex_span_mut() noexcept
 	{
-		assert(id < this->edge_count);
-		return Edata[id];
-	}
-};
-template <size_t MaxV, size_t MaxE>
-struct static_adj_graph_data<MaxV, MaxE, void>
-{
-	using vertex_id = util::fit_unsigned_t<MaxV>;
-	using edge_id = util::fit_unsigned_t<MaxV>;
-
-	struct vertex_node {
-		edge_id edge_start;
-		edge_id edge_count;
-	};
-
-	vertex_id vertex_count;
-	edge_id edge_count;
-	std::unique_ptr<vertex_node[]> V;
-	std::unique_ptr<vertex_id[]> E;
-
-	void set_size(vertex_id vcount, edge_id ecount)
-	{
-		V = std::make_unique<vertex_node[]>(vcount);
-		vertex_count = vcount;
-		V = std::make_unique<vertex_id[]>(ecount);
-		edge_count = ecount;
-	}
-
-	vertex_node vertex(vertex_id id) const noexcept
-	{
-		assert(id < vertex_count);
-		return V[id];
-	}
-
-	std::span<const vertex_id> vertex_out(vertex_node node) const noexcept
-	{
-		assert((size_t)node.edge_start + (size_t)node.edge_count <= edge_count);
-		return std::span(E.get() + node.edge_start, node.edge_count);
-	}
-	std::span<const vertex_id> vertex_out(vertex_id id) const noexcept
-	{
-		return vertex_out(vertex(id));
-	}
-
-	vertex_id edge(edge_id id) const noexcept
-	{
-		assert(id < edge_count);
-		return V[id];
+		return std::span<vertex_type>(this->vertex_node.get(), this->vertices());
 	}
 };
 
+template <uint8_t GraphDir = graph::e_OUT, typename CostOut = void, typename CostIn = void>
+using static_adj_graph16 = static_adj_graph<GraphDir, graph::graph_int16, graph::graph_int16, CostOut, CostIn>;
 
-};
-
-template <size_t MaxV = graph_int16, size_t MaxE = graph_int16, typename EdgeData = void>
-class static_adj_graph : public details::static_adj_graph_data<MaxV, MaxE, EdgeData>
-{
-
-};
+template <uint8_t GraphDir = graph::e_OUT, typename CostOut = void, typename CostIn = void>
+using static_adj_graph32 = static_adj_graph<GraphDir, graph::graph_int32, graph::graph_int32, CostOut, CostIn>;
 
 } // namespace warthog::domain
 
-#endif // WARTHOG_DOMAIN_ADJ_GRAPH_H
+#endif // WARTHOG_DOMAIN_STATIC_ADJ_GRAPH_H

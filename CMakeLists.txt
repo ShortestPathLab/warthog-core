@@ -52,16 +52,26 @@ target_sources(warthog_core
 		${CMAKE_CURRENT_BINARY_DIR}/include/warthog/config.h
 	)
 
+
+add_library(warthog_apps_common)
+add_library(warthog::apps ALIAS warthog_apps_common)
+target_link_libraries(warthog_apps_common PUBLIC warthog::core)
+
 add_executable(warthog_app)
 add_executable(warthog::warthog ALIAS warthog_app)
 set_target_properties(warthog_app PROPERTIES OUTPUT_NAME "warthog")
-target_link_libraries(warthog_app PUBLIC warthog::core)
+target_link_libraries(warthog_app PUBLIC warthog::apps)
+
+add_executable(warthog_dimics)
+add_executable(warthog::dimics ALIAS warthog_dimics)
+set_target_properties(warthog_dimics PROPERTIES OUTPUT_NAME "dimics")
+target_link_libraries(warthog_dimics PUBLIC warthog::apps)
 
 add_subdirectory(src)
 add_subdirectory(apps)
 
 
-install(TARGETS warthog_core warthog_app
+install(TARGETS warthog_core warthog_app warthog_dimics
     RUNTIME 
         COMPONENT Runtime
     LIBRARY 

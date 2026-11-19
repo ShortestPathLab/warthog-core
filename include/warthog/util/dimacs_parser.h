@@ -12,10 +12,13 @@
 #include <warthog/forward.h>
 
 #include <warthog/search/problem_instance.h>
+#include <warthog/domain/static_adj_graph.h>
 
 #include <fstream>
-#include <stdint.h>
 #include <vector>
+#include <span>
+#include <cassert>
+#include <ranges>
 
 namespace warthog::util
 {
@@ -94,46 +97,43 @@ public:
 		return (uint32_t)edges_->size();
 	}
 
-	inline dimacs_parser::node_iterator
-	nodes_begin()
+	std::span<const dimacs_parser::node> nodes() const noexcept
 	{
-		return nodes_->begin();
+		assert(nodes_ != nullptr);
+		return *nodes_;
+	}
+	std::span<dimacs_parser::node> nodes_mut() noexcept
+	{
+		assert(nodes_ != nullptr);
+		return *nodes_;
 	}
 
-	inline dimacs_parser::node_iterator
-	nodes_end()
+	std::span<const dimacs_parser::edge> edges() const noexcept
 	{
-		return nodes_->end();
+		assert(edges_ != nullptr);
+		return *edges_;
+	}
+	std::span<dimacs_parser::edge> edges_mut() noexcept
+	{
+		assert(edges_ != nullptr);
+		return *edges_;
 	}
 
-	inline dimacs_parser::edge_iterator
-	edges_begin()
+	std::span<const dimacs_parser::experiment> experiments() const noexcept
 	{
-		return edges_->begin();
+		assert(experiments_ != nullptr);
+		return *experiments_;
 	}
-
-	inline dimacs_parser::edge_iterator
-	edges_end()
+	std::span<dimacs_parser::experiment> experiments_mut() noexcept
 	{
-		return edges_->end();
-	}
-
-	inline dimacs_parser::experiment_iterator
-	experiments_begin()
-	{
-		return experiments_->begin();
+		assert(experiments_ != nullptr);
+		return *experiments_;
 	}
 
 	inline uint32_t
 	num_experiments()
 	{
 		return (uint32_t)experiments_->size();
-	}
-
-	inline dimacs_parser::experiment_iterator
-	experiments_end()
-	{
-		return experiments_->end();
 	}
 
 	void
@@ -179,6 +179,36 @@ private:
 	std::string co_file_;
 	std::string gr_file_;
 };
+
+template <uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
+	requires ((GraphDir & graph::e_OUT) != 0)
+void dimics_to_graph(const dimacs_parser& dimic,
+	domain::static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& graph)
+{
+	using graph_type = domain::static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>;
+	auto nodes = dimic.nodes();
+	auto edges = dimic.edges();
+
+	graph.setup(nodes.size(), edges.size());
+	// assert(std::ranges::is_sorted(edges));
+	// head is in order, so setup nodes
+	auto nd_vtx = graph.vertex_span_mut();
+	uint32_t edge_at = 0;
+	for (auto const node_edges : edges | std::views::chunk_by([](const auto& a, const auto& b) noexcept { return a.head_id_ == b.head_id_; }))
+	{
+		uint32_t node_id = begin(node_edges)->head_id_ - 1;
+		// any skipped node will have zero edges
+		auto& vtx_ed = vertex_node_edges<graph::e_OUT>(nd_vtx[node_id]);
+		uint32_t ie = size(node_edges);
+		vtx_ed.start = edge_at;
+		vtx_ed.count = ie;
+		for (uint32_t i = 0; i < ie; ++i) {
+			graph.edge_out.data[edge_at+i] = static_cast<typename graph_type::vertex_id>(edges[edge_at+i].tail_id_ - 1);
+			graph.cost_out.data[edge_at+i] = static_cast<typename graph_type::cost_out_type>(edges[edge_at+i].weight_);
+		}
+		edge_at += ie;
+	}
+}
 
 } // warthog::util
 

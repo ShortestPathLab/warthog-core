@@ -27,10 +27,6 @@ enum edge_val : uint8_t
 	e_OUT = 1U << 0,
 	e_IN = 1U << 1,
 	e_BOTH = e_OUT | e_IN,
-	e_EXTRA1 = 1U << 2,
-	e_EXTRA2 = 1U << 3,
-	e_EXTRA3 = 1U << 4,
-	e_EXTRA4 = 1U << 5,
 };
 
 template <typename edge_id>
@@ -44,21 +40,21 @@ struct vertex_node;
 template <typename edge_id>
 struct vertex_node<e_OUT, edge_id>
 {
-	static constexpr uint8_t edir() noexcept { return dir; } 
-	vertex_edges out;
+	static consteval uint8_t edir() noexcept { return e_OUT; } 
+	vertex_edges<edge_id> out;
 };
 template <typename edge_id>
 struct vertex_node<e_IN, edge_id>
 {
-	static constexpr uint8_t edir() noexcept { return dir; } 
-	vertex_edges in;
+	static consteval uint8_t edir() noexcept { return e_IN; } 
+	vertex_edges<edge_id> in;
 };
 template <typename edge_id>
 struct vertex_node<e_BOTH, edge_id>
 {
-	static constexpr uint8_t edir() noexcept { return dir; } 
-	vertex_edges out;
-	vertex_edges in;
+	static consteval uint8_t edir() noexcept { return e_BOTH; } 
+	vertex_edges<edge_id> out;
+	vertex_edges<edge_id> in;
 };
 
 template <uint8_t dir, typename T>
