@@ -192,7 +192,7 @@ void dimics_to_graph(const dimacs_parser& dimic,
 	graph.setup(nodes.size(), edges.size());
 	// assert(std::ranges::is_sorted(edges));
 	// head is in order, so setup nodes
-	auto nd_vtx = graph.vertex_span_mut();
+	auto nd_vtx = graph.vertex_all_mut();
 	uint32_t edge_at = 0;
 	for (auto const node_edges : edges | std::views::chunk_by([](const auto& a, const auto& b) noexcept { return a.head_id_ == b.head_id_; }))
 	{
@@ -204,9 +204,43 @@ void dimics_to_graph(const dimacs_parser& dimic,
 		vtx_ed.count = ie;
 		for (uint32_t i = 0; i < ie; ++i) {
 			graph.edge_out.data[edge_at+i] = static_cast<typename graph_type::vertex_id>(edges[edge_at+i].tail_id_ - 1);
-			graph.cost_out.data[edge_at+i] = static_cast<typename graph_type::cost_out_type>(edges[edge_at+i].weight_);
+			if constexpr (!std::same_as<CostOut, void>) {
+				if constexpr (std::assignable_from<CostOut&, uint32_t>) {
+					graph.cost_out.data[edge_at+i] = edges[edge_at+i].weight_;
+				} else {
+					graph.cost_out.data[edge_at+i] = static_cast<CostOut>(edges[edge_at+i].weight_);
+				}
+			}
 		}
 		edge_at += ie;
+	}
+
+	if constexpr ((GraphDir & graph::e_IN) != 0) {
+		// add in-edges
+		std::vector indir(edges);
+		std::ranges::sort(indir, {}, [](const auto& e) noexcept { return e.tail_id_; });
+
+		edge_at = 0;
+		for (auto const node_edges : indir | std::views::chunk_by([](const auto& a, const auto& b) noexcept { return a.tail_id_ == b.tail_id_; }))
+		{
+			uint32_t node_id = begin(node_edges)->tail_id_ - 1;
+			// any skipped node will have zero edges
+			auto& vtx_ed = vertex_node_edges<graph::e_IN>(nd_vtx[node_id]);
+			uint32_t ie = size(node_edges);
+			vtx_ed.start = edge_at;
+			vtx_ed.count = ie;
+			for (uint32_t i = 0; i < ie; ++i) {
+				graph.edge_in.data[edge_at+i] = static_cast<typename graph_type::vertex_id>(edges[edge_at+i].head_id_ - 1);
+				if constexpr (!std::same_as<CostIn, void>) {
+					if constexpr (std::assignable_from<CostIn&, uint32_t>) {
+						graph.cost_in.data[edge_at+i] = edges[edge_at+i].weight_;
+					} else {
+						graph.cost_in.data[edge_at+i] = static_cast<CostIn>(edges[edge_at+i].weight_);
+					}
+				}
+			}
+			edge_at += ie;
+		}
 	}
 }
 

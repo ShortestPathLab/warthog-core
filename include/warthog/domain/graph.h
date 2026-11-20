@@ -40,21 +40,24 @@ struct vertex_node;
 template <typename edge_id>
 struct vertex_node<e_OUT, edge_id>
 {
+	using edge_type = vertex_edges<edge_id>;
 	static consteval uint8_t edir() noexcept { return e_OUT; } 
-	vertex_edges<edge_id> out;
+	edge_type out;
 };
 template <typename edge_id>
 struct vertex_node<e_IN, edge_id>
 {
+	using edge_type = vertex_edges<edge_id>;
 	static consteval uint8_t edir() noexcept { return e_IN; } 
-	vertex_edges<edge_id> in;
+	edge_type in;
 };
 template <typename edge_id>
 struct vertex_node<e_BOTH, edge_id>
 {
+	using edge_type = vertex_edges<edge_id>;
 	static consteval uint8_t edir() noexcept { return e_BOTH; } 
-	vertex_edges<edge_id> out;
-	vertex_edges<edge_id> in;
+	edge_type out;
+	edge_type in;
 };
 
 template <uint8_t dir, typename T>
@@ -67,6 +70,42 @@ constexpr auto& vertex_node_edges(T& node) noexcept
 	} else {
 		return node.in;
 	}
+}
+
+struct graph_stats
+{
+	uint32_t vertices;
+	uint32_t edges;
+
+	uint32_t max_out_degree;
+	uint32_t max_in_degree;
+};
+
+template <typename Graph>
+graph_stats compute_stats(const Graph& G)
+{
+	graph_stats res;
+
+	res.vertices = G.vertices();
+	res.edges = G.edges();
+
+	constexpr bool out = (Graph::graph_dir() & e_OUT) != 0;
+	constexpr bool in = (Graph::graph_dir() & e_OUT) != 0;
+	res.max_out_degree = 0;
+	res.max_in_degree = 0;
+
+	for (const auto& v : vertex_range(G)) {
+		if constexpr (out) {
+			uint32_t c = static_cast<uint32_t>(size(edge_range<e_OUT>(G, v)));
+			res.max_out_degree = std::max(res.max_out_degree, c);
+		}
+		if constexpr (in) {
+			uint32_t c = static_cast<uint32_t>(size(edge_range<e_IN>(G, v)));
+			res.max_out_degree = std::max(res.max_in_degree, c);
+		}
+	}
+
+	return res;
 }
 
 } // namespace warthog::graph

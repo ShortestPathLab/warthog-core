@@ -66,9 +66,15 @@ struct static_adj_graph_data
 {
 	static_assert(std::same_as<CostOut,void> || (GraphDir&graph::e_OUT) != 0);
 	static_assert(std::same_as<CostIn,void> || (GraphDir&graph::e_IN) != 0);
+
 	using vertex_id = util::fit_unsigned_t<MaxV>;
 	using edge_id = util::fit_unsigned_t<MaxE>;
 	using vertex_type = graph::vertex_node<GraphDir, edge_id>;
+	using vertex_edges_type = typename vertex_type::edge_type;
+
+	static consteval uint8_t graph_dir() noexcept { return GraphDir; }
+	static consteval uint8_t graph_cost_out() noexcept { return !std::same_as<CostOut,void>; }
+	static consteval uint8_t graph_cost_in() noexcept { return !std::same_as<CostIn,void>; }
 	
 	std::pair<uint32_t,uint32_t> graph_size;
 	std::unique_ptr<vertex_type[]> vertex_node;
@@ -101,6 +107,59 @@ struct static_adj_graph_data
 	{
 		return graph_size.second;
 	}
+
+#define WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(name,type,varname,req,edir) \
+	std::span<const type> name##_all() const noexcept \
+		requires req \
+	{ \
+		return std::span<const type>(this->varname.get(), this->edges()); \
+	} \
+	std::span<type> name##_all_mut() noexcept \
+		requires req \
+	{ \
+		return std::span<type>(this->varname.get(), this->edges()); \
+	} \
+	std::span<const type> name##_id(vertex_edges_type et) const noexcept \
+		requires req \
+	{ \
+		assert(et.start + et.count <= this->edges()); \
+		return std::span<const type>(this->varname.get() + et.start, et.count); \
+	} \
+	std::span<type> name##_id_mut(vertex_edges_type et) noexcept \
+		requires req \
+	{ \
+		assert(et.start + et.count <= this->edges()); \
+		return std::span<type>(this->varname.get() + et.start, et.count); \
+	} \
+	std::span<const type> name##_id(const vertex_type& vert) const noexcept \
+		requires req \
+	{ \
+		return name##_id(vertex_node_edges<edir>(vert)); \
+	} \
+	std::span<type> name##_id_mut(const vertex_type& vert) noexcept \
+		requires req \
+	{ \
+		return name##_id_mut(vertex_node_edges<edir>(vert)); \
+	} \
+	std::span<const type> name##_id(uint32_t vertex_id) const noexcept \
+		requires req \
+	{ \
+		assert(vertex_id < this->vertices()); \
+		return name##_id(vertex_node_edges<edir>(this->vertex_node[vertex_id])); \
+	} \
+	std::span<type> name##_id_mut(uint32_t vertex_id) noexcept \
+		requires req \
+	{ \
+		assert(vertex_id < this->vertices()); \
+		return name##_id_mut(vertex_node_edges<edir>(this->vertex_node[vertex_id])); \
+	}
+	
+	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(edge_out,uint32_t,edge_out,((GraphDir&graph::e_OUT)!=0),graph::e_OUT)
+	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(edge_in,uint32_t,edge_in,((GraphDir&graph::e_IN)!=0),graph::e_IN)
+	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(cost_out,CostOut,cost_out,(!std::same_as<CostOut,void>),graph::e_OUT)
+	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(cost_in,CostIn,cost_in,(!std::same_as<CostIn,void>),graph::e_IN)
+
+#undef WARTHOG_CODE_GENERATOR_STGRAPH_EDGE
 };
 
 
@@ -128,15 +187,73 @@ public:
 		assert(i < this->vertices() && this->vertex_node != nullptr);
 		return this->vertex_node[i];
 	}
-	std::span<const vertex_type> vertex_span() const noexcept
+
+	std::span<const vertex_type> vertex_all() const noexcept
 	{
 		return std::span<const vertex_type>(this->vertex_node.get(), this->vertices());
 	}
-	std::span<vertex_type> vertex_span_mut() noexcept
+	std::span<vertex_type> vertex_all_mut() noexcept
 	{
 		return std::span<vertex_type>(this->vertex_node.get(), this->vertices());
 	}
 };
+
+template <uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
+auto&& vertex_range(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G)
+{
+	return G.vertex_all();
+}
+template <uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
+auto&& vertex_range_mut(static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G)
+{
+	return G.vertex_all_mut();
+}
+
+template <uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
+	requires((EdgeDir & GraphDir) == EdgeDir)
+auto&& edge_range(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
+{
+	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
+	if constexpr (EdgeDir == graph::e_IN) {
+		return G.edge_in_id(vertex_identifier);
+	} else if constexpr (EdgeDir == graph::e_OUT) {
+		return G.edge_out_id(vertex_identifier);
+	}
+}
+template <uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
+	requires((EdgeDir & GraphDir) == EdgeDir)
+auto&& edge_range_mut(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
+{
+	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
+	if constexpr (EdgeDir == graph::e_IN) {
+		return G.edge_in_id_mut(vertex_identifier);
+	} else if constexpr (EdgeDir == graph::e_OUT) {
+		return G.edge_out_id_mut(vertex_identifier);
+	}
+}
+
+template <uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
+	requires((EdgeDir & GraphDir) == EdgeDir)
+auto&& cost_range(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
+{
+	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
+	if constexpr (EdgeDir == graph::e_IN) {
+		return G.cost_in_id(vertex_identifier);
+	} else if constexpr (EdgeDir == graph::e_OUT) {
+		return G.cost_out_id(vertex_identifier);
+	}
+}
+template <uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
+	requires((EdgeDir & GraphDir) == EdgeDir)
+auto&& cost_range_mut(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
+{
+	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
+	if constexpr (EdgeDir == graph::e_IN) {
+		return G.cost_in_id_mut(vertex_identifier);
+	} else if constexpr (EdgeDir == graph::e_OUT) {
+		return G.cost_out_id_mut(vertex_identifier);
+	}
+}
 
 template <uint8_t GraphDir = graph::e_OUT, typename CostOut = void, typename CostIn = void>
 using static_adj_graph16 = static_adj_graph<GraphDir, graph::graph_int16, graph::graph_int16, CostOut, CostIn>;
