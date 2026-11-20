@@ -209,6 +209,17 @@ auto&& vertex_range_mut(static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G)
 	return G.vertex_all_mut();
 }
 
+template <uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
+const auto& vertex_at(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, uint32_t vertex_id)
+{
+	return G.vertex(vertex_id);
+}
+template <uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
+auto& vertex_at_mut(static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, uint32_t vertex_id)
+{
+	return G.vertex_mut(vertex_id);
+}
+
 template <uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
 	requires((EdgeDir & GraphDir) == EdgeDir)
 auto&& edge_range(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
