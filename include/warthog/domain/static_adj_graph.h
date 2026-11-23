@@ -41,6 +41,8 @@ struct static_adj_graph_edges
 	{
 		data = std::make_unique<T[]>(ecount);
 	}
+	T* get() noexcept { return data.get(); }
+	const T* get() const noexcept { return data.get(); }
 };
 template <>
 struct static_adj_graph_edges<void>
@@ -222,7 +224,7 @@ auto& vertex_at_mut(static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, uint
 
 template <uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
 	requires((EdgeDir & GraphDir) == EdgeDir)
-auto&& edge_range(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
+auto edge_range(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
 {
 	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
 	if constexpr (EdgeDir == graph::e_IN) {
@@ -233,7 +235,7 @@ auto&& edge_range(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, 
 }
 template <uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
 	requires((EdgeDir & GraphDir) == EdgeDir)
-auto&& edge_range_mut(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
+auto edge_range_mut(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
 {
 	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
 	if constexpr (EdgeDir == graph::e_IN) {
@@ -245,7 +247,7 @@ auto&& edge_range_mut(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>&
 
 template <uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
 	requires((EdgeDir & GraphDir) == EdgeDir)
-auto&& cost_range(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
+auto cost_range(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
 {
 	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
 	if constexpr (EdgeDir == graph::e_IN) {
@@ -256,7 +258,7 @@ auto&& cost_range(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, 
 }
 template <uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
 	requires((EdgeDir & GraphDir) == EdgeDir)
-auto&& cost_range_mut(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
+auto cost_range_mut(const static_adj_graph<GraphDir,MaxV,MaxE,CostOut,CostIn>& G, const auto& vertex_identifier)
 {
 	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
 	if constexpr (EdgeDir == graph::e_IN) {

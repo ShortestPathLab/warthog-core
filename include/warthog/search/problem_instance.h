@@ -74,15 +74,15 @@ public:
 using problem_instance        = problem_instance_base<pack_id>;
 using search_problem_instance = problem_instance_base<pad_id>;
 
-template<class Domain>
+template<class Expander>
 search_problem_instance
-convert_problem_instance_to_search(const problem_instance& pi, Domain& d)
+convert_problem_instance_to_search(const problem_instance& pi, Expander& exp)
 {
 	// convert start/target to padded/unpadded, preserving max value
 	pad_id start  = pi.start_ == pack_id::max() ? pad_id::max()
-	                                            : d.to_padded_id(pi.start_);
+	                                            : exp.unget_state(pi.start_);
 	pad_id target = pi.target_ == pack_id::max() ? pad_id::max()
-	                                             : d.to_padded_id(pi.target_);
+	                                             : exp.unget_state(pi.target_);
 	return search_problem_instance{
 	    start, target, pi.instance_id_, pi.verbose_, pi.extra_params_};
 }

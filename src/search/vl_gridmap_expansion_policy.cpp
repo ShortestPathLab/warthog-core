@@ -25,7 +25,7 @@ search_problem_instance
 vl_gridmap_expansion_policy_base::get_problem_instance(problem_instance* pi)
 {
 	assert(pi != nullptr);
-	return convert_problem_instance_to_search(*pi, *map_);
+	return convert_problem_instance_to_search(*pi, *this);
 }
 
 pack_id

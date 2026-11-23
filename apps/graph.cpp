@@ -11,9 +11,15 @@
 
 #include <warthog/forward.h>
 
+#include <warthog/domain/grid.h>
 #include <warthog/io/dimacs_parser.h>
 #include <warthog/domain/static_adj_graph.h>
 #include <warthog/util/string.h>
+#include <warthog/search/graph_expansion_policy.h>
+#include <warthog/heuristic/euclidean_heuristic.h>
+#include <warthog/heuristic/zero_heuristic.h>
+#include <warthog/util/pqueue.h>
+#include <warthog/search/unidirectional_search.h>
 
 #ifdef WARTHOG_POSTHOC
 #include <warthog/io/grid_trace.h>
@@ -22,6 +28,7 @@
 #include "cfg.h"
 
 #include <iostream>
+#include <ranges>
 #include <string>
 
 namespace
@@ -86,16 +93,148 @@ help(std::ostream& out)
 /// @brief general wrapper around dimics
 struct dimics_scenario
 {
+	using graph_type = warthog::domain::static_adj_graph32<warthog::graph::e_OUT, uint32_t>;
+
 	warthog::io::dimacs_parser parser;
-	warthog::domain::static_adj_graph32<warthog::graph::e_OUT, uint32_t> graph;
+	graph_type graph;
+	std::vector<warthog::grid::spoint32> vertex_loc;
 
 	void setup_graph()
 	{
 		dimics_to_graph(parser, graph);
+		vertex_loc.resize(parser.get_num_nodes());
+		for (auto&& [data,p_node] : std::views::zip(vertex_loc, parser.nodes())) {
+			data.x = p_node.x_;
+			data.y = p_node.y_;
+		}
 	}
 };
 
+
+template<typename Search>
+int
+run_experiments(
+    Search& algo, std::string alg_name, dimics_scenario& scen, bool verbose,
+    [[maybe_unused]] bool checkopt, std::ostream& out)
+{
+	WARTHOG_GINFO_FMT("start search with algorithm {}", alg_name);
+	warthog::search::search_parameters par;
+	warthog::search::solution sol;
+	auto* expander = algo.get_expander();
+	if(expander == nullptr) return (int)std::errc::invalid_argument;
+
+	out << "id\talg\texpanded\tgenerated\treopen\tsurplus\theapops"
+	    << "\tnanos\tplen\tpcost\tscost\n";
+
+	uint32_t i, ie;
+	if (filter_id < 0) {
+		i = 0;
+		ie = scen.parser.num_experiments();
+	} else {
+		i = static_cast<uint32_t>(filter_id);
+		ie = std::min(static_cast<uint32_t>(scen.parser.num_experiments()), static_cast<uint32_t>(i+1));
+	}
+	for(; i < ie; ++i)
+	{
+#ifdef WARTHOG_POSTHOC
+		std::optional<std::ofstream>
+		    trace_stream; // open and pass to trace if used
+#endif
+
+		auto& exp = scen.parser.experiments()[i];
+
+		warthog::pack_id startid
+		    = static_cast<warthog::pack_id>(exp.source);
+		warthog::pack_id goalid
+		    = static_cast<warthog::pack_id>(exp.target);
+		warthog::search::problem_instance pi(startid, goalid, verbose);
+		sol.reset();
+
+		algo.get_path(&pi, &par, &sol);
+		// check for no solution
+		if(sol.sum_of_edge_costs_ >= warthog::COST_MAX)
+		{
+			sol.sum_of_edge_costs_ = -1;
+		}
+
+#ifdef WARTHOG_POSTHOC
+		if constexpr(std::same_as<
+		                 listener_type,
+		                 std::remove_cvref_t<decltype(algo.get_listeners())>>)
+		{
+			if(trace_stream.has_value())
+			{
+				// close
+				std::get<listener_grid>(algo.get_listeners()).close();
+			}
+		}
+#endif
+
+		out << i << "\t" << alg_name << "\t"
+		    << sol.met_.nodes_expanded_ << "\t" << sol.met_.nodes_generated_
+		    << "\t" << sol.met_.nodes_reopen_ << "\t"
+		    << sol.met_.nodes_surplus_ << "\t" << sol.met_.heap_ops_ << "\t"
+		    << sol.met_.time_elapsed_nano_.count() << "\t"
+		    << (!sol.path_.empty() ? sol.path_.size() - 1 : 0) << "\t"
+		    << sol.sum_of_edge_costs_ << "\t-" << std::endl;
+
+		// if(checkopt)
+		// {
+		// 	if(!check_optimality(sol, exp))
+		// 	{
+		// 		WARTHOG_GCRIT("search error: failed suboptimal 4");
+		// 		return (int)std::errc::result_out_of_range;
+		// 	}
+		// }
+	}
+
+	WARTHOG_GINFO_FMT(
+	    "search complete; total memory: {}", algo.mem());
+	return 0;
+}
+
+int
+run_astar(
+    dimics_scenario& scenmgr, 
+    std::string alg_name)
+{
+	warthog::search::graph_expansion_policy<dimics_scenario::graph_type, warthog::search::get_graph_cost_cast>
+		expander(&scenmgr.graph);
+	warthog::heuristic::euclidean_heuristic heuristic(
+	    scenmgr.vertex_loc | std::views::all);
+	warthog::util::pqueue_min open;
+
+	warthog::search::unidirectional_search astar(
+	    &heuristic, &expander, &open,
+	    listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
+
+	int ret
+	    = run_experiments(astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	return ret;
+}
+
+int
+run_dijkstra(
+    dimics_scenario& scenmgr, 
+    std::string alg_name)
+{
+	warthog::search::graph_expansion_policy<dimics_scenario::graph_type, warthog::search::get_graph_cost_cast>
+		expander(&scenmgr.graph);
+	warthog::heuristic::zero_heuristic heuristic;
+	warthog::util::pqueue_min open;
+
+	warthog::search::unidirectional_search astar(
+	    &heuristic, &expander, &open,
+	    listener_type(WARTHOG_POSTHOC_DO(&scen.grid)));
+
+	int ret
+	    = run_experiments(astar, alg_name, scenmgr, verbose, checkopt, std::cout);
+	return ret;
+}
+
 } // namespace
+
+
 
 int
 main(int argc, char** argv)
@@ -175,7 +314,11 @@ main(int argc, char** argv)
 
 	dimics.setup_graph();
 
-	if(alg == "astar") {  }
+	if(alg == "astar") {
+		return run_astar(dimics, "astar");
+	} else if (alg == "dijkstra") {
+		return run_dijkstra(dimics, "dijkstra");
+	}
 	WARTHOG_GCRIT_FMT("invalid search algorithm: ", alg);
 	return (int)std::errc::invalid_argument;
 }

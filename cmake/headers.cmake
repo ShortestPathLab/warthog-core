@@ -16,6 +16,7 @@ warthog/domain/static_adj_graph.h
 warthog/geometry/geography.h
 warthog/geometry/geom.h
 
+warthog/heuristic/euclidean_heuristic.h
 warthog/heuristic/heuristic_value.h
 warthog/heuristic/manhattan_heuristic.h
 warthog/heuristic/octile_heuristic.h
@@ -43,6 +44,7 @@ warthog/scenario/scenario_manager.h
 warthog/scenario/scenario_runner.h
 
 warthog/search/expansion_policy.h
+warthog/search/graph_expansion_policy.h
 warthog/search/gridmap_expansion_policy.h
 warthog/search/problem_instance.h
 warthog/search/search.h

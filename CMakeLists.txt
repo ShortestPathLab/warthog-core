@@ -62,16 +62,16 @@ add_executable(warthog::warthog ALIAS warthog_app)
 set_target_properties(warthog_app PROPERTIES OUTPUT_NAME "warthog")
 target_link_libraries(warthog_app PUBLIC warthog::apps)
 
-add_executable(warthog_dimics)
-add_executable(warthog::dimics ALIAS warthog_dimics)
-set_target_properties(warthog_dimics PROPERTIES OUTPUT_NAME "dimics")
-target_link_libraries(warthog_dimics PUBLIC warthog::apps)
+add_executable(warthog_graph)
+add_executable(warthog::graph ALIAS warthog_graph)
+set_target_properties(warthog_graph PROPERTIES OUTPUT_NAME "graph")
+target_link_libraries(warthog_graph PUBLIC warthog::apps)
 
 add_subdirectory(src)
 add_subdirectory(apps)
 
 
-install(TARGETS warthog_core warthog_app warthog_dimics
+install(TARGETS warthog_core warthog_app warthog_graph
     RUNTIME 
         COMPONENT Runtime
     LIBRARY 
