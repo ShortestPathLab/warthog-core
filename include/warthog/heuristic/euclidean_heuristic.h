@@ -14,60 +14,71 @@
 #include <warthog/domain/grid.h>
 #include <warthog/util/helpers.h>
 
-#include <concepts>
-#include <tuple>
-#include <span>
 #include <cmath>
+#include <concepts>
+#include <span>
+#include <tuple>
 
 namespace warthog::heuristic
 {
 
 struct EuclideanXY
 {
-	constexpr auto operator()(const auto& c) const noexcept
+	constexpr auto
+	operator()(const auto& c) const noexcept
 	{
 		return std::tuple(c.x, c.y);
 	}
 };
 
-template <typename CoordArray = std::span<const grid::spoint32>, typename GetXY = EuclideanXY>
+template<
+    typename CoordArray = std::span<const grid::spoint32>,
+    typename GetXY      = EuclideanXY>
 class euclidean_heuristic
 {
 public:
-	constexpr euclidean_heuristic(auto&& crd) : coords_(std::move(crd))
-	{ }
+	constexpr euclidean_heuristic(auto&& crd) : coords_(std::move(crd)) { }
 
 	~euclidean_heuristic() { }
 
-	template <std::integral C>
+	template<std::integral C>
 	double
 	h(C x, C y, C x2, C y2)
 	{
-		if constexpr (sizeof(C) <= 4) {
+		if constexpr(sizeof(C) <= 4)
+		{
 			int64_t dx = (int64_t)x - (int64_t)x2;
-			dx = dx * dx;
+			dx         = dx * dx;
 			int64_t dy = (int64_t)x - (int64_t)x2;
-			dy = dy * dy;
-			return std::sqrt(static_cast<double>(dx) + static_cast<double>(dy));
-		} else {
-			return h(static_cast<double>(x), static_cast<double>(y), static_cast<double>(x2), static_cast<double>(y2));
+			dy         = dy * dy;
+			return std::sqrt(
+			    static_cast<double>(dx) + static_cast<double>(dy));
+		}
+		else
+		{
+			return h(
+			    static_cast<double>(x), static_cast<double>(y),
+			    static_cast<double>(x2), static_cast<double>(y2));
 		}
 	}
-	template <std::floating_point C>
+	template<std::floating_point C>
 	double
 	h(C x, C y, C x2, C y2)
 	{
 		x -= x2;
 		y -= y2;
-		if constexpr (std::same_as<C, double>) {
+		if constexpr(std::same_as<C, double>)
+		{
 			x *= x;
 			y *= y;
 			return std::sqrt(x + y);
-		} else {
+		}
+		else
+		{
 			double dx = static_cast<double>(x);
-			dx *= dx;
+			dx       *= dx;
 			double dy = static_cast<double>(x);
-			dy *= dy;
+			dy       *= dy;
 			return std::sqrt(dx + dy);
 		}
 	}
@@ -76,7 +87,7 @@ public:
 	h(sn_id_t id, sn_id_t id2)
 	{
 		GetXY g_xy;
-		auto [x, y] = g_xy(this->coords_[id]);
+		auto [x, y]   = g_xy(this->coords_[id]);
 		auto [x2, y2] = g_xy(this->coords_[id2]);
 		return this->h(x, y, x2, y2);
 	}

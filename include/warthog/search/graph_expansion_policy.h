@@ -17,33 +17,35 @@
 #include "search_node.h"
 #include <warthog/domain/graph.h>
 
-#include <memory>
 #include <cassert>
+#include <memory>
 
 namespace warthog::search
 {
 
 struct get_graph_cost_cast
 {
-	cost_t operator()(const auto& G, const auto& edge_data)
+	cost_t
+	operator()(const auto& G, const auto& edge_data)
 	{
 		return static_cast<cost_t>(edge_data);
 	}
 };
 struct get_graph_cost_unit
 {
-	constexpr cost_t operator()() noexcept
+	constexpr cost_t
+	operator()() noexcept
 	{
 		return 1;
 	}
 };
 
-template <typename G>
+template<typename G>
 class graph_expansion_policy_base : public expansion_policy
 {
 public:
-	graph_expansion_policy_base(G* map) : expansion_policy(map != nullptr ? map->vertices() : 0),
-		map_(map)
+	graph_expansion_policy_base(G* map)
+	    : expansion_policy(map != nullptr ? map->vertices() : 0), map_(map)
 	{ }
 
 	void
@@ -86,19 +88,20 @@ public:
 	// TODO: overhaul mem()
 	size_t
 	mem() override
-	{ return 0; }
+	{
+		return 0;
+	}
 
 protected:
 	G* map_ = nullptr;
 };
 
-
-template <typename G, typename CostConv>
+template<typename G, typename CostConv>
 class graph_expansion_policy : public graph_expansion_policy_base<G>
 {
 public:
-	graph_expansion_policy(G* map, CostConv&& conv = CostConv()) :
-		graph_expansion_policy_base<G>(map), cost_conv(std::move(conv))
+	graph_expansion_policy(G* map, CostConv&& conv = CostConv())
+	    : graph_expansion_policy_base<G>(map), cost_conv(std::move(conv))
 	{ }
 
 	void
@@ -120,47 +123,56 @@ protected:
 	[[no_unique_address]] CostConv cost_conv;
 };
 
-template <typename G, typename CostConv>
+template<typename G, typename CostConv>
 void
-graph_expansion_policy<G, CostConv>::expand(search_node* current, search_problem_instance* problem)
+graph_expansion_policy<G, CostConv>::expand(
+    search_node* current, search_problem_instance* problem)
 {
 	this->reset();
 
 	uint32_t cid = static_cast<uint32_t>(current->get_id());
 
-	if constexpr (std::invocable<CostConv&>) {
+	if constexpr(std::invocable<CostConv&>)
+	{
 		// no data
-		for (auto i : edge_range(*this->map_, cid)) {
+		for(auto i : edge_range(*this->map_, cid))
+		{
 			this->add_neighbour(this->generate(i), cost_conv());
 		}
-	} else {
+	}
+	else
+	{
 		auto& map = *this->map_;
-		for (auto i : std::views::zip(edge_range<graph::e_OUT>(map, cid), cost_range<graph::e_OUT>(map, cid))) {
+		for(auto i : std::views::zip(
+		        edge_range<graph::e_OUT>(map, cid),
+		        cost_range<graph::e_OUT>(map, cid)))
+		{
 			search_node* succ = this->generate(pad_id(std::get<0>(i)));
-			double cost = cost_conv(map, std::get<1>(i));
+			double cost       = cost_conv(map, std::get<1>(i));
 			this->add_neighbour(succ, cost);
 		}
 	}
 }
 
-template <typename G, typename CostConv>
+template<typename G, typename CostConv>
 search_node*
-graph_expansion_policy<G, CostConv>::generate_start_node(search_problem_instance* pi)
+graph_expansion_policy<G, CostConv>::generate_start_node(
+    search_problem_instance* pi)
 {
 	uint32_t max_id = this->map_->vertices();
 	if(uint32_t{pi->start_} >= max_id) { return 0; }
 	return this->generate(pi->start_);
 }
 
-template <typename G, typename CostConv>
+template<typename G, typename CostConv>
 search_node*
-graph_expansion_policy<G, CostConv>::generate_target_node(search_problem_instance* pi)
+graph_expansion_policy<G, CostConv>::generate_target_node(
+    search_problem_instance* pi)
 {
 	uint32_t max_id = this->map_->vertices();
 	if(uint32_t{pi->target_} >= max_id) { return 0; }
 	return this->generate(pi->target_);
 }
-
 
 } // namespace warthog::search
 

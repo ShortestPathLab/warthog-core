@@ -11,14 +11,14 @@
 
 #include <warthog/forward.h>
 
-#include <warthog/search/problem_instance.h>
 #include <warthog/domain/static_adj_graph.h>
+#include <warthog/search/problem_instance.h>
 
-#include <fstream>
-#include <vector>
-#include <span>
 #include <cassert>
+#include <fstream>
 #include <ranges>
+#include <span>
+#include <vector>
 
 namespace warthog::io
 {
@@ -97,34 +97,40 @@ public:
 		return (uint32_t)edges_->size();
 	}
 
-	std::span<const dimacs_parser::node> nodes() const noexcept
+	std::span<const dimacs_parser::node>
+	nodes() const noexcept
 	{
 		assert(nodes_ != nullptr);
 		return *nodes_;
 	}
-	std::span<dimacs_parser::node> nodes_mut() noexcept
+	std::span<dimacs_parser::node>
+	nodes_mut() noexcept
 	{
 		assert(nodes_ != nullptr);
 		return *nodes_;
 	}
 
-	std::span<const dimacs_parser::edge> edges() const noexcept
+	std::span<const dimacs_parser::edge>
+	edges() const noexcept
 	{
 		assert(edges_ != nullptr);
 		return *edges_;
 	}
-	std::span<dimacs_parser::edge> edges_mut() noexcept
+	std::span<dimacs_parser::edge>
+	edges_mut() noexcept
 	{
 		assert(edges_ != nullptr);
 		return *edges_;
 	}
 
-	std::span<const dimacs_parser::experiment> experiments() const noexcept
+	std::span<const dimacs_parser::experiment>
+	experiments() const noexcept
 	{
 		assert(experiments_ != nullptr);
 		return *experiments_;
 	}
-	std::span<dimacs_parser::experiment> experiments_mut() noexcept
+	std::span<dimacs_parser::experiment>
+	experiments_mut() noexcept
 	{
 		assert(experiments_ != nullptr);
 		return *experiments_;
@@ -180,61 +186,94 @@ private:
 	std::string gr_file_;
 };
 
-template <uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut, typename CostIn>
-	requires ((GraphDir & graph::e_OUT) != 0)
-void dimics_to_graph(const dimacs_parser& dimic,
-	domain::static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& graph)
+template<
+    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut,
+    typename CostIn>
+    requires((GraphDir & graph::e_OUT) != 0)
+void
+dimics_to_graph(
+    const dimacs_parser& dimic,
+    domain::static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& graph)
 {
-	using graph_type = domain::static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>;
+	using graph_type
+	    = domain::static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>;
 	auto nodes = dimic.nodes();
 	// copy edges, will sort
 	std::vector edges(dimic.edges().begin(), dimic.edges().end());
 	graph.setup(nodes.size(), edges.size());
 
-	auto nd_vtx = graph.vertex_all_mut();
+	auto nd_vtx      = graph.vertex_all_mut();
 	uint32_t edge_at = 0;
-	std::ranges::sort(edges, {}, [](const auto& e) noexcept { return e.head_id_; });
-	for (auto const node_edges : edges | std::views::chunk_by([](const auto& a, const auto& b) noexcept { return a.head_id_ == b.head_id_; }))
+	std::ranges::sort(
+	    edges, {}, [](const auto& e) noexcept { return e.head_id_; });
+	for(auto const node_edges : edges
+	        | std::views::chunk_by([](const auto& a, const auto& b) noexcept {
+		                            return a.head_id_ == b.head_id_;
+	                            }))
 	{
 		uint32_t node_id = begin(node_edges)->head_id_ - 1;
 		// any skipped node will have zero edges
 		auto& vtx_ed = vertex_node_edges<graph::e_OUT>(nd_vtx[node_id]);
-		uint32_t ie = size(node_edges);
+		uint32_t ie  = size(node_edges);
 		vtx_ed.start = edge_at;
 		vtx_ed.count = ie;
-		for (uint32_t i = 0; i < ie; ++i) {
-			graph.edge_out.data[edge_at+i] = static_cast<typename graph_type::vertex_id>(edges[edge_at+i].tail_id_ - 1);
-			if constexpr (!std::same_as<CostOut, void>) {
-				if constexpr (std::assignable_from<CostOut&, uint32_t>) {
-					graph.cost_out.data[edge_at+i] = edges[edge_at+i].weight_;
-				} else {
-					graph.cost_out.data[edge_at+i] = static_cast<CostOut>(edges[edge_at+i].weight_);
+		for(uint32_t i = 0; i < ie; ++i)
+		{
+			graph.edge_out.data[edge_at + i]
+			    = static_cast<typename graph_type::vertex_id>(
+			        edges[edge_at + i].tail_id_ - 1);
+			if constexpr(!std::same_as<CostOut, void>)
+			{
+				if constexpr(std::assignable_from<CostOut&, uint32_t>)
+				{
+					graph.cost_out.data[edge_at + i]
+					    = edges[edge_at + i].weight_;
+				}
+				else
+				{
+					graph.cost_out.data[edge_at + i]
+					    = static_cast<CostOut>(edges[edge_at + i].weight_);
 				}
 			}
 		}
 		edge_at += ie;
 	}
 
-	if constexpr ((GraphDir & graph::e_IN) != 0) {
+	if constexpr((GraphDir & graph::e_IN) != 0)
+	{
 		// add in-edges
-		std::ranges::sort(edges, {}, [](const auto& e) noexcept { return e.tail_id_; });
+		std::ranges::sort(
+		    edges, {}, [](const auto& e) noexcept { return e.tail_id_; });
 
 		edge_at = 0;
-		for (auto const node_edges : edges | std::views::chunk_by([](const auto& a, const auto& b) noexcept { return a.tail_id_ == b.tail_id_; }))
+		for(auto const node_edges : edges
+		        | std::views::chunk_by([](const auto& a,
+		                                  const auto& b) noexcept {
+			                            return a.tail_id_ == b.tail_id_;
+		                            }))
 		{
 			uint32_t node_id = begin(node_edges)->tail_id_ - 1;
 			// any skipped node will have zero edges
 			auto& vtx_ed = vertex_node_edges<graph::e_IN>(nd_vtx[node_id]);
-			uint32_t ie = size(node_edges);
+			uint32_t ie  = size(node_edges);
 			vtx_ed.start = edge_at;
 			vtx_ed.count = ie;
-			for (uint32_t i = 0; i < ie; ++i) {
-				graph.edge_in.data[edge_at+i] = static_cast<typename graph_type::vertex_id>(edges[edge_at+i].head_id_ - 1);
-				if constexpr (!std::same_as<CostIn, void>) {
-					if constexpr (std::assignable_from<CostIn&, uint32_t>) {
-						graph.cost_in.data[edge_at+i] = edges[edge_at+i].weight_;
-					} else {
-						graph.cost_in.data[edge_at+i] = static_cast<CostIn>(edges[edge_at+i].weight_);
+			for(uint32_t i = 0; i < ie; ++i)
+			{
+				graph.edge_in.data[edge_at + i]
+				    = static_cast<typename graph_type::vertex_id>(
+				        edges[edge_at + i].head_id_ - 1);
+				if constexpr(!std::same_as<CostIn, void>)
+				{
+					if constexpr(std::assignable_from<CostIn&, uint32_t>)
+					{
+						graph.cost_in.data[edge_at + i]
+						    = edges[edge_at + i].weight_;
+					}
+					else
+					{
+						graph.cost_in.data[edge_at + i]
+						    = static_cast<CostIn>(edges[edge_at + i].weight_);
 					}
 				}
 			}
