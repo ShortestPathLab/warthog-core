@@ -33,7 +33,7 @@ namespace details
 {
 
 template<typename T>
-struct static_adj_graph_edges
+struct static_adj_graph_label
 {
 	std::unique_ptr<T[]> data;
 
@@ -54,7 +54,7 @@ struct static_adj_graph_edges
 	}
 };
 template<>
-struct static_adj_graph_edges<void>
+struct static_adj_graph_label<void>
 {
 	void
 	setup(size_t)
@@ -64,26 +64,25 @@ struct static_adj_graph_edges<void>
 template<typename T, typename edge_id>
 std::span<const T>
 get_vertex_data(
-    const static_adj_graph_edges<T>& edges, graph::vertex_edges<edge_id> ve)
+    const static_adj_graph_label<T>& edges, graph::vertex_edges<edge_id> ve)
 {
 	return std::span<const T>(edges.data.get() + ve.start, ve.count);
 }
 template<typename T, typename edge_id>
 std::span<T>
 get_vertex_data_mut(
-    static_adj_graph_edges<T>& edges, graph::vertex_edges<edge_id> ve)
+    static_adj_graph_label<T>& edges, graph::vertex_edges<edge_id> ve)
 {
 	return std::span<T>(edges.data.get() + ve.start, ve.count);
 }
 
 template<
-    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut,
-    typename CostIn>
+    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
 struct static_adj_graph_data
 {
 	static_assert(
-	    std::same_as<CostOut, void> || (GraphDir & graph::e_out) != 0);
-	static_assert(std::same_as<CostIn, void> || (GraphDir & graph::e_in) != 0);
+	    std::same_as<LabelOut, void> || (GraphDir & graph::e_out) != 0);
+	static_assert(std::same_as<LabelIn, void> || (GraphDir & graph::e_in) != 0);
 
 	using vertex_id         = util::fit_unsigned_t<MaxV>;
 	using edge_id           = util::fit_unsigned_t<MaxE>;
@@ -96,26 +95,32 @@ struct static_adj_graph_data
 		return GraphDir;
 	}
 	static consteval uint8_t
-	graph_cost_out() noexcept
+	graph_label_vertex() noexcept
 	{
-		return !std::same_as<CostOut, void>;
+		return !std::same_as<LabelVertex, void>;
 	}
 	static consteval uint8_t
-	graph_cost_in() noexcept
+	graph_label_out() noexcept
 	{
-		return !std::same_as<CostIn, void>;
+		return !std::same_as<LabelOut, void>;
+	}
+	static consteval uint8_t
+	graph_label_in() noexcept
+	{
+		return !std::same_as<LabelIn, void>;
 	}
 
-	std::pair<uint32_t, uint32_t> graph_size;
-	std::unique_ptr<vertex_type[]> vertex_node;
-	[[no_unique_address]] static_adj_graph_edges<
+	std::pair<uint32_t, uint32_t> graph_size; ///< first=num vertex,second=num edge
+	std::unique_ptr<vertex_type[]> vertex_node; ///< array of vertices of size vertices()
+	[[no_unique_address]] static_adj_graph_label<
 	    std::conditional_t<(GraphDir & graph::e_out) != 0, vertex_id, void>>
-	    edge_out;
-	[[no_unique_address]] static_adj_graph_edges<
+	    edge_out; ///< array of edge to of size edges(); only in e_out graphs
+	[[no_unique_address]] static_adj_graph_label<
 	    std::conditional_t<(GraphDir & graph::e_in) != 0, vertex_id, void>>
-	    edge_in;
-	[[no_unique_address]] static_adj_graph_edges<CostOut> cost_out;
-	[[no_unique_address]] static_adj_graph_edges<CostIn> cost_in;
+	    edge_in; ///< array of edge from of size edges(); only in e_in graphs
+	[[no_unique_address]] static_adj_graph_label<LabelVertex> label_vertex; ///< array of vertex labels of size vertices(); only if not void
+	[[no_unique_address]] static_adj_graph_label<LabelOut> label_out; ///< array of edge out labels of size edges(); only if not void
+	[[no_unique_address]] static_adj_graph_label<LabelIn> label_in; ///< array of edge in labels of size edges(); only if not void
 
 	void
 	setup(vertex_id vcount, edge_id ecount)
@@ -126,8 +131,8 @@ struct static_adj_graph_data
 		std::fill_n(vertex_node.get(), vcount, vertex_type{});
 		edge_out.setup(ecount);
 		edge_in.setup(ecount);
-		cost_out.setup(ecount);
-		cost_in.setup(ecount);
+		label_out.setup(ecount);
+		label_in.setup(ecount);
 	}
 
 	std::pair<uint32_t, uint32_t>
@@ -202,10 +207,10 @@ struct static_adj_graph_data
 	    edge_in, uint32_t, edge_in, ((GraphDir & graph::e_in) != 0),
 	    graph::e_in)
 	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(
-	    cost_out, CostOut, cost_out, (!std::same_as<CostOut, void>),
+	    label_out, LabelOut, label_out, (!std::same_as<LabelOut, void>),
 	    graph::e_out)
 	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(
-	    cost_in, CostIn, cost_in, (!std::same_as<CostIn, void>), graph::e_in)
+	    label_in, LabelIn, label_in, (!std::same_as<LabelIn, void>), graph::e_in)
 
 #undef WARTHOG_CODE_GENERATOR_STGRAPH_EDGE
 };
@@ -214,16 +219,16 @@ struct static_adj_graph_data
 
 template<
     uint8_t GraphDir = graph::e_out, size_t MaxV = graph::graph_int16,
-    size_t MaxE = graph::graph_int16, typename CostOut = void,
-    typename CostIn = void>
+    size_t MaxE = graph::graph_int16, typename LabelVertex = void, typename LabelOut = void,
+    typename LabelIn = void>
 class static_adj_graph : public details::static_adj_graph_data<
-                             GraphDir, MaxV, MaxE, CostOut, CostIn>
+                             GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>
 {
 public:
 	using super = details::static_adj_graph_data<
-	    GraphDir, MaxV, MaxE, CostOut, CostIn>;
-	using cost_out_type = CostOut;
-	using cost_in_type  = CostIn;
+	    GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>;
+	using label_out_type = LabelOut;
+	using label_in_type  = LabelIn;
 	using typename super::edge_id;
 	using typename super::vertex_id;
 	using typename super::vertex_type;
@@ -257,50 +262,45 @@ public:
 };
 
 template<
-    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut,
-    typename CostIn>
+    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
 auto&&
-vertex_range(const static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G)
+vertex_range(const static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G)
 {
 	return G.vertex_all();
 }
 template<
-    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut,
-    typename CostIn>
+    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
 auto&&
-vertex_range_mut(static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G)
+vertex_range_mut(static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G)
 {
 	return G.vertex_all_mut();
 }
 
 template<
-    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut,
-    typename CostIn>
+    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
 const auto&
 vertex_at(
-    const static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G,
+    const static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G,
     uint32_t vertex_id)
 {
 	return G.vertex(vertex_id);
 }
 template<
-    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut,
-    typename CostIn>
+    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
 auto&
 vertex_at_mut(
-    static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G,
+    static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G,
     uint32_t vertex_id)
 {
 	return G.vertex_mut(vertex_id);
 }
 
 template<
-    uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE,
-    typename CostOut, typename CostIn>
+    uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
     requires((EdgeDir & GraphDir) == EdgeDir)
 auto
 edge_range(
-    const static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G,
+    const static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G,
     const auto& vertex_identifier)
 {
 	static_assert(EdgeDir == graph::e_in || EdgeDir == graph::e_out);
@@ -314,12 +314,11 @@ edge_range(
 	}
 }
 template<
-    uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE,
-    typename CostOut, typename CostIn>
+    uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
     requires((EdgeDir & GraphDir) == EdgeDir)
 auto
 edge_range_mut(
-    const static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G,
+    const static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G,
     const auto& vertex_identifier)
 {
 	static_assert(EdgeDir == graph::e_in || EdgeDir == graph::e_out);
@@ -334,55 +333,53 @@ edge_range_mut(
 }
 
 template<
-    uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE,
-    typename CostOut, typename CostIn>
+    uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
     requires((EdgeDir & GraphDir) == EdgeDir)
 auto
-cost_range(
-    const static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G,
+label_range(
+    const static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G,
     const auto& vertex_identifier)
 {
 	static_assert(EdgeDir == graph::e_in || EdgeDir == graph::e_out);
 	if constexpr(EdgeDir == graph::e_in)
 	{
-		return G.cost_in_id(vertex_identifier);
+		return G.label_in_id(vertex_identifier);
 	}
 	else if constexpr(EdgeDir == graph::e_out)
 	{
-		return G.cost_out_id(vertex_identifier);
+		return G.label_out_id(vertex_identifier);
 	}
 }
 template<
-    uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE,
-    typename CostOut, typename CostIn>
+    uint8_t EdgeDir, uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
     requires((EdgeDir & GraphDir) == EdgeDir)
 auto
-cost_range_mut(
-    const static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G,
+label_range_mut(
+    const static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G,
     const auto& vertex_identifier)
 {
 	static_assert(EdgeDir == graph::e_in || EdgeDir == graph::e_out);
 	if constexpr(EdgeDir == graph::e_in)
 	{
-		return G.cost_in_id_mut(vertex_identifier);
+		return G.label_in_id_mut(vertex_identifier);
 	}
 	else if constexpr(EdgeDir == graph::e_out)
 	{
-		return G.cost_out_id_mut(vertex_identifier);
+		return G.label_out_id_mut(vertex_identifier);
 	}
 }
 
 template<
-    uint8_t GraphDir = graph::e_out, typename CostOut = void,
-    typename CostIn = void>
+    uint8_t GraphDir = graph::e_out, typename LabelVertex = void, typename LabelOut = void,
+    typename LabelIn = void>
 using static_adj_graph16 = static_adj_graph<
-    GraphDir, graph::graph_int16, graph::graph_int16, CostOut, CostIn>;
+    GraphDir, graph::graph_int16, graph::graph_int16, LabelVertex, LabelOut, LabelIn>;
 
 template<
-    uint8_t GraphDir = graph::e_out, typename CostOut = void,
-    typename CostIn = void>
+    uint8_t GraphDir = graph::e_out, typename LabelVertex = void, typename LabelOut = void,
+    typename LabelIn = void>
 using static_adj_graph32 = static_adj_graph<
-    GraphDir, graph::graph_int32, graph::graph_int32, CostOut, CostIn>;
+    GraphDir, graph::graph_int32, graph::graph_int32, LabelVertex, LabelOut, LabelIn>;
 
 } // namespace warthog::domain
 

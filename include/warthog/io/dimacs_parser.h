@@ -187,16 +187,15 @@ private:
 };
 
 template<
-    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut,
-    typename CostIn>
+    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
     requires((GraphDir & graph::e_out) != 0)
 void
 dimics_to_graph(
     const dimacs_parser& dimic,
-    domain::static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& graph)
+    domain::static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& graph)
 {
 	using graph_type
-	    = domain::static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>;
+	    = domain::static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>;
 	auto nodes = dimic.nodes();
 	// copy edges, will sort
 	std::vector edges(dimic.edges().begin(), dimic.edges().end());
@@ -222,17 +221,17 @@ dimics_to_graph(
 			graph.edge_out.data[edge_at + i]
 			    = static_cast<typename graph_type::vertex_id>(
 			        edges[edge_at + i].tail_id_ - 1);
-			if constexpr(!std::same_as<CostOut, void>)
+			if constexpr(!std::same_as<LabelOut, void>)
 			{
-				if constexpr(std::assignable_from<CostOut&, uint32_t>)
+				if constexpr(std::assignable_from<LabelOut&, uint32_t>)
 				{
-					graph.cost_out.data[edge_at + i]
+					graph.label_out.data[edge_at + i]
 					    = edges[edge_at + i].weight_;
 				}
 				else
 				{
-					graph.cost_out.data[edge_at + i]
-					    = static_cast<CostOut>(edges[edge_at + i].weight_);
+					graph.label_out.data[edge_at + i]
+					    = static_cast<LabelOut>(edges[edge_at + i].weight_);
 				}
 			}
 		}
@@ -263,17 +262,17 @@ dimics_to_graph(
 				graph.edge_in.data[edge_at + i]
 				    = static_cast<typename graph_type::vertex_id>(
 				        edges[edge_at + i].head_id_ - 1);
-				if constexpr(!std::same_as<CostIn, void>)
+				if constexpr(!std::same_as<LabelIn, void>)
 				{
-					if constexpr(std::assignable_from<CostIn&, uint32_t>)
+					if constexpr(std::assignable_from<LabelIn&, uint32_t>)
 					{
-						graph.cost_in.data[edge_at + i]
+						graph.label_in.data[edge_at + i]
 						    = edges[edge_at + i].weight_;
 					}
 					else
 					{
-						graph.cost_in.data[edge_at + i]
-						    = static_cast<CostIn>(edges[edge_at + i].weight_);
+						graph.label_in.data[edge_at + i]
+						    = static_cast<LabelIn>(edges[edge_at + i].weight_);
 					}
 				}
 			}
