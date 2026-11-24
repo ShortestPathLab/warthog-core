@@ -189,7 +189,7 @@ private:
 template<
     uint8_t GraphDir, size_t MaxV, size_t MaxE, typename CostOut,
     typename CostIn>
-    requires((GraphDir & graph::e_OUT) != 0)
+    requires((GraphDir & graph::e_out) != 0)
 void
 dimics_to_graph(
     const dimacs_parser& dimic,
@@ -213,7 +213,7 @@ dimics_to_graph(
 	{
 		uint32_t node_id = begin(node_edges)->head_id_ - 1;
 		// any skipped node will have zero edges
-		auto& vtx_ed = vertex_node_edges<graph::e_OUT>(nd_vtx[node_id]);
+		auto& vtx_ed = vertex_node_edges<graph::e_out>(nd_vtx[node_id]);
 		uint32_t ie  = size(node_edges);
 		vtx_ed.start = edge_at;
 		vtx_ed.count = ie;
@@ -239,7 +239,7 @@ dimics_to_graph(
 		edge_at += ie;
 	}
 
-	if constexpr((GraphDir & graph::e_IN) != 0)
+	if constexpr((GraphDir & graph::e_in) != 0)
 	{
 		// add in-edges
 		std::ranges::sort(
@@ -254,7 +254,7 @@ dimics_to_graph(
 		{
 			uint32_t node_id = begin(node_edges)->tail_id_ - 1;
 			// any skipped node will have zero edges
-			auto& vtx_ed = vertex_node_edges<graph::e_IN>(nd_vtx[node_id]);
+			auto& vtx_ed = vertex_node_edges<graph::e_in>(nd_vtx[node_id]);
 			uint32_t ie  = size(node_edges);
 			vtx_ed.start = edge_at;
 			vtx_ed.count = ie;

@@ -24,9 +24,9 @@ constexpr size_t graph_int32 = std::numeric_limits<uint32_t>::max();
 
 enum edge_val : uint8_t
 {
-	e_OUT  = 1U << 0,
-	e_IN   = 1U << 1,
-	e_BOTH = e_OUT | e_IN,
+	e_out  = 1U << 0,
+	e_in   = 1U << 1,
+	e_both = e_out | e_in,
 };
 
 template<typename edge_id>
@@ -38,35 +38,35 @@ struct vertex_edges
 template<uint8_t dir, typename edge_id>
 struct vertex_node;
 template<typename edge_id>
-struct vertex_node<e_OUT, edge_id>
+struct vertex_node<e_out, edge_id>
 {
 	using edge_type = vertex_edges<edge_id>;
 	static consteval uint8_t
 	edir() noexcept
 	{
-		return e_OUT;
+		return e_out;
 	}
 	edge_type out;
 };
 template<typename edge_id>
-struct vertex_node<e_IN, edge_id>
+struct vertex_node<e_in, edge_id>
 {
 	using edge_type = vertex_edges<edge_id>;
 	static consteval uint8_t
 	edir() noexcept
 	{
-		return e_IN;
+		return e_in;
 	}
 	edge_type in;
 };
 template<typename edge_id>
-struct vertex_node<e_BOTH, edge_id>
+struct vertex_node<e_both, edge_id>
 {
 	using edge_type = vertex_edges<edge_id>;
 	static consteval uint8_t
 	edir() noexcept
 	{
-		return e_BOTH;
+		return e_both;
 	}
 	edge_type out;
 	edge_type in;
@@ -77,8 +77,8 @@ template<uint8_t dir, typename T>
 constexpr auto&
 vertex_node_edges(T& node) noexcept
 {
-	static_assert((dir & e_BOTH) != e_BOTH && (dir & e_BOTH) != 0);
-	if constexpr((dir & e_OUT)) { return node.out; }
+	static_assert((dir & e_both) != e_both && (dir & e_both) != 0);
+	if constexpr((dir & e_out)) { return node.out; }
 	else { return node.in; }
 }
 
@@ -100,8 +100,8 @@ compute_stats(const Graph& G)
 	res.vertices = G.vertices();
 	res.edges    = G.edges();
 
-	constexpr bool out = (Graph::graph_dir() & e_OUT) != 0;
-	constexpr bool in  = (Graph::graph_dir() & e_OUT) != 0;
+	constexpr bool out = (Graph::graph_dir() & e_out) != 0;
+	constexpr bool in  = (Graph::graph_dir() & e_in) != 0;
 	res.max_out_degree = 0;
 	res.max_in_degree  = 0;
 
@@ -109,12 +109,12 @@ compute_stats(const Graph& G)
 	{
 		if constexpr(out)
 		{
-			uint32_t c = static_cast<uint32_t>(size(edge_range<e_OUT>(G, v)));
+			uint32_t c = static_cast<uint32_t>(size(edge_range<e_out>(G, v)));
 			res.max_out_degree = std::max(res.max_out_degree, c);
 		}
 		if constexpr(in)
 		{
-			uint32_t c = static_cast<uint32_t>(size(edge_range<e_IN>(G, v)));
+			uint32_t c = static_cast<uint32_t>(size(edge_range<e_in>(G, v)));
 			res.max_out_degree = std::max(res.max_in_degree, c);
 		}
 	}

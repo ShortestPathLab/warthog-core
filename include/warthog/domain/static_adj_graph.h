@@ -82,8 +82,8 @@ template<
 struct static_adj_graph_data
 {
 	static_assert(
-	    std::same_as<CostOut, void> || (GraphDir & graph::e_OUT) != 0);
-	static_assert(std::same_as<CostIn, void> || (GraphDir & graph::e_IN) != 0);
+	    std::same_as<CostOut, void> || (GraphDir & graph::e_out) != 0);
+	static_assert(std::same_as<CostIn, void> || (GraphDir & graph::e_in) != 0);
 
 	using vertex_id         = util::fit_unsigned_t<MaxV>;
 	using edge_id           = util::fit_unsigned_t<MaxE>;
@@ -109,10 +109,10 @@ struct static_adj_graph_data
 	std::pair<uint32_t, uint32_t> graph_size;
 	std::unique_ptr<vertex_type[]> vertex_node;
 	[[no_unique_address]] static_adj_graph_edges<
-	    std::conditional_t<(GraphDir & graph::e_OUT) != 0, vertex_id, void>>
+	    std::conditional_t<(GraphDir & graph::e_out) != 0, vertex_id, void>>
 	    edge_out;
 	[[no_unique_address]] static_adj_graph_edges<
-	    std::conditional_t<(GraphDir & graph::e_OUT) != 0, vertex_id, void>>
+	    std::conditional_t<(GraphDir & graph::e_in) != 0, vertex_id, void>>
 	    edge_in;
 	[[no_unique_address]] static_adj_graph_edges<CostOut> cost_out;
 	[[no_unique_address]] static_adj_graph_edges<CostIn> cost_in;
@@ -196,16 +196,16 @@ struct static_adj_graph_data
 	}
 
 	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(
-	    edge_out, uint32_t, edge_out, ((GraphDir & graph::e_OUT) != 0),
-	    graph::e_OUT)
+	    edge_out, uint32_t, edge_out, ((GraphDir & graph::e_out) != 0),
+	    graph::e_out)
 	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(
-	    edge_in, uint32_t, edge_in, ((GraphDir & graph::e_IN) != 0),
-	    graph::e_IN)
+	    edge_in, uint32_t, edge_in, ((GraphDir & graph::e_in) != 0),
+	    graph::e_in)
 	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(
 	    cost_out, CostOut, cost_out, (!std::same_as<CostOut, void>),
-	    graph::e_OUT)
+	    graph::e_out)
 	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(
-	    cost_in, CostIn, cost_in, (!std::same_as<CostIn, void>), graph::e_IN)
+	    cost_in, CostIn, cost_in, (!std::same_as<CostIn, void>), graph::e_in)
 
 #undef WARTHOG_CODE_GENERATOR_STGRAPH_EDGE
 };
@@ -213,7 +213,7 @@ struct static_adj_graph_data
 };
 
 template<
-    uint8_t GraphDir = graph::e_OUT, size_t MaxV = graph::graph_int16,
+    uint8_t GraphDir = graph::e_out, size_t MaxV = graph::graph_int16,
     size_t MaxE = graph::graph_int16, typename CostOut = void,
     typename CostIn = void>
 class static_adj_graph : public details::static_adj_graph_data<
@@ -303,12 +303,12 @@ edge_range(
     const static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G,
     const auto& vertex_identifier)
 {
-	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
-	if constexpr(EdgeDir == graph::e_IN)
+	static_assert(EdgeDir == graph::e_in || EdgeDir == graph::e_out);
+	if constexpr(EdgeDir == graph::e_in)
 	{
 		return G.edge_in_id(vertex_identifier);
 	}
-	else if constexpr(EdgeDir == graph::e_OUT)
+	else if constexpr(EdgeDir == graph::e_out)
 	{
 		return G.edge_out_id(vertex_identifier);
 	}
@@ -322,12 +322,12 @@ edge_range_mut(
     const static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G,
     const auto& vertex_identifier)
 {
-	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
-	if constexpr(EdgeDir == graph::e_IN)
+	static_assert(EdgeDir == graph::e_in || EdgeDir == graph::e_out);
+	if constexpr(EdgeDir == graph::e_in)
 	{
 		return G.edge_in_id_mut(vertex_identifier);
 	}
-	else if constexpr(EdgeDir == graph::e_OUT)
+	else if constexpr(EdgeDir == graph::e_out)
 	{
 		return G.edge_out_id_mut(vertex_identifier);
 	}
@@ -342,12 +342,12 @@ cost_range(
     const static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G,
     const auto& vertex_identifier)
 {
-	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
-	if constexpr(EdgeDir == graph::e_IN)
+	static_assert(EdgeDir == graph::e_in || EdgeDir == graph::e_out);
+	if constexpr(EdgeDir == graph::e_in)
 	{
 		return G.cost_in_id(vertex_identifier);
 	}
-	else if constexpr(EdgeDir == graph::e_OUT)
+	else if constexpr(EdgeDir == graph::e_out)
 	{
 		return G.cost_out_id(vertex_identifier);
 	}
@@ -361,25 +361,25 @@ cost_range_mut(
     const static_adj_graph<GraphDir, MaxV, MaxE, CostOut, CostIn>& G,
     const auto& vertex_identifier)
 {
-	static_assert(EdgeDir == graph::e_IN || EdgeDir == graph::e_OUT);
-	if constexpr(EdgeDir == graph::e_IN)
+	static_assert(EdgeDir == graph::e_in || EdgeDir == graph::e_out);
+	if constexpr(EdgeDir == graph::e_in)
 	{
 		return G.cost_in_id_mut(vertex_identifier);
 	}
-	else if constexpr(EdgeDir == graph::e_OUT)
+	else if constexpr(EdgeDir == graph::e_out)
 	{
 		return G.cost_out_id_mut(vertex_identifier);
 	}
 }
 
 template<
-    uint8_t GraphDir = graph::e_OUT, typename CostOut = void,
+    uint8_t GraphDir = graph::e_out, typename CostOut = void,
     typename CostIn = void>
 using static_adj_graph16 = static_adj_graph<
     GraphDir, graph::graph_int16, graph::graph_int16, CostOut, CostIn>;
 
 template<
-    uint8_t GraphDir = graph::e_OUT, typename CostOut = void,
+    uint8_t GraphDir = graph::e_out, typename CostOut = void,
     typename CostIn = void>
 using static_adj_graph32 = static_adj_graph<
     GraphDir, graph::graph_int32, graph::graph_int32, CostOut, CostIn>;

@@ -113,12 +113,6 @@ public:
 	search_node*
 	generate_target_node(search_problem_instance* pi) override;
 
-	size_t
-	mem() override
-	{
-		return 0;
-	}
-
 protected:
 	[[no_unique_address]] CostConv cost_conv;
 };
@@ -144,8 +138,8 @@ graph_expansion_policy<G, CostConv>::expand(
 	{
 		auto& map = *this->map_;
 		for(auto i : std::views::zip(
-		        edge_range<graph::e_OUT>(map, cid),
-		        cost_range<graph::e_OUT>(map, cid)))
+		        edge_range<graph::e_out>(map, cid),
+		        cost_range<graph::e_out>(map, cid)))
 		{
 			search_node* succ = this->generate(pad_id(std::get<0>(i)));
 			double cost       = cost_conv(map, std::get<1>(i));

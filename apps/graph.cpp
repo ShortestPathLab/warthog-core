@@ -94,7 +94,7 @@ help(std::ostream& out)
 struct dimics_scenario
 {
 	using graph_type
-	    = warthog::domain::static_adj_graph32<warthog::graph::e_OUT, uint32_t>;
+	    = warthog::domain::static_adj_graph32<warthog::graph::e_out, uint32_t>;
 
 	warthog::io::dimacs_parser parser;
 	graph_type graph;
