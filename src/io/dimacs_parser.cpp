@@ -12,6 +12,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <fstream>
 
 namespace warthog::io
 {
@@ -34,39 +35,29 @@ dimacs_parser::dimacs_parser(const char* co_file, const char* gr_file)
 	load_graph(gr_file);
 }
 
-dimacs_parser::~dimacs_parser()
-{
-	delete nodes_;
-	delete edges_;
-	delete experiments_;
-}
+dimacs_parser::~dimacs_parser() = default;
 
 void
 dimacs_parser::init()
-{
-	nodes_       = new std::vector<dimacs_parser::node>();
-	edges_       = new std::vector<dimacs_parser::edge>();
-	experiments_ = new std::vector<dimacs_parser::experiment>();
-}
+{ }
 
 dimacs_parser::node&
 dimacs_parser::get_node(uint32_t id)
 {
-	return nodes_->at(id);
+	return nodes_.at(id);
 }
 
 dimacs_parser::node&
 dimacs_parser::get_dimacs_node(uint32_t id)
 {
-	return nodes_->at(id - 1);
+	return nodes_.at(id - 1);
 }
 
 bool
-dimacs_parser::load_graph(const char* filename)
+dimacs_parser::load_graph(std::string_view filename)
 {
-	std::fstream* fdimacs = new std::fstream(filename, std::fstream::in);
-	if(!fdimacs->is_open())
-	{
+	std::ifstream fdimacs(std::string(filename));
+	if (!open_read(&fdimacs)) {
 		std::cerr << "err; dimacs_parser::dimacs_parser "
 		             "cannot open file: "
 		          << filename << std::endl;
@@ -76,10 +67,10 @@ dimacs_parser::load_graph(const char* filename)
 	bool retval       = true;
 	char* buf         = new char[1024];
 	const char* delim = " \t";
-	uint32_t line     = 1;
-	while(fdimacs->good())
+	while(true)
 	{
-		fdimacs->getline(buf, 1024);
+		readline();
+		fdimacs.getline(buf, 1024);
 		if(buf[0] == 'c') continue;
 
 		if(buf[0] == 'p')
@@ -104,7 +95,7 @@ dimacs_parser::load_graph(const char* filename)
 				}
 				std::cerr << "loading " << tmp_num_edges << " arcs " << "from "
 				          << filename << " ... ";
-				edges_->reserve(tmp_num_edges);
+				edges_.reserve(tmp_num_edges);
 				retval   = load_gr_file(*fdimacs);
 				gr_file_ = filename;
 				assert(tmp_num_edges == get_num_edges());
@@ -144,7 +135,7 @@ dimacs_parser::load_graph(const char* filename)
 						}
 						std::cerr << "loading " << tmp_num_nodes << " nodes "
 						          << "from " << filename << " ... ";
-						nodes_->reserve(tmp_num_nodes);
+						nodes_.reserve(tmp_num_nodes);
 						retval   = load_co_file(*fdimacs);
 						gr_file_ = filename;
 						assert(tmp_num_nodes == get_num_nodes());
@@ -173,7 +164,7 @@ dimacs_parser::load_graph(const char* filename)
 bool
 dimacs_parser::load_co_file(std::istream& fdimacs)
 {
-	nodes_->clear();
+	nodes_.clear();
 	uint32_t line     = 1;
 	char* buf         = new char[1024];
 	const char* delim = " \t";
@@ -202,7 +193,7 @@ dimacs_parser::load_co_file(std::istream& fdimacs)
 			n.id_ = (uint32_t)atoi(id);
 			n.x_  = atoi(x);
 			n.y_  = atoi(y);
-			nodes_->push_back(n);
+			nodes_.push_back(n);
 			break;
 		}
 		case 'p': // stop if we hit another problem line
@@ -254,7 +245,7 @@ dimacs_parser::load_gr_file(std::istream& fdimacs)
 			e.tail_id_ = (uint32_t)atoi(from);
 			e.head_id_ = (uint32_t)atoi(to);
 			e.weight_  = (uint32_t)atoi(cost);
-			edges_->push_back(e);
+			edges_.push_back(e);
 			break;
 		}
 		case 'p': // another problem line. stop here
@@ -279,24 +270,24 @@ dimacs_parser::load_gr_file(std::istream& fdimacs)
 void
 dimacs_parser::print(std::ostream& oss)
 {
-	uint32_t nnodes = (uint32_t)nodes_->size();
+	uint32_t nnodes = (uint32_t)nodes_.size();
 	if(nnodes > 0)
 	{
-		oss << "p aux sp co " << nodes_->size() << std::endl;
+		oss << "p aux sp co " << nodes_.size() << std::endl;
 		for(uint32_t i = 0; i < nnodes; i++)
 		{
-			dimacs_parser::node n = nodes_->at(i);
+			dimacs_parser::node n = nodes_.at(i);
 			oss << "v " << i + 1 << " " << n.x_ << " " << n.y_ << std::endl;
 		}
 	}
 
-	uint32_t nedges = (uint32_t)edges_->size();
+	uint32_t nedges = (uint32_t)edges_.size();
 	if(nedges > 0)
 	{
 		oss << "p sp " << nnodes << " " << nedges << std::endl;
 		for(uint32_t i = 0; i < nedges; i++)
 		{
-			dimacs_parser::edge e = edges_->at(i);
+			dimacs_parser::edge e = edges_.at(i);
 			oss << "a " << e.tail_id_ << " " << e.head_id_ << " " << e.weight_
 			    << std::endl;
 		}
@@ -387,7 +378,7 @@ dimacs_parser::load_instance(const char* dimacs_file)
 			else { exp.target = warthog::INF32; }
 
 			// add the experiment
-			experiments_->push_back(exp);
+			experiments_.push_back(exp);
 		}
 		else
 		{
@@ -396,7 +387,7 @@ dimacs_parser::load_instance(const char* dimacs_file)
 		}
 		infile.getline(buf, 1024);
 	}
-	// std::cerr << "loaded "<<experiments_->size() << " queries\n";
+	// std::cerr << "loaded "<<experiments_.size() << " queries\n";
 	return true;
 }
 
@@ -411,9 +402,9 @@ dimacs_parser::print_undirected_unweighted_metis(
 	uint32_t id_offset = 1; // order ids begin from 0; dimacs ids from 1
 
 	// enumerate all the nodes
-	for(uint32_t i = 0; i < edges_->size(); i++)
+	for(uint32_t i = 0; i < edges_.size(); i++)
 	{
-		dimacs_parser::edge e = edges_->at(i);
+		dimacs_parser::edge e = edges_.at(i);
 		uint32_t id1          = e.head_id_;
 		uint32_t id2          = e.tail_id_;
 		bool include_id1 = true, include_id2 = true;

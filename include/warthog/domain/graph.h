@@ -29,6 +29,12 @@ enum edge_val : uint8_t
 	e_both = e_out | e_in,
 };
 
+constexpr edge_val invert_edge(edge_val a) noexcept
+{
+	assert(a == e_out || a == e_in);
+	return static_cast<edge_val>(a ^ e_both);
+}
+
 template<typename edge_id>
 struct vertex_edges
 {

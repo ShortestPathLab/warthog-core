@@ -89,28 +89,6 @@ struct static_adj_graph_data
 	using vertex_type       = graph::vertex_node<GraphDir, edge_id>;
 	using vertex_edges_type = typename vertex_type::edge_type;
 
-	static consteval uint8_t
-	graph_dir() noexcept
-	{
-		return GraphDir;
-	}
-	static consteval uint8_t
-	graph_label_vertex() noexcept
-	{
-		return !std::same_as<LabelVertex, void>;
-	}
-	static consteval uint8_t
-	graph_label_out() noexcept
-	{
-		return !std::same_as<LabelOut, void>;
-	}
-	static consteval uint8_t
-	graph_label_in() noexcept
-	{
-		return !std::same_as<LabelIn, void>;
-	}
-
-	std::pair<uint32_t, uint32_t> graph_size; ///< first=num vertex,second=num edge
 	std::unique_ptr<vertex_type[]> vertex_node; ///< array of vertices of size vertices()
 	[[no_unique_address]] static_adj_graph_label<
 	    std::conditional_t<(GraphDir & graph::e_out) != 0, vertex_id, void>>
@@ -123,16 +101,68 @@ struct static_adj_graph_data
 	[[no_unique_address]] static_adj_graph_label<LabelIn> label_in; ///< array of edge in labels of size edges(); only if not void
 
 	void
-	setup(vertex_id vcount, edge_id ecount)
+	setup_(uint32_t vcount, uint32_t ecount)
 	{
-		graph_size.first  = static_cast<uint32_t>(vcount);
-		graph_size.second = static_cast<uint32_t>(ecount);
-		vertex_node       = std::make_unique<vertex_type[]>(vcount);
-		std::fill_n(vertex_node.get(), vcount, vertex_type{});
+		vertex_node = std::make_unique<vertex_type[]>(vcount);
 		edge_out.setup(ecount);
 		edge_in.setup(ecount);
+		label_vertex.setup(vcount);
 		label_out.setup(ecount);
 		label_in.setup(ecount);
+	}
+};
+
+};
+
+template<
+    uint8_t GraphDir = graph::e_out, size_t MaxV = graph::graph_int16,
+    size_t MaxE = graph::graph_int16, typename LabelVertex = void, typename LabelOut = void,
+    typename LabelIn = void>
+class static_adj_graph : public details::static_adj_graph_data<
+                             GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>
+{
+public:
+	using super = details::static_adj_graph_data<
+	    GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>;
+	using label_vertex_type = LabelVertex;
+	using label_out_type = LabelOut;
+	using label_in_type  = LabelIn;
+	using typename super::edge_id;
+	using typename super::vertex_id;
+	using typename super::vertex_type;
+	using typename super::vertex_edges_type;
+
+	std::pair<uint32_t, uint32_t> graph_size; ///< first=num vertex, second=num edge
+
+	static consteval uint8_t
+	graph_dir() noexcept
+	{
+		return GraphDir;
+	}
+	static consteval bool
+	graph_out() noexcept
+	{
+		return GraphDir & graph::e_out;
+	}
+	static consteval bool
+	graph_in() noexcept
+	{
+		return GraphDir & graph::e_in;
+	}
+	static consteval bool
+	graph_label_vertex() noexcept
+	{
+		return !std::same_as<LabelVertex, void>;
+	}
+	static consteval bool
+	graph_label_out() noexcept
+	{
+		return !std::same_as<LabelOut, void>;
+	}
+	static consteval bool
+	graph_label_in() noexcept
+	{
+		return !std::same_as<LabelIn, void>;
 	}
 
 	std::pair<uint32_t, uint32_t>
@@ -149,6 +179,66 @@ struct static_adj_graph_data
 	edges() const noexcept
 	{
 		return graph_size.second;
+	}
+
+	void
+	setup(uint32_t vcount, uint32_t ecount)
+	{
+		super::setup_(vcount, ecount);
+		graph_size.first  = static_cast<uint32_t>(vcount);
+		graph_size.second = static_cast<uint32_t>(ecount);
+	}
+
+	const vertex_type&
+	vertex(uint32_t i) const noexcept
+	{
+		assert(i < this->vertices() && this->vertex_node != nullptr);
+		return this->vertex_node[i];
+	}
+	vertex_type&
+	vertex_mut(uint32_t i) noexcept
+	{
+		assert(i < this->vertices() && this->vertex_node != nullptr);
+		return this->vertex_node[i];
+	}
+
+	std::span<const vertex_type>
+	vertex_all() const noexcept
+	{
+		return std::span<const vertex_type>(
+		    this->vertex_node.get(), this->vertices());
+	}
+	std::span<vertex_type>
+	vertex_all_mut() noexcept
+	{
+		return std::span<vertex_type>(
+		    this->vertex_node.get(), this->vertices());
+	}
+
+	const label_vertex_type&
+	label_vertex_id(uint32_t i) const noexcept
+	{
+		assert(i < this->vertices() && this->label_vertex != nullptr);
+		return this->label_vertex[i];
+	}
+	label_vertex_type&
+	label_vertex_id_mut(uint32_t i) noexcept
+	{
+		assert(i < this->vertices() && this->label_vertex != nullptr);
+		return this->label_vertex[i];
+	}
+
+	std::span<const label_vertex_type>
+	label_vertex_all() const noexcept requires(graph_label_vertex())
+	{
+		return std::span<const vertex_type>(
+		    this->label_vertex.get(), this->vertices());
+	}
+	std::span<label_vertex_type>
+	label_vertex_all_mut() noexcept requires(graph_label_vertex())
+	{
+		return std::span<vertex_type>(
+		    this->label_vertex.get(), this->vertices());
 	}
 
 #define WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(name, type, varname, req, edir)   \
@@ -201,64 +291,17 @@ struct static_adj_graph_data
 	}
 
 	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(
-	    edge_out, uint32_t, edge_out, ((GraphDir & graph::e_out) != 0),
+	    edge_out, uint32_t, edge_out, (graph_out() != 0),
 	    graph::e_out)
 	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(
-	    edge_in, uint32_t, edge_in, ((GraphDir & graph::e_in) != 0),
+	    edge_in, uint32_t, edge_in, (graph_in() != 0),
 	    graph::e_in)
 	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(
-	    label_out, LabelOut, label_out, (!std::same_as<LabelOut, void>),
-	    graph::e_out)
+	    label_out, LabelOut, label_out, (graph_label_out()), graph::e_out)
 	WARTHOG_CODE_GENERATOR_STGRAPH_EDGE(
-	    label_in, LabelIn, label_in, (!std::same_as<LabelIn, void>), graph::e_in)
+	    label_in, LabelIn, label_in, (graph_label_in()), graph::e_in)
 
 #undef WARTHOG_CODE_GENERATOR_STGRAPH_EDGE
-};
-
-};
-
-template<
-    uint8_t GraphDir = graph::e_out, size_t MaxV = graph::graph_int16,
-    size_t MaxE = graph::graph_int16, typename LabelVertex = void, typename LabelOut = void,
-    typename LabelIn = void>
-class static_adj_graph : public details::static_adj_graph_data<
-                             GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>
-{
-public:
-	using super = details::static_adj_graph_data<
-	    GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>;
-	using label_out_type = LabelOut;
-	using label_in_type  = LabelIn;
-	using typename super::edge_id;
-	using typename super::vertex_id;
-	using typename super::vertex_type;
-	using vertex_edges = graph::vertex_edges<edge_id>;
-
-	const vertex_type&
-	vertex(uint32_t i) const noexcept
-	{
-		assert(i < this->vertices() && this->vertex_node != nullptr);
-		return this->vertex_node[i];
-	}
-	vertex_type&
-	vertex_mut(uint32_t i) noexcept
-	{
-		assert(i < this->vertices() && this->vertex_node != nullptr);
-		return this->vertex_node[i];
-	}
-
-	std::span<const vertex_type>
-	vertex_all() const noexcept
-	{
-		return std::span<const vertex_type>(
-		    this->vertex_node.get(), this->vertices());
-	}
-	std::span<vertex_type>
-	vertex_all_mut() noexcept
-	{
-		return std::span<vertex_type>(
-		    this->vertex_node.get(), this->vertices());
-	}
 };
 
 template<
@@ -318,7 +361,7 @@ template<
     requires((EdgeDir & GraphDir) == EdgeDir)
 auto
 edge_range_mut(
-    const static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G,
+    static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G,
     const auto& vertex_identifier)
 {
 	static_assert(EdgeDir == graph::e_in || EdgeDir == graph::e_out);
@@ -355,7 +398,7 @@ template<
     requires((EdgeDir & GraphDir) == EdgeDir)
 auto
 label_range_mut(
-    const static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G,
+    static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>& G,
     const auto& vertex_identifier)
 {
 	static_assert(EdgeDir == graph::e_in || EdgeDir == graph::e_out);

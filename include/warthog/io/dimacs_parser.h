@@ -11,6 +11,7 @@
 
 #include <warthog/forward.h>
 
+#include "serialize_base.h"
 #include <warthog/domain/static_adj_graph.h>
 #include <warthog/search/problem_instance.h>
 
@@ -23,7 +24,7 @@
 namespace warthog::io
 {
 
-class dimacs_parser
+class dimacs_parser : public serialize_base
 {
 public:
 	struct node
@@ -38,6 +39,27 @@ public:
 		uint32_t tail_id_;
 		uint32_t head_id_;
 		uint32_t weight_;
+
+		template <graph::edge_val D>
+		uint32_t end_id() const noexcept
+		{
+			static_assert(D == graph::e_in || D == graph::e_out);
+			if constexpr (D == graph::e_in) {
+				return head_id_;
+			} else {
+				return tail_id_;
+			}
+		}
+		template <graph::edge_val D>
+		uint32_t& end_id() noexcept
+		{
+			static_assert(D == graph::e_in || D == graph::e_out);
+			if constexpr (D == graph::e_in) {
+				return head_id_;
+			} else {
+				return tail_id_;
+			}
+		}
 
 		bool
 		operator<(dimacs_parser::edge& other)
@@ -74,10 +96,10 @@ public:
 	// (or edges, depending on the type of file passed for loading) and
 	// THEN attempt to load new data.
 	bool
-	load_graph(const char* dimacs_file);
+	load_graph(std::string_view dimacs_file);
 
 	bool
-	load_instance(const char* dimacs_file);
+	load_instance(std::string_view dimacs_file);
 
 	dimacs_parser::node&
 	get_node(uint32_t id);
@@ -171,6 +193,8 @@ public:
 	}
 
 private:
+	using serialize_base::set_filename;
+
 	void
 	init();
 	bool
@@ -178,13 +202,16 @@ private:
 	bool
 	load_gr_file(std::istream& fdimacs);
 
-	std::vector<dimacs_parser::node>* nodes_;
-	std::vector<dimacs_parser::edge>* edges_;
-	std::vector<dimacs_parser::experiment>* experiments_;
+	std::vector<dimacs_parser::node> nodes_;
+	std::vector<dimacs_parser::edge> edges_;
+	std::vector<dimacs_parser::experiment> experiments_;
 	std::string problemfile_;
 	std::string co_file_;
 	std::string gr_file_;
 };
+
+
+/// TODO: need features from other branches, help with control over Label and assigning to in dimics_to_graph
 
 template<
     uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
@@ -203,81 +230,55 @@ dimics_to_graph(
 
 	auto nd_vtx      = graph.vertex_all_mut();
 	uint32_t edge_at = 0;
-	std::ranges::sort(
-	    edges, {}, [](const auto& e) noexcept { return e.head_id_; });
-	for(auto const node_edges : edges
-	        | std::views::chunk_by([](const auto& a, const auto& b) noexcept {
-		                            return a.head_id_ == b.head_id_;
-	                            }))
-	{
-		uint32_t node_id = begin(node_edges)->head_id_ - 1;
-		// any skipped node will have zero edges
-		auto& vtx_ed = vertex_node_edges<graph::e_out>(nd_vtx[node_id]);
-		uint32_t ie  = size(node_edges);
-		vtx_ed.start = edge_at;
-		vtx_ed.count = ie;
-		for(uint32_t i = 0; i < ie; ++i)
-		{
-			graph.edge_out.data[edge_at + i]
-			    = static_cast<typename graph_type::vertex_id>(
-			        edges[edge_at + i].tail_id_ - 1);
-			if constexpr(!std::same_as<LabelOut, void>)
-			{
-				if constexpr(std::assignable_from<LabelOut&, uint32_t>)
-				{
-					graph.label_out.data[edge_at + i]
-					    = edges[edge_at + i].weight_;
-				}
-				else
-				{
-					graph.label_out.data[edge_at + i]
-					    = static_cast<LabelOut>(edges[edge_at + i].weight_);
-				}
-			}
-		}
-		edge_at += ie;
-	}
 
-	if constexpr((GraphDir & graph::e_in) != 0)
+	auto edge_insert = [&]<graph::edge_val E>(std::integral_constant<graph::edge_val, E>)
 	{
-		// add in-edges
+		constexpr auto Ei = invert_edge(E);
+		using L = std::conditional_t<E == graph::e_in, LabelIn, LabelOut>;
 		std::ranges::sort(
-		    edges, {}, [](const auto& e) noexcept { return e.tail_id_; });
-
-		edge_at = 0;
+			edges, {}, [](const auto& e) noexcept { return e.template end_id<Ei>(); });
 		for(auto const node_edges : edges
-		        | std::views::chunk_by([](const auto& a,
-		                                  const auto& b) noexcept {
-			                            return a.tail_id_ == b.tail_id_;
-		                            }))
+				| std::views::chunk_by([](const auto& a, const auto& b) noexcept {
+										return a.template end_id<Ei>() == b.template end_id<Ei>();
+									}))
 		{
-			uint32_t node_id = begin(node_edges)->tail_id_ - 1;
+			uint32_t node_id = begin(node_edges)->template end_id<Ei>() - 1;
 			// any skipped node will have zero edges
-			auto& vtx_ed = vertex_node_edges<graph::e_in>(nd_vtx[node_id]);
+			auto& vtx_ed = vertex_node_edges<graph::e_out>(nd_vtx[node_id]);
 			uint32_t ie  = size(node_edges);
 			vtx_ed.start = edge_at;
 			vtx_ed.count = ie;
+			const auto vtx_st = vtx_ed;
+
+			auto ed_to = edge_range_mut<E>(graph, vtx_st);
 			for(uint32_t i = 0; i < ie; ++i)
 			{
-				graph.edge_in.data[edge_at + i]
-				    = static_cast<typename graph_type::vertex_id>(
-				        edges[edge_at + i].head_id_ - 1);
-				if constexpr(!std::same_as<LabelIn, void>)
+				ed_to[i] = static_cast<typename graph_type::vertex_id>(
+						edges[edge_at + i].template end_id<E>() - 1);
+				if constexpr(!std::same_as<L, void>)
 				{
-					if constexpr(std::assignable_from<LabelIn&, uint32_t>)
+					if constexpr(std::assignable_from<L&, uint32_t>)
 					{
-						graph.label_in.data[edge_at + i]
-						    = edges[edge_at + i].weight_;
+
+						label_range_mut<E>(graph, vtx_st)[i]
+							= edges[edge_at + i].weight_;
 					}
 					else
 					{
-						graph.label_in.data[edge_at + i]
-						    = static_cast<LabelIn>(edges[edge_at + i].weight_);
+						label_range_mut<E>(graph, vtx_st)[i]
+							= static_cast<L>(edges[edge_at + i].weight_);
 					}
 				}
 			}
 			edge_at += ie;
 		}
+	};
+
+	if constexpr (graph_type::graph_label_out()) {
+		edge_insert(std::integral_constant<graph::edge_val, graph::e_out>());
+	}
+	if constexpr (graph_type::graph_label_in()) {
+		edge_insert(std::integral_constant<graph::edge_val, graph::e_in>());
 	}
 }
 
