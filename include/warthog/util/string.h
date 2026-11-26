@@ -259,7 +259,7 @@ parse_token_quoted(
 class string_parser
 {
 public:
-	string_parser();
+	string_parser() = default;
 	string_parser(std::string_view str) : m_str(str) { }
 	// error codes
 	void

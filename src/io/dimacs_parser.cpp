@@ -56,8 +56,10 @@ dimacs_parser::get_dimacs_node(uint32_t id)
 bool
 dimacs_parser::load_graph(std::string_view filename)
 {
-	std::ifstream fdimacs(std::string(filename));
-	if (!open_read(&fdimacs)) {
+	using namespace std::string_view_literals;
+	std::ifstream fdimacs{std::string(filename)};
+	line_serialize lines;
+	if (!lines.open_read(&fdimacs)) {
 		std::cerr << "err; dimacs_parser::dimacs_parser "
 		             "cannot open file: "
 		          << filename << std::endl;
@@ -65,78 +67,78 @@ dimacs_parser::load_graph(std::string_view filename)
 	}
 
 	bool retval       = true;
-	char* buf         = new char[1024];
-	const char* delim = " \t";
 	while(true)
 	{
-		readline();
-		fdimacs.getline(buf, 1024);
-		if(buf[0] == 'c') continue;
+		line_serialize::parser par;
+		if (auto r = lines.readline(); r) {
+			par.str(*r);
+		} else {
+			return false;
+		}
+		if (lines.istream_eof())
+			break;
 
-		if(buf[0] == 'p')
+		std::string_view token;
+		if (!par.next(token))
+			return false;
+		if(token.at(0) == 'c') continue;
+
+		if(token.at(0) == 'p')
 		{
-			char* token = strtok(buf, delim);  // p char
-			token       = strtok(NULL, delim); // file type token
-			if(strcmp(token, "sp") == 0)
+			if (!par.next(token))
+				return false;
+			if(token == "sp"sv)
 			{
-				char* end;
-				token                  = strtok(NULL, delim);
-				uint32_t tmp_num_nodes = (uint32_t)strtol(token, &end, 10);
-
-				token                  = strtok(NULL, delim);
-				uint32_t tmp_num_edges = (uint32_t)strtol(token, &end, 10);
-				if(tmp_num_edges == 0L || tmp_num_nodes == 0L)
+				uint32_t tmp_num_nodes, tmp_num_edges;
+				if (!par.next(tmp_num_nodes).next(tmp_num_edges))
+					return false;
+				if(tmp_num_edges == 0 || tmp_num_nodes == 0)
 				{
 					std::cerr << "error; invalid graph description on line "
-					          << line << " of file " << filename << "\n";
-					delete fdimacs;
-					delete[] buf;
-					return 0;
+					          << lines.get_line_num() << " of file " << filename << "\n";
+					return false;
 				}
 				std::cerr << "loading " << tmp_num_edges << " arcs " << "from "
 				          << filename << " ... ";
 				edges_.reserve(tmp_num_edges);
-				retval   = load_gr_file(*fdimacs);
+				retval   = load_gr_file(lines);
+				if (!retval)
+					return false;
 				gr_file_ = filename;
 				assert(tmp_num_edges == get_num_edges());
 				std::cerr << "done\n";
 				break;
 			}
-			else if(strcmp(token, "aux") == 0)
+			else if(token == "aux"sv)
 			{
-				token = strtok(NULL, delim);
-				if(strcmp(token, "sp") != 0) { retval = false; }
+				if (!par.next(token)) return false;
+				if(token != "sp"sv) { retval = false; }
 				else
 				{
-					token = strtok(NULL, delim);
-					if(strcmp(token, "co") != 0)
+					if (!par.next(token)) return false;
+					if(token != "co"sv)
 					{
 						std::cerr
 						    << "error; invalid graph description on line "
-						    << line << " of file " << filename << "\n";
-						delete fdimacs;
-						delete[] buf;
+						    << lines.get_line_num() << " of file " << filename << "\n";
 						return 0;
 					}
 					else
 					{
-						token = strtok(NULL, delim);
-						char* end;
-						uint32_t tmp_num_nodes
-						    = (uint32_t)strtol(token, &end, 10);
-						if(tmp_num_nodes == 0L)
+						uint32_t tmp_num_nodes;
+						if (!par.next(tmp_num_nodes))
+							return false;
+						if(tmp_num_nodes == 0)
 						{
 							std::cerr
 							    << "error; invalid graph description on line "
-							    << line << " of file " << filename << "\n";
-							delete fdimacs;
-							delete[] buf;
+							    << lines.get_line_num() << " of file " << filename << "\n";
 							return 0;
 						}
 						std::cerr << "loading " << tmp_num_nodes << " nodes "
 						          << "from " << filename << " ... ";
 						nodes_.reserve(tmp_num_nodes);
-						retval   = load_co_file(*fdimacs);
+						retval   = load_co_file(lines);
 						gr_file_ = filename;
 						assert(tmp_num_nodes == get_num_nodes());
 						std::cerr << "done\n";
@@ -148,51 +150,50 @@ dimacs_parser::load_graph(std::string_view filename)
 			{
 				std::cerr
 				    << "error; unrecognised problem line in dimacs file\n";
-				delete fdimacs;
-				delete[] buf;
 				return 0;
 			}
 		}
-		line++;
 	}
 
-	delete fdimacs;
-	delete[] buf;
 	return retval;
 }
 
 bool
-dimacs_parser::load_co_file(std::istream& fdimacs)
+dimacs_parser::load_co_file(line_serialize& lines)
 {
+	using namespace std::string_view_literals;
+
+	if (!lines.can_read())
+		return false;
 	nodes_.clear();
-	uint32_t line     = 1;
-	char* buf         = new char[1024];
-	const char* delim = " \t";
 	bool all_good     = true;
-	while(fdimacs.good() && all_good)
+	while(all_good)
 	{
-		char next_char = (char)fdimacs.peek();
-		switch(next_char)
+		line_serialize::parser par;
+		if (auto r = lines.readline(); r) {
+			par.str(*r);
+		} else {
+			return false;
+		}
+		if (lines.istream_eof())
+			break;
+
+		std::string_view token;
+		if (!par.next(token) || token.size() != 1)
+			return false;
+		switch(token[0])
 		{
 		case 'v':
 		{
-			fdimacs.getline(buf, 1024);
-			char* descriptor = strtok(buf, delim);
-			char* id         = strtok(NULL, delim);
-			char* x          = strtok(NULL, delim);
-			char* y          = strtok(NULL, delim);
-			if(!(descriptor && id && x && y))
+			dimacs_parser::node n;
+			if (!par.next(n.id_).next(n.x_).next(n.y_))
 			{
 				std::cerr
 				    << "warning; badly formatted node descriptor on line "
-				    << line << std::endl;
+				    << lines.get_line_num() << std::endl;
 				all_good = false;
 				break;
 			}
-			dimacs_parser::node n;
-			n.id_ = (uint32_t)atoi(id);
-			n.x_  = atoi(x);
-			n.y_  = atoi(y);
 			nodes_.push_back(n);
 			break;
 		}
@@ -200,51 +201,50 @@ dimacs_parser::load_co_file(std::istream& fdimacs)
 			all_good = false;
 			break;
 		default: // ignore non-node, non-problem lines
-			fdimacs.getline(buf, 1024);
 			break;
 		}
-		//        if((line % 10000) == 0)
-		//        {
-		//                std::cerr << "\r co file; K lines read: " << (line /
-		//                1000) << " ";
-		//        }
-		line++;
 	}
 
-	delete[] buf;
 	return all_good;
 }
 
 bool
-dimacs_parser::load_gr_file(std::istream& fdimacs)
+dimacs_parser::load_gr_file(line_serialize& lines)
 {
-	uint32_t line     = 1;
-	char* buf         = new char[1024];
-	const char* delim = " \t";
+	using namespace std::string_view_literals;
+
+	if (!lines.can_read())
+		return false;
 	bool all_good     = true;
-	while(fdimacs.good() && all_good)
+	while(all_good)
 	{
-		char next_char = (char)fdimacs.peek();
-		switch(next_char)
+		line_serialize::parser par;
+		std::string_view line;
+		if (auto r = lines.readline(); r) {
+			line = *r;
+			par.str(*r);
+		} else {
+			return false;
+		}
+		if (lines.istream_eof()) {
+			break;
+		}
+		
+		std::string_view token;
+		if (!par.next(token) || token.size() != 1)
+			return false;
+		switch(token[0])
 		{
 		case 'a':
 		{
-			fdimacs.getline(buf, 1024);
-			char* descriptor = strtok(buf, delim);
-			char* from       = strtok(NULL, delim);
-			char* to         = strtok(NULL, delim);
-			char* cost       = strtok(NULL, delim);
-			if(!(descriptor && from && to && cost))
+			dimacs_parser::edge e;
+			if (!par.next(e.tail_id_).next(e.head_id_).next(e.weight_))
 			{
 				std::cerr << "warning; badly formatted arc descriptor on line "
-				          << line << std::endl;
+				          << lines.get_line_num() << std::endl;
 				all_good = false;
 				break;
 			}
-			dimacs_parser::edge e;
-			e.tail_id_ = (uint32_t)atoi(from);
-			e.head_id_ = (uint32_t)atoi(to);
-			e.weight_  = (uint32_t)atoi(cost);
 			edges_.push_back(e);
 			break;
 		}
@@ -252,18 +252,10 @@ dimacs_parser::load_gr_file(std::istream& fdimacs)
 			all_good = false;
 			break;
 		default: // ignore non-arc, non-problem lines
-			fdimacs.getline(buf, 1024);
 			break;
 		}
-		//        if((line % 10000) == 0)
-		//        {
-		//                std::cerr << "\r gr file; K lines read: " << (line /
-		//                1000) << " ";
-		//        }
-		line++;
 	}
 
-	delete[] buf;
 	return all_good;
 }
 
@@ -295,84 +287,107 @@ dimacs_parser::print(std::ostream& oss)
 }
 
 bool
-dimacs_parser::load_instance(const char* dimacs_file)
+dimacs_parser::load_instance(std::string_view dimacs_file)
 {
+	using namespace std::string_view_literals;
 	problemfile_ = std::string(dimacs_file);
-	std::ifstream infile;
-	infile.open(dimacs_file, std::ios::in);
+	
+	std::ifstream fdimacs{problemfile_};
+	line_serialize lines;
+	if (!lines.open_read(&fdimacs)) {
+		std::cerr << "err; dimacs_parser::dimacs_parser "
+		             "cannot open file: "
+		          << problemfile_ << std::endl;
+		return false;
+	}
 
 	bool p2p = true;
-	char buf[1024];
 
 	// dimacs stuff is 1-indexed but warthog is zero indexed
 	// we adjust ids if necessary
 	uint32_t id_offset = 1;
-	while(infile.good())
+	while(true)
 	{
-		infile.getline(buf, 1024);
+		line_serialize::parser par;
+		std::string_view line;
+		if (auto r = lines.readline(); r) {
+			par.str(line = *r);
+		} else {
+			return false;
+		}
+		if (lines.istream_eof())
+			return false;
+		
+		std::string_view token;
+		if (!par.next(token))
+			return false;
 		// skip comment lines
-		if(buf[0] == 'c') { continue; }
+		if(token == "c"sv) { continue; }
 		// "p2p-xy is a warthog extended problem specification format
 		// where start and target ids are zero indexed. In these cases
 		// we don't need to adjust the start and target ids
-		else if(strstr(buf, "p aux sp p2p-zero") != 0)
+		if(line.starts_with("p aux sp p2p-zero"sv))
 		{
 			p2p       = true;
 			id_offset = 0;
 			break;
 		}
-		else if(strstr(buf, "p aux sp ss-zero") != 0)
+		if(line.starts_with("p aux sp ss-zero"))
 		{
 			id_offset = 0;
 			p2p       = false;
 			break;
 		}
-		if(strstr(buf, "p aux sp p2p") != 0)
+		if(line.starts_with("p aux sp p2p"))
 		{
 			p2p = true;
 			break;
 		}
-		else if(strstr(buf, "p aux sp ss") != 0)
+		if(line.starts_with("p aux sp ss"))
 		{
 			p2p = false;
 			break;
 		}
 	}
 
-	infile.getline(buf, 1024);
-	while(infile.good())
+	while(true)
 	{
-		if(buf[0] == 'c')
-		{
-			infile.getline(buf, 1024);
-			continue;
+		line_serialize::parser par;
+		if (auto r = lines.readline(); r) {
+			par.str(*r);
+		} else {
+			return false;
 		}
+		if (lines.istream_eof())
+			break;
 
-		char* tok = strtok(buf, " \t\n");
-		if(strcmp(tok, "q") == 0 || strcmp(tok, "s") == 0)
+		std::string_view token;
+		if (!par.next(token))
+			return false;
+		if(token == "c"sv)
+			continue;
+
+		if(token == "q"sv || token == "s"sv)
 		{
 			dimacs_parser::experiment exp;
 
-			tok = strtok(0, " \t\n");
-			if(tok == 0)
+			if (!par.next(exp.source))
 			{
-				std::cerr << "skipping invalid query in problem file:  " << buf
+				std::cerr << "skipping invalid query in problem file on line " << lines.get_line_num()
 				          << "\n";
 				continue;
 			}
-			exp.source  = (uint32_t)atoi(tok);
 			exp.source -= id_offset;
 			exp.p2p     = p2p;
 
 			if(p2p)
 			{
-				tok = strtok(0, " \t\n");
-				if(tok == 0)
+				if (!par.next(exp.target))
 				{
-					std::cerr << "invalid query in problem file:  " << buf
+					std::cerr << "invalid query in problem file on line " << lines.get_line_num()
 					          << "\n";
+					return false;
 				}
-				exp.target  = (uint32_t)atoi(tok);
 				exp.target -= id_offset;
 			}
 			else { exp.target = warthog::INF32; }
@@ -382,10 +397,9 @@ dimacs_parser::load_instance(const char* dimacs_file)
 		}
 		else
 		{
-			std::cerr << "skipping invalid query in problem file: " << buf
+			std::cerr << "skipping invalid query in problem file on line " << lines.get_line_num()
 			          << std::endl;
 		}
-		infile.getline(buf, 1024);
 	}
 	// std::cerr << "loaded "<<experiments_.size() << " queries\n";
 	return true;

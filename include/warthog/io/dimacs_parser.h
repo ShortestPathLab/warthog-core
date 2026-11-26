@@ -24,7 +24,7 @@
 namespace warthog::io
 {
 
-class dimacs_parser : public serialize_base
+class dimacs_parser
 {
 public:
 	struct node
@@ -110,58 +110,52 @@ public:
 	inline uint32_t
 	get_num_nodes()
 	{
-		return (uint32_t)nodes_->size();
+		return (uint32_t)nodes_.size();
 	}
 
 	inline uint32_t
 	get_num_edges()
 	{
-		return (uint32_t)edges_->size();
+		return (uint32_t)edges_.size();
 	}
 
 	std::span<const dimacs_parser::node>
 	nodes() const noexcept
 	{
-		assert(nodes_ != nullptr);
-		return *nodes_;
+		return nodes_;
 	}
 	std::span<dimacs_parser::node>
 	nodes_mut() noexcept
 	{
-		assert(nodes_ != nullptr);
-		return *nodes_;
+		return nodes_;
 	}
 
 	std::span<const dimacs_parser::edge>
 	edges() const noexcept
 	{
-		assert(edges_ != nullptr);
-		return *edges_;
+		return edges_;
 	}
 	std::span<dimacs_parser::edge>
 	edges_mut() noexcept
 	{
-		assert(edges_ != nullptr);
-		return *edges_;
+		return edges_;
 	}
 
 	std::span<const dimacs_parser::experiment>
 	experiments() const noexcept
 	{
-		assert(experiments_ != nullptr);
-		return *experiments_;
+		return experiments_;
 	}
 	std::span<dimacs_parser::experiment>
 	experiments_mut() noexcept
 	{
-		assert(experiments_ != nullptr);
-		return *experiments_;
+		return experiments_;
 	}
 
 	inline uint32_t
 	num_experiments()
 	{
-		return (uint32_t)experiments_->size();
+		return (uint32_t)experiments_.size();
 	}
 
 	void
@@ -193,14 +187,13 @@ public:
 	}
 
 private:
-	using serialize_base::set_filename;
 
 	void
 	init();
 	bool
-	load_co_file(std::istream& fdimacs);
+	load_co_file(line_serialize& lines);
 	bool
-	load_gr_file(std::istream& fdimacs);
+	load_gr_file(line_serialize& lines);
 
 	std::vector<dimacs_parser::node> nodes_;
 	std::vector<dimacs_parser::edge> edges_;

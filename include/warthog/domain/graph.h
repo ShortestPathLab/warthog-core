@@ -14,6 +14,7 @@
 
 #include <limits>
 #include <memory>
+#include <cassert>
 
 namespace warthog::graph
 {

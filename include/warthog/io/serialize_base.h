@@ -158,7 +158,7 @@ protected:
 	/// get_line_num() will return the 1-index line number, reading from an
 	/// unreadline does not change the line number.
 	std::expected<std::string_view, std::errc>
-	readline(std::istream* in, bool skip_blanks = false);
+	readline(std::istream* in = nullptr, bool skip_blanks = false);
 
 	/// @brief unreads a line, keeps only a single line
 	/// @param line the line to return and read later, does not have to match a
@@ -198,11 +198,35 @@ class line_serialize final : public serialize_base
 public:
 	using serialize_base::serialize_base;
 
+	using serialize_base::get_istream;
+	using serialize_base::get_ostream;
 	using serialize_base::is_line_blank;
 	using serialize_base::istream_eof;
 	using serialize_base::readline;
 	using serialize_base::set_max_line_length;
 	using serialize_base::unreadline;
+};
+
+/// @brief will automatically call close on destruction
+template <typename T>
+class auto_close
+{
+	T* file;
+
+	auto_close(T& f) : file(&f)
+	{ }
+	~auto_close()
+	{
+		if (file != nullptr) {
+			file->close();
+			file = nullptr;
+		}
+	}
+
+	void unlink()
+	{
+		file = nullptr;
+	}
 };
 
 } // namespace warthog::io

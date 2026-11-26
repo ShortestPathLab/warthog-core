@@ -118,6 +118,7 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 					in->clear(std::ios::eofbit);
 					// extracted no characters and reached end of file, return
 					// no error
+					m_line = std::string_view();
 					return std::string_view();
 				}
 				else
@@ -128,7 +129,16 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 			}
 			// get length, if eof is set, is last line and no delimiter was
 			// extracted
-			len = static_cast<size_t>(in->gcount()) - (in->eof() ? 0 : 1);
+			len = static_cast<size_t>(in->gcount());
+			if(in->eof())
+			{
+				// last line is not blank
+				in->clear();
+				assert(!in->eof());
+			} else if(len > 0) [[likely]]
+			{
+				len -= 1; // remove the implicit
+			}
 			if(len == 0) { m_line = std::string_view(); }
 			else
 			{
@@ -145,6 +155,7 @@ serialize_base::readline(std::istream* in, bool skip_blanks)
 		{
 			continue; // blank line, repeat
 		}
+		assert(!in->eof());
 		return m_line;
 	}
 }
