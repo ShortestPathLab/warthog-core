@@ -22,6 +22,15 @@
 namespace warthog::heuristic
 {
 
+struct EuclideanGet
+{
+	constexpr auto
+	operator()(const auto& c) const noexcept
+	{
+		using std::get;
+		return std::tuple(get<0>(c), get<1>(c));
+	}
+};
 struct EuclideanXY
 {
 	constexpr auto
@@ -33,11 +42,11 @@ struct EuclideanXY
 
 template<
     typename CoordArray = std::span<const grid::spoint32>,
-    typename GetXY      = EuclideanXY>
+    typename GetXY      = EuclideanGet>
 class euclidean_heuristic
 {
 public:
-	constexpr euclidean_heuristic(auto&& crd) : coords_(std::move(crd)) { }
+	constexpr euclidean_heuristic(auto&& crd, GetXY&& xy = GetXY()) : coords_(std::move(crd)), getxy_(std::move(xy)) { }
 
 	~euclidean_heuristic() { }
 
@@ -86,9 +95,8 @@ public:
 	double
 	h(sn_id_t id, sn_id_t id2)
 	{
-		GetXY g_xy;
-		auto [x, y]   = g_xy(this->coords_[id]);
-		auto [x2, y2] = g_xy(this->coords_[id2]);
+		auto [x, y]   = getxy_(this->coords_[id]);
+		auto [x2, y2] = getxy_(this->coords_[id2]);
 		return this->h(x, y, x2, y2);
 	}
 
@@ -106,7 +114,10 @@ public:
 
 private:
 	CoordArray coords_;
+	GetXY getxy_;
 };
+
+
 
 } // namespace warthog::heuristic
 

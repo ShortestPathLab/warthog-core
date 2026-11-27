@@ -503,6 +503,44 @@ struct alignas(uint32_t) spoint;
 struct alignas(uint32_t) point32;
 struct alignas(uint64_t) spoint32;
 
+template <typename T>
+struct is_point : std::false_type
+{ };
+template <>
+struct is_point<point> : std::true_type
+{ };
+template <>
+struct is_point<spoint> : std::true_type
+{ };
+template <>
+struct is_point<point32> : std::true_type
+{ };
+template <>
+struct is_point<spoint32> : std::true_type
+{ };
+
+template <typename P>
+concept Point = is_point<P>::value;
+
+template <size_t I, Point P>
+auto get(const P& p) noexcept {
+	static_assert(I < 2);
+	if constexpr (I == 0) {
+		return p.x;
+	} else {
+		return p.y;
+	}
+}
+template <size_t I, Point P>
+auto& get(P& p) noexcept {
+	static_assert(I < 2);
+	if constexpr (I == 0) {
+		return p.x;
+	} else {
+		return p.y;
+	}
+}
+
 struct alignas(uint32_t) point
 {
 	uint16_t x;

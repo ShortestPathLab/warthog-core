@@ -196,9 +196,9 @@ run_astar(dimics_scenario& scenmgr, std::string alg_name)
 	warthog::search::graph_expansion_policy<
 	    dimics_scenario::graph_type, warthog::search::get_graph_cost_cast>
 	    expander(&scenmgr.graph);
-	warthog::heuristic::zero_heuristic heuristic;
-	// warthog::heuristic::euclidean_heuristic heuristic(
-	//     scenmgr.vertex_loc | std::views::all);
+	// warthog::heuristic::zero_heuristic heuristic;
+	warthog::heuristic::euclidean_heuristic heuristic(
+	    vertex_range<warthog::graph::label>(scenmgr.graph) | std::views::all);
 	warthog::util::pqueue_min open;
 
 	warthog::search::unidirectional_search astar(

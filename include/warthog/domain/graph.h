@@ -8,7 +8,7 @@
 /// @author Ryan Hechenberger
 /// @date 2026-11-11
 
-#include <warthog/forward.h>
+#include <warthog/constants.h>
 
 #include <warthog/util/numeric.h>
 
@@ -36,19 +36,35 @@ constexpr edge_val invert_edge(edge_val a) noexcept
 	return static_cast<edge_val>(a ^ e_both);
 }
 
+enum data_level : uint8_t
+{
+	linkage, ///< for vertex give edges, for edge give other end
+	label ///< label data information
+};
+
+struct vertex_index_tag {};
+/// @brief vertex index
+template<typename vertex_id>
+using vertex_index = identity_base<vertex_index_tag, vertex_id>;
+
+struct edge_index_tag {};
+/// @brief edge index
+template<typename edge_id>
+using edge_index = identity_base<edge_index_tag, edge_id>;
+
 template<typename edge_id>
 struct vertex_edges
 {
-	edge_id start;
+	edge_index<edge_id> start;
 	edge_id count;
 };
-template<uint8_t dir, typename edge_id>
+template<edge_val dir, typename edge_id>
 struct vertex_node;
 template<typename edge_id>
 struct vertex_node<e_out, edge_id>
 {
 	using edge_type = vertex_edges<edge_id>;
-	static consteval uint8_t
+	static consteval edge_val
 	edir() noexcept
 	{
 		return e_out;
@@ -59,7 +75,7 @@ template<typename edge_id>
 struct vertex_node<e_in, edge_id>
 {
 	using edge_type = vertex_edges<edge_id>;
-	static consteval uint8_t
+	static consteval edge_val
 	edir() noexcept
 	{
 		return e_in;
@@ -70,7 +86,7 @@ template<typename edge_id>
 struct vertex_node<e_both, edge_id>
 {
 	using edge_type = vertex_edges<edge_id>;
-	static consteval uint8_t
+	static consteval edge_val
 	edir() noexcept
 	{
 		return e_both;
@@ -79,7 +95,7 @@ struct vertex_node<e_both, edge_id>
 	edge_type in;
 };
 
-template<uint8_t dir, typename T>
+template<edge_val dir, typename T>
     requires((T::edir() & dir) == dir)
 constexpr auto&
 vertex_node_edges(T& node) noexcept

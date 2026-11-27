@@ -207,7 +207,7 @@ private:
 /// TODO: need features from other branches, help with control over Label and assigning to in dimics_to_graph
 
 template<
-    uint8_t GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
+    graph::edge_val GraphDir, size_t MaxV, size_t MaxE, typename LabelVertex, typename LabelOut, typename LabelIn>
     requires((GraphDir & graph::e_out) != 0)
 void
 dimics_to_graph(
@@ -217,13 +217,15 @@ dimics_to_graph(
 	using graph_type
 	    = domain::static_adj_graph<GraphDir, MaxV, MaxE, LabelVertex, LabelOut, LabelIn>;
 	auto nodes = dimic.nodes();
-	// copy edges, will sort
+	// edges copied to enable sorting
 	std::vector edges(dimic.edges().begin(), dimic.edges().end());
 	graph.setup(nodes.size(), edges.size());
 
+	// setup edges
 	auto nd_vtx      = graph.vertex_all_mut();
 	uint32_t edge_at = 0;
 
+	// insert either e_out or e_in edges based on template
 	auto edge_insert = [&]<graph::edge_val E>(std::integral_constant<graph::edge_val, E>)
 	{
 		constexpr auto Ei = invert_edge(E);
@@ -239,26 +241,25 @@ dimics_to_graph(
 			// any skipped node will have zero edges
 			auto& vtx_ed = vertex_node_edges<graph::e_out>(nd_vtx[node_id]);
 			uint32_t ie  = size(node_edges);
-			vtx_ed.start = edge_at;
+			vtx_ed.start = static_cast<typename graph_type::edge_index>(edge_at);
 			vtx_ed.count = ie;
 			const auto vtx_st = vtx_ed;
 
 			auto ed_to = edge_range_mut<E>(graph, vtx_st);
 			for(uint32_t i = 0; i < ie; ++i)
 			{
-				ed_to[i] = static_cast<typename graph_type::vertex_id>(
+				ed_to[i] = static_cast<typename graph_type::vertex_index>(
 						edges[edge_at + i].template end_id<E>() - 1);
 				if constexpr(!std::same_as<L, void>)
 				{
 					if constexpr(std::assignable_from<L&, uint32_t>)
 					{
-
-						label_range_mut<E>(graph, vtx_st)[i]
+						edge_range_mut<E, graph::label>(graph, vtx_st)[i]
 							= edges[edge_at + i].weight_;
 					}
 					else
 					{
-						label_range_mut<E>(graph, vtx_st)[i]
+						edge_range_mut<E, graph::label>(graph, vtx_st)[i]
 							= static_cast<L>(edges[edge_at + i].weight_);
 					}
 				}
@@ -272,6 +273,22 @@ dimics_to_graph(
 	}
 	if constexpr (graph_type::graph_label_in()) {
 		edge_insert(std::integral_constant<graph::edge_val, graph::e_in>());
+	}
+
+	if constexpr (graph_type::graph_label_vertex()) {
+		// add vertex labels if able
+		using std::get;
+		constexpr bool is_assign = requires (LabelVertex& v, uint32_t cost) {
+			get<0>(v) = cost;
+			get<1>(v) = cost;
+		};
+		if constexpr (is_assign)
+		{
+			for (auto&& [label,node] : std::views::zip(vertex_range_mut<graph::label>(graph), nodes)) {
+				get<0>(label) = node.x_;
+				get<1>(label) = node.y_;
+			}
+		}
 	}
 }
 

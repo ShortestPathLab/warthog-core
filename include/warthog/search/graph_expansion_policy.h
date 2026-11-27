@@ -139,7 +139,7 @@ graph_expansion_policy<G, CostConv>::expand(
 		auto& map = *this->map_;
 		for(auto i : std::views::zip(
 		        edge_range<graph::e_out>(map, cid),
-		        label_range<graph::e_out>(map, cid)))
+		        edge_range<graph::e_out, graph::label>(map, cid)))
 		{
 			search_node* succ = this->generate(pad_id(std::get<0>(i)));
 			double cost       = cost_conv(map, std::get<1>(i));
